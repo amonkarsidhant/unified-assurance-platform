@@ -63,3 +63,12 @@ Quick links:
 - Engineering teams adopting a standard quality baseline
 - QE/Platform teams building centralized assurance workflows
 - Product/security/compliance stakeholders requiring clear release decisions
+
+## Contribution standard
+For major design docs and stakeholder-facing reports, follow:
+- `docs/contribution-standard.md`
+- `templates/self-reflection-template.md` (required self-reflection block)
+
+## Agentic-QE enterprise alignment
+- `docs/agentic-alignment-matrix.md`
+- `docs/enterprise-hardening-backlog.md`

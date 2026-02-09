@@ -18,6 +18,10 @@ validate:
 	@test -x scripts/run-assurance.sh
 	@test -x scripts/collect-evidence.sh
 	@test -x scripts/generate-release-report.py
+	@test -f docs/agentic-alignment-matrix.md
+	@test -f docs/enterprise-hardening-backlog.md
+	@test -f docs/contribution-standard.md
+	@test -f templates/self-reflection-template.md
 	@echo "Validation passed."
 
 run-assurance:

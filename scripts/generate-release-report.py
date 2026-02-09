@@ -17,9 +17,13 @@ SOFT = {
 }
 
 
-def evaluate(metrics):
+def evaluate(metrics, risk_context):
     mandatory_failed = [k for k, check in MANDATORY.items() if not check(metrics.get(k, float("inf")))]
     soft_failed = [k for k, check in SOFT.items() if not check(metrics.get(k, float("inf")))]
+
+    if risk_context and risk_context.get("policy_validation_passed") is False:
+        mandatory_failed.append("risk_policy_required_controls")
+
     if mandatory_failed:
         decision = "NO-GO"
     elif soft_failed:
@@ -31,23 +35,15 @@ def evaluate(metrics):
 
 def render(data):
     metrics = data.get("metrics", {})
-    decision, mandatory_failed, soft_failed = evaluate(metrics)
+    risk_context = data.get("risk_context", {})
+    decision, mandatory_failed, soft_failed = evaluate(metrics, risk_context)
 
     if decision == "GO":
-        plain_summary = (
-            "Release is ready. All mandatory and soft quality gates passed, "
-            "so risk is currently within acceptable policy thresholds."
-        )
+        plain_summary = "Release is ready. Mandatory and soft gates passed for the current risk context."
     elif decision == "CONDITIONAL":
-        plain_summary = (
-            "Release can proceed with caution. Mandatory gates passed, but some "
-            "non-blocking quality signals need follow-up and documented ownership."
-        )
+        plain_summary = "Release can proceed with caution. Mandatory gates passed, but follow-up is needed on soft signals."
     else:
-        plain_summary = (
-            "Release is not ready. One or more mandatory gates failed, which means "
-            "there is elevated customer or operational risk if shipped now."
-        )
+        plain_summary = "Release is not ready. Mandatory quality or risk-policy controls failed."
 
     lines = [
         "# Release Assurance Report",
@@ -60,13 +56,27 @@ def render(data):
         "",
         f"- {plain_summary}",
         "",
-        "## Gate Evaluation",
+        "## Risk Context",
         "",
-        "### Mandatory Gates",
+        f"- Risk score: **{risk_context.get('risk_score', 'n/a')}**",
+        f"- Risk tier: **{risk_context.get('risk_tier', 'n/a')}**",
+        f"- Policy validation passed: **{risk_context.get('policy_validation_passed', 'n/a')}**",
     ]
+
+    req_controls = risk_context.get("required_controls", [])
+    if req_controls:
+        lines.append(f"- Required controls: **{', '.join(req_controls)}**")
+    missing = risk_context.get("missing_required_controls", [])
+    lines.append(f"- Missing required controls: **{', '.join(missing) if missing else 'none'}**")
+
+    lines += ["", "## Gate Evaluation", "", "### Mandatory Gates"]
     for k in MANDATORY:
         status = "PASS" if k not in mandatory_failed else "FAIL"
         lines.append(f"- {k}: {metrics.get(k)} ({status})")
+
+    if "risk_policy_required_controls" in mandatory_failed:
+        lines.append("- risk_policy_required_controls: policy validation failed (FAIL)")
+
     lines += ["", "### Soft Gates"]
     for k in SOFT:
         status = "PASS" if k not in soft_failed else "FAIL"
@@ -74,11 +84,11 @@ def render(data):
 
     lines += ["", "## Notes"]
     if decision == "GO":
-        lines.append("- All mandatory and soft gates passed.")
+        lines.append("- All mandatory and soft gates passed for this risk context.")
     elif decision == "CONDITIONAL":
-        lines.append("- Mandatory gates passed; some soft gates failed. Proceed with documented exceptions.")
+        lines.append("- Mandatory gates passed; soft signals need tracked follow-up.")
     else:
-        lines.append("- One or more mandatory gates failed. Fix before release.")
+        lines.append("- Fix mandatory failures before release. Include risk-control remediation.")
 
     return "\n".join(lines) + "\n"
 
