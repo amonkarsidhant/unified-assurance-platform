@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate run-assurance report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down
+.PHONY: bootstrap validate run-assurance report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -82,3 +82,14 @@ demo-site-down:
 	else \
 		echo "Demo site is not running."; \
 	fi
+
+dev-stack-up:
+	@docker compose -f infra/local/docker-compose.yml up -d
+	@echo "Local observability stack is up."
+
+dev-stack-down:
+	@docker compose -f infra/local/docker-compose.yml down
+	@echo "Local observability stack is down."
+
+dev-stack-status:
+	@docker compose -f infra/local/docker-compose.yml ps
