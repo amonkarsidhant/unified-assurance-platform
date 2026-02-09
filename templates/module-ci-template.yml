@@ -1,0 +1,22 @@
+name: module-ci-template
+
+on:
+  pull_request:
+    paths:
+      - '<module-path>/**'
+      - '.github/workflows/module-<module-name>.yml'
+
+jobs:
+  module-assurance:
+    uses: ./.github/workflows/reusable-assurance.yml
+    with:
+      module_name: '<module-name>'
+      module_type: '<frontend|api|worker|shared-lib|infra>'
+      risk_tier: '<medium|high>'
+      run_lint: true
+      run_unit: true
+      run_integration: true
+      run_security: true
+      run_contract: false
+      run_e2e_smoke: false
+    secrets: inherit

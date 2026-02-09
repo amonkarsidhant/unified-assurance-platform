@@ -1,0 +1,28 @@
+{
+  "moduleType": "api",
+  "riskTier": "high",
+  "mandatoryTests": [
+    "lint",
+    "unit",
+    "integration",
+    "contract",
+    "backward-compat",
+    "sast",
+    "dependency-scan",
+    "dast-smoke"
+  ],
+  "promotionCriteria": {
+    "stage": {
+      "minPassRate": 0.97,
+      "maxCriticalFindings": 0,
+      "requiresSchemaCompatibility": true
+    },
+    "prod": {
+      "minPassRate": 0.99,
+      "maxCriticalFindings": 0,
+      "maxHighFindings": 0,
+      "requiresRollbackPlan": true,
+      "requiresApprovalRoles": ["api-owner", "security-owner", "platform-owner"]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "moduleType": "frontend",
+  "riskTier": "medium",
+  "mandatoryTests": [
+    "lint",
+    "unit",
+    "component",
+    "e2e-smoke",
+    "accessibility-smoke",
+    "sast",
+    "dependency-scan"
+  ],
+  "promotionCriteria": {
+    "stage": {
+      "minPassRate": 0.95,
+      "maxCriticalFindings": 0,
+      "requiresVisualSmoke": true
+    },
+    "prod": {
+      "minPassRate": 0.98,
+      "maxCriticalFindings": 0,
+      "requiresRollbackPlan": true,
+      "requiresApprovalRoles": ["frontend-owner", "platform-owner"]
+    }
+  }
+}

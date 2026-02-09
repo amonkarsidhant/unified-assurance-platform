@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle promotion-check demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -71,6 +71,15 @@ sign-bundle:
 
 promotion-check:
 	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest
+
+MODULE ?=
+TYPE ?=
+module-golden-path:
+	@if [ -z "$(MODULE)" ] || [ -z "$(TYPE)" ]; then \
+		echo "Usage: make module-golden-path MODULE=<module-name> TYPE=<frontend|api|worker|shared-lib>"; \
+		exit 1; \
+	fi
+	@./scripts/generate-module-golden-path.py --module "$(MODULE)" --type "$(TYPE)"
 
 demo-up:
 	@if command -v docker >/dev/null 2>&1; then \

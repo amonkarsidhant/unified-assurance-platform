@@ -141,6 +141,32 @@ Quick links:
 - `demo/reference-scenarios.md`
 - `reporting/reference-architecture-scorecard.md`
 
+## Golden paths for multi-module apps
+For monorepos with multiple module teams, use the module golden-path assets in this repo:
+
+- Guidance: `docs/golden-paths/multi-module-app.md`
+- Onboarding template: `templates/module-onboarding-template.md`
+- Assurance profile template: `templates/module-assurance-profile.yaml`
+- Reusable module CI example: `templates/module-ci-template.yml`
+- Module config examples: `config/modules/*.json`
+- Generator script: `scripts/generate-module-golden-path.py`
+
+Generate module-specific onboarding docs:
+
+```bash
+make module-golden-path MODULE=checkout-ui TYPE=frontend
+make module-golden-path MODULE=payments-api TYPE=api
+```
+
+Direct script usage:
+
+```bash
+python3 scripts/generate-module-golden-path.py --module fraud-worker --type worker
+python3 scripts/generate-module-golden-path.py --module shared-types --type shared-lib
+```
+
+Generated files are written to `docs/generated/<module>.md` and should be committed with module onboarding changes.
+
 ## Repo map
 - `docs/` product + technical guidance
 - `policies/` release gates and risk scoring

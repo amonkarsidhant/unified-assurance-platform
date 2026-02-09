@@ -1,0 +1,26 @@
+{
+  "moduleType": "worker",
+  "riskTier": "medium-high",
+  "mandatoryTests": [
+    "lint",
+    "unit",
+    "integration",
+    "queue-contract",
+    "idempotency-replay",
+    "sast",
+    "dependency-scan"
+  ],
+  "promotionCriteria": {
+    "stage": {
+      "minPassRate": 0.95,
+      "maxCriticalFindings": 0,
+      "requiresReplayValidation": true
+    },
+    "prod": {
+      "minPassRate": 0.98,
+      "maxCriticalFindings": 0,
+      "requiresRollbackPlan": true,
+      "requiresApprovalRoles": ["worker-owner", "platform-owner"]
+    }
+  }
+}

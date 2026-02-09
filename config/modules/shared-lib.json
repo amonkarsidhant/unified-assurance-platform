@@ -1,0 +1,26 @@
+{
+  "moduleType": "shared-lib",
+  "riskTier": "high",
+  "mandatoryTests": [
+    "lint",
+    "unit",
+    "semver-check",
+    "consumer-compatibility-matrix",
+    "sast",
+    "dependency-scan"
+  ],
+  "promotionCriteria": {
+    "stage": {
+      "minPassRate": 0.97,
+      "maxCriticalFindings": 0,
+      "requiresConsumerCompatibility": true
+    },
+    "prod": {
+      "minPassRate": 0.99,
+      "maxCriticalFindings": 0,
+      "maxHighFindings": 0,
+      "requiresRollbackPlan": true,
+      "requiresApprovalRoles": ["shared-lib-owner", "consumer-owner", "platform-owner"]
+    }
+  }
+}

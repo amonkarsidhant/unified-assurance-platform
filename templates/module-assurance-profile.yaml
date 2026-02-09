@@ -1,0 +1,39 @@
+# Module Assurance Profile Template
+apiVersion: assurance.uap/v1
+kind: ModuleAssuranceProfile
+metadata:
+  moduleName: "<module-name>"
+  moduleType: "<frontend|api|worker|shared-lib|infra>"
+  owners:
+    primaryTeam: "@org/<team>"
+    secondaryTeams:
+      - "@org/platform-owners"
+
+spec:
+  riskTier: "<low|medium|high|critical>"
+
+  requiredChecks:
+    - name: lint
+      requiredOn: ["pr", "stage", "prod"]
+    - name: unit-tests
+      requiredOn: ["pr", "stage", "prod"]
+    - name: security-sast
+      requiredOn: ["pr", "stage", "prod"]
+
+  promotionCriteria:
+    stage:
+      maxOpenCriticalDefects: 0
+      minPassRate: 0.95
+      requiresEvidenceBundle: true
+    prod:
+      maxOpenCriticalDefects: 0
+      maxOpenHighSecurityFindings: 0
+      requiresChangeApproval: true
+      requiresRollbackPlan: true
+
+  release:
+    train: "twice-weekly"
+    exceptionWorkflow:
+      enabled: true
+      requiredApprovals: 3
+      ticketPrefix: "INC-"
