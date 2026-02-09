@@ -16,7 +16,29 @@ Ship faster with confidence by making quality decisions:
 4. **Telemetry layer**: `observability/otel-collector-config.yaml`, dashboard guidance
 5. **Domain onboarding**: golden paths and sample service descriptors in `docs/golden-paths/` and `examples/services/`
 
-Detailed architecture: `docs/architecture.md`
+### Architecture diagram
+```mermaid
+flowchart LR
+  U[Users / Stakeholders] --> LB[Load Balancer / Ingress]
+  LB --> API[API Services on VM/Containers]
+  API --> DB[(Primary DB)]
+  API --> REP[(Read Replica)]
+  API --> C[(Cache)]
+  API --> Q[(Queue)]
+  Q --> W[Async Workers]
+
+  API --> OTEL[OpenTelemetry Collector]
+  W --> OTEL
+  OTEL --> OBS[(Metrics / Logs / Traces Dashboards)]
+
+  P[Policies\nquality-gates + risk-model] --> CI[CI/CD Assurance Pipelines]
+  TC[Test Catalog] --> CI
+  CI --> API
+  CI --> RPT[Release Report + Evidence Bundle]
+  RPT --> U
+```
+
+Detailed architecture: `docs/architecture.md` and `docs/reference-architecture/diagram.md`
 
 ## Quick start
 ```bash
