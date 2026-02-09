@@ -89,6 +89,10 @@ The same make targets can be used both locally and in CI for consistent behavior
 ## Real mode caveats
 
 - Real mode (`make run-assurance-real`) prefers installed OSS tools and writes tool-specific evidence under `artifacts/latest/`.
+- OWASP ZAP baseline is included in real mode and writes `artifacts/latest/dast_zap.status` + `artifacts/latest/dast_zap.log`.
+- ZAP tuning env vars: `ZAP_TARGET_URL` (default `http://127.0.0.1:5678`), `ZAP_TIMEOUT_MIN` (default `2`), `ZAP_FAIL_LEVEL` (default `medium`).
+- Run only ZAP (fast smoke): `make zap-smoke`.
+- On macOS, if Gatekeeper blocks downloaded security tools, prefer Homebrew installs or explicitly allow binaries in **System Settings → Privacy & Security**.
 - Missing optional assets (Postman collection / Playwright smoke spec) are marked as `skipped` with explicit reasons.
 - Trivy is configured non-fatal by default (`TRIVY_EXIT_CODE=0`) so local runs remain practical.
-- Typical laptop runtime target is a few minutes; keep k6 smoke small (`K6_VUS`, `K6_DURATION`).
+- Typical laptop runtime target is a few minutes; keep k6 smoke small (`K6_VUS`, `K6_DURATION`) and ZAP baseline short (`ZAP_TIMEOUT_MIN`).

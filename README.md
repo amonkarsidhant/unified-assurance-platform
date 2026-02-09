@@ -71,6 +71,7 @@ Artifacts created in:
 - k6 (`tests/perf/smoke.js`)
 - semgrep (`tests/security/semgrep-rules.yml`)
 - trivy (`trivy fs` over repo)
+- OWASP ZAP baseline (`dast_zap`) against a target URL
 - optional newman (if collection exists)
 - optional playwright smoke (if test exists)
 
@@ -79,6 +80,20 @@ Useful env overrides:
 - `TRIVY_EXIT_CODE=0` (non-fatal default)
 - `PERF_TARGET_URL=https://test.k6.io`
 - `K6_VUS=2 K6_DURATION=5s`
+- `ZAP_TARGET_URL=http://127.0.0.1:5678`
+- `ZAP_TIMEOUT_MIN=2`
+- `ZAP_FAIL_LEVEL=medium`
+
+Run only the lightweight ZAP step (laptop-friendly):
+
+```bash
+make zap-smoke
+```
+
+Notes for macOS:
+- If `zap-baseline.py` is not installed locally, the script falls back to Dockerized ZAP when Docker is available.
+- For localhost targets, Docker path automatically uses `host.docker.internal` so ZAP can reach host services.
+- If Gatekeeper blocks downloaded binaries, install via Homebrew (or allow the binary in Privacy & Security) and retry.
 
 ## New Golden Path: Enterprise Reference Architecture
 For teams deploying transaction platforms with LB + API + VM + DB + queue/cache.

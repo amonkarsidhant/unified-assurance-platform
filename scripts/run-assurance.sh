@@ -12,12 +12,19 @@ if [ "$FORCE_REAL" = "1" ]; then
   MODE="real"
 fi
 
+ONLY_ZAP_SMOKE="${ONLY_ZAP_SMOKE:-0}"
+
 TRIVY_SEVERITY="${TRIVY_SEVERITY:-CRITICAL,HIGH}"
 TRIVY_EXIT_CODE="${TRIVY_EXIT_CODE:-0}" # keep non-fatal by default
 K6_VUS="${K6_VUS:-2}"
 K6_DURATION="${K6_DURATION:-5s}"
 PERF_TARGET_URL="${PERF_TARGET_URL:-https://test.k6.io}"
 SEMGREP_CONFIG="${SEMGREP_CONFIG:-$ROOT_DIR/tests/security/semgrep-rules.yml}"
+
+ZAP_TARGET_URL="${ZAP_TARGET_URL:-http://127.0.0.1:5678}"
+ZAP_TIMEOUT_MIN="${ZAP_TIMEOUT_MIN:-2}"
+ZAP_FAIL_LEVEL="${ZAP_FAIL_LEVEL:-medium}"
+ZAP_DOCKER_IMAGE="${ZAP_DOCKER_IMAGE:-ghcr.io/zaproxy/zaproxy:stable}"
 
 log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
 
@@ -84,93 +91,134 @@ control_to_status() {
     contract_tests) cat "$ART_DIR/contract.status" ;;
     dependency_scan) cat "$ART_DIR/dependency_scan.status" ;;
     security_scan) cat "$ART_DIR/security_scan.status" ;;
+    dast|dast_scan) cat "$ART_DIR/dast_zap.status" ;;
     performance_smoke) cat "$ART_DIR/performance_smoke.status" ;;
     authz_negative_tests) echo "skipped" ;;
     *) echo "unknown" ;;
   esac
 }
 
-# 1) Core pragmatic checks
+run_zap_baseline() {
+  if [ "$MODE" != "real" ]; then
+    record_skipped dast_zap "pragmatic mode: ZAP baseline runs only in real mode"
+    return 0
+  fi
+
+  if command -v zap-baseline.py >/dev/null 2>&1; then
+    run_cmd_step dast_zap bash -lc "zap-baseline.py -t '$ZAP_TARGET_URL' -m '$ZAP_TIMEOUT_MIN' -l '$ZAP_FAIL_LEVEL'"
+    return $?
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    local docker_target="$ZAP_TARGET_URL"
+    docker_target="${docker_target/127.0.0.1/host.docker.internal}"
+    docker_target="${docker_target/localhost/host.docker.internal}"
+    run_cmd_step dast_zap bash -lc "docker run --rm -t '$ZAP_DOCKER_IMAGE' zap-baseline.py -t '$docker_target' -m '$ZAP_TIMEOUT_MIN' -l '$ZAP_FAIL_LEVEL'"
+    return $?
+  fi
+
+  record_skipped dast_zap "real mode: neither zap-baseline.py nor dockerized ZAP available"
+  return 0
+}
+
 FAILURES=0
-run_npm_or_fallback lint "npm run lint" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
-run_npm_or_fallback unit "npm test" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
-run_npm_or_fallback integration "npm run test:integration" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
-run_npm_or_fallback contract "npm run test:contract" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
 
-# 2) Real tool: semgrep (security scan)
-if command -v semgrep >/dev/null 2>&1; then
-  if [ -f "$SEMGREP_CONFIG" ]; then
-    run_cmd_step security_scan bash -lc "cd '$ROOT_DIR' && semgrep --config '$SEMGREP_CONFIG' --error --json --output '$ART_DIR/semgrep.json' ." || FAILURES=$((FAILURES+1))
-  else
-    run_cmd_step security_scan bash -lc "cd '$ROOT_DIR' && semgrep --config auto --error --json --output '$ART_DIR/semgrep.json' ." || FAILURES=$((FAILURES+1))
-  fi
+if [ "$ONLY_ZAP_SMOKE" = "1" ]; then
+  record_skipped lint "zap-smoke mode: not executed"
+  record_skipped unit "zap-smoke mode: not executed"
+  record_skipped integration "zap-smoke mode: not executed"
+  record_skipped contract "zap-smoke mode: not executed"
+  record_skipped security_scan "zap-smoke mode: not executed"
+  record_skipped dependency_scan "zap-smoke mode: not executed"
+  record_skipped performance_smoke "zap-smoke mode: not executed"
+  record_skipped newman_smoke "zap-smoke mode: not executed"
+  record_skipped playwright_smoke "zap-smoke mode: not executed"
+  run_zap_baseline || FAILURES=$((FAILURES+1))
 else
-  if [ "$MODE" = "real" ]; then
-    record_skipped security_scan "real mode: semgrep not installed"
-  else
-    run_cmd_step security_scan bash -lc "echo 'simulated security_scan (semgrep not installed)'"
-  fi
-fi
+  # 1) Core pragmatic checks
+  run_npm_or_fallback lint "npm run lint" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
+  run_npm_or_fallback unit "npm test" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
+  run_npm_or_fallback integration "npm run test:integration" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
+  run_npm_or_fallback contract "npm run test:contract" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
 
-# 3) Real tool: trivy fs (dependency scan)
-if command -v trivy >/dev/null 2>&1; then
-  run_cmd_step dependency_scan bash -lc "cd '$ROOT_DIR' && trivy fs --quiet --severity '$TRIVY_SEVERITY' --exit-code '$TRIVY_EXIT_CODE' --format json --output '$ART_DIR/trivy.json' ." || FAILURES=$((FAILURES+1))
-else
-  if [ "$MODE" = "real" ]; then
-    record_skipped dependency_scan "real mode: trivy not installed"
-  else
-    run_cmd_step dependency_scan bash -lc "echo 'simulated dependency_scan (trivy not installed)'"
-  fi
-fi
-
-# 4) Real tool: k6 performance smoke
-if command -v k6 >/dev/null 2>&1 && [ -f "$ROOT_DIR/tests/perf/smoke.js" ]; then
-  run_cmd_step performance_smoke bash -lc "cd '$ROOT_DIR' && PERF_TARGET_URL='$PERF_TARGET_URL' K6_VUS='$K6_VUS' K6_DURATION='$K6_DURATION' k6 run tests/perf/smoke.js --summary-export '$ART_DIR/k6-summary.json'" || FAILURES=$((FAILURES+1))
-else
-  if [ "$MODE" = "real" ]; then
-    if ! command -v k6 >/dev/null 2>&1; then
-      record_skipped performance_smoke "real mode: k6 not installed"
+  # 2) Real tool: semgrep (security scan)
+  if command -v semgrep >/dev/null 2>&1; then
+    if [ -f "$SEMGREP_CONFIG" ]; then
+      run_cmd_step security_scan bash -lc "cd '$ROOT_DIR' && semgrep --config '$SEMGREP_CONFIG' --error --json --output '$ART_DIR/semgrep.json' ." || FAILURES=$((FAILURES+1))
     else
-      record_skipped performance_smoke "real mode: tests/perf/smoke.js missing"
+      run_cmd_step security_scan bash -lc "cd '$ROOT_DIR' && semgrep --config auto --error --json --output '$ART_DIR/semgrep.json' ." || FAILURES=$((FAILURES+1))
     fi
   else
-    run_cmd_step performance_smoke bash -lc "echo 'simulated performance_smoke (k6/script unavailable)'"
+    if [ "$MODE" = "real" ]; then
+      record_skipped security_scan "real mode: semgrep not installed"
+    else
+      run_cmd_step security_scan bash -lc "echo 'simulated security_scan (semgrep not installed)'"
+    fi
   fi
-fi
 
-# Optional: Newman
-NEWMAN_COLLECTION=""
-for candidate in "$ROOT_DIR/tests/api/postman.collection.json" "$ROOT_DIR/tests/postman/collection.json" "$ROOT_DIR/postman/collection.json"; do
-  if [ -f "$candidate" ]; then
-    NEWMAN_COLLECTION="$candidate"
-    break
-  fi
-done
-if command -v newman >/dev/null 2>&1 && [ -n "$NEWMAN_COLLECTION" ]; then
-  run_cmd_step newman_smoke bash -lc "cd '$ROOT_DIR' && newman run '$NEWMAN_COLLECTION' --reporters cli,json --reporter-json-export '$ART_DIR/newman.json'"
-else
-  if [ -z "$NEWMAN_COLLECTION" ]; then
-    record_skipped newman_smoke "collection not found"
-  else
-    record_skipped newman_smoke "newman not installed"
-  fi
-fi
+  # 3) Real tool: OWASP ZAP baseline (DAST)
+  run_zap_baseline || FAILURES=$((FAILURES+1))
 
-# Optional: Playwright smoke
-PLAYWRIGHT_TEST=""
-for candidate in "$ROOT_DIR/tests/e2e/smoke.spec.ts" "$ROOT_DIR/tests/e2e/smoke.spec.js"; do
-  if [ -f "$candidate" ]; then
-    PLAYWRIGHT_TEST="$candidate"
-    break
-  fi
-done
-if command -v npx >/dev/null 2>&1 && [ -n "$PLAYWRIGHT_TEST" ]; then
-  run_cmd_step playwright_smoke bash -lc "cd '$ROOT_DIR' && npx playwright test '$PLAYWRIGHT_TEST' --reporter=line"
-else
-  if [ -z "$PLAYWRIGHT_TEST" ]; then
-    record_skipped playwright_smoke "smoke test not found"
+  # 4) Real tool: trivy fs (dependency scan)
+  if command -v trivy >/dev/null 2>&1; then
+    run_cmd_step dependency_scan bash -lc "cd '$ROOT_DIR' && trivy fs --quiet --severity '$TRIVY_SEVERITY' --exit-code '$TRIVY_EXIT_CODE' --format json --output '$ART_DIR/trivy.json' ." || FAILURES=$((FAILURES+1))
   else
-    record_skipped playwright_smoke "npx unavailable"
+    if [ "$MODE" = "real" ]; then
+      record_skipped dependency_scan "real mode: trivy not installed"
+    else
+      run_cmd_step dependency_scan bash -lc "echo 'simulated dependency_scan (trivy not installed)'"
+    fi
+  fi
+
+  # 5) Real tool: k6 performance smoke
+  if command -v k6 >/dev/null 2>&1 && [ -f "$ROOT_DIR/tests/perf/smoke.js" ]; then
+    run_cmd_step performance_smoke bash -lc "cd '$ROOT_DIR' && PERF_TARGET_URL='$PERF_TARGET_URL' K6_VUS='$K6_VUS' K6_DURATION='$K6_DURATION' k6 run tests/perf/smoke.js --summary-export '$ART_DIR/k6-summary.json'" || FAILURES=$((FAILURES+1))
+  else
+    if [ "$MODE" = "real" ]; then
+      if ! command -v k6 >/dev/null 2>&1; then
+        record_skipped performance_smoke "real mode: k6 not installed"
+      else
+        record_skipped performance_smoke "real mode: tests/perf/smoke.js missing"
+      fi
+    else
+      run_cmd_step performance_smoke bash -lc "echo 'simulated performance_smoke (k6/script unavailable)'"
+    fi
+  fi
+
+  # Optional: Newman
+  NEWMAN_COLLECTION=""
+  for candidate in "$ROOT_DIR/tests/api/postman.collection.json" "$ROOT_DIR/tests/postman/collection.json" "$ROOT_DIR/postman/collection.json"; do
+    if [ -f "$candidate" ]; then
+      NEWMAN_COLLECTION="$candidate"
+      break
+    fi
+  done
+  if command -v newman >/dev/null 2>&1 && [ -n "$NEWMAN_COLLECTION" ]; then
+    run_cmd_step newman_smoke bash -lc "cd '$ROOT_DIR' && newman run '$NEWMAN_COLLECTION' --reporters cli,json --reporter-json-export '$ART_DIR/newman.json'"
+  else
+    if [ -z "$NEWMAN_COLLECTION" ]; then
+      record_skipped newman_smoke "collection not found"
+    else
+      record_skipped newman_smoke "newman not installed"
+    fi
+  fi
+
+  # Optional: Playwright smoke
+  PLAYWRIGHT_TEST=""
+  for candidate in "$ROOT_DIR/tests/e2e/smoke.spec.ts" "$ROOT_DIR/tests/e2e/smoke.spec.js"; do
+    if [ -f "$candidate" ]; then
+      PLAYWRIGHT_TEST="$candidate"
+      break
+    fi
+  done
+  if command -v npx >/dev/null 2>&1 && [ -n "$PLAYWRIGHT_TEST" ]; then
+    run_cmd_step playwright_smoke bash -lc "cd '$ROOT_DIR' && npx playwright test '$PLAYWRIGHT_TEST' --reporter=line"
+  else
+    if [ -z "$PLAYWRIGHT_TEST" ]; then
+      record_skipped playwright_smoke "smoke test not found"
+    else
+      record_skipped playwright_smoke "npx unavailable"
+    fi
   fi
 fi
 
@@ -178,8 +226,16 @@ fi
 cp "$ART_DIR/security_scan.status" "$ART_DIR/security.status"
 cp "$ART_DIR/performance_smoke.status" "$ART_DIR/performance.status"
 
-TOTAL=7
-PASSED=$(grep -h '^pass$' "$ART_DIR"/*.status | wc -l | tr -d ' ')
+TOTAL=8
+PASSED=$(grep -h '^pass$' \
+  "$ART_DIR/lint.status" \
+  "$ART_DIR/unit.status" \
+  "$ART_DIR/integration.status" \
+  "$ART_DIR/contract.status" \
+  "$ART_DIR/dependency_scan.status" \
+  "$ART_DIR/security_scan.status" \
+  "$ART_DIR/performance_smoke.status" \
+  "$ART_DIR/dast_zap.status" | wc -l | tr -d ' ')
 PASS_RATE=$(python3 - <<PY
 print(round($PASSED/$TOTAL, 4))
 PY
@@ -242,17 +298,28 @@ cat > "$ART_DIR/results.json" <<JSON
     "contract": "$(cat "$ART_DIR/contract.status")",
     "dependency_scan": "$(cat "$ART_DIR/dependency_scan.status")",
     "security_scan": "$(cat "$ART_DIR/security_scan.status")",
+    "dast_zap": "$(cat "$ART_DIR/dast_zap.status")",
     "performance_smoke": "$(cat "$ART_DIR/performance_smoke.status")",
     "newman_smoke": "$(cat "$ART_DIR/newman_smoke.status")",
     "playwright_smoke": "$(cat "$ART_DIR/playwright_smoke.status")"
   },
   "evidence": {
+    "tools": {
+      "dast_zap": {
+        "status": "$(cat "$ART_DIR/dast_zap.status")",
+        "target_url": "$ZAP_TARGET_URL",
+        "timeout_min": $ZAP_TIMEOUT_MIN,
+        "fail_level": "$ZAP_FAIL_LEVEL",
+        "log": "artifacts/latest/dast_zap.log"
+      }
+    },
     "tool_logs": {
       "lint": "artifacts/latest/lint.log",
       "unit": "artifacts/latest/unit.log",
       "integration": "artifacts/latest/integration.log",
       "contract": "artifacts/latest/contract.log",
       "security_scan": "artifacts/latest/security_scan.log",
+      "dast_zap": "artifacts/latest/dast_zap.log",
       "dependency_scan": "artifacts/latest/dependency_scan.log",
       "performance_smoke": "artifacts/latest/performance_smoke.log",
       "newman_smoke": "artifacts/latest/newman_smoke.log",

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -32,6 +32,9 @@ run-assurance:
 
 run-assurance-real:
 	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ./scripts/run-assurance.sh
+
+zap-smoke:
+	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ONLY_ZAP_SMOKE=1 ./scripts/run-assurance.sh
 
 RESULTS ?= artifacts/latest/results.json
 OUT ?= artifacts/latest/release-report.md

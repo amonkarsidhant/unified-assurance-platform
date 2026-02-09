@@ -9,6 +9,10 @@ riskTiers:
   high:
     scoreRange: [70, 100]
     requiredControls: [unit_tests, integration_tests, contract_tests, security_scan, performance_smoke, authz_negative_tests]
+controlMappings:
+  security_scan:
+    aliases: [dast, dast_scan, dast_zap]
+
 factors:
   change_size:
     low: 5
