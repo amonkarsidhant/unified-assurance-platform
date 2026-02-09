@@ -3,5 +3,14 @@
   "description": "Low-risk changes require baseline static controls.",
   "mandatory_controls": ["sast", "sca"],
   "allowed_statuses": ["pass"],
-  "exception_allowed": true
+  "exception_allowed": true,
+  "chaos_policy": {
+    "required": false,
+    "required_module_scenarios": {
+      "api": ["network_latency"],
+      "frontend": ["network_latency"],
+      "worker": ["queue_backlog"],
+      "shared-lib": ["dependency_timeout"]
+    }
+  }
 }

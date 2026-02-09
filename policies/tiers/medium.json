@@ -3,5 +3,14 @@
   "description": "Medium-risk changes require baseline security and contract confidence.",
   "mandatory_controls": ["sast", "sca", "contract"],
   "allowed_statuses": ["pass"],
-  "exception_allowed": true
+  "exception_allowed": true,
+  "chaos_policy": {
+    "required": false,
+    "required_module_scenarios": {
+      "api": ["network_latency", "dependency_timeout"],
+      "frontend": ["network_latency", "dependency_timeout"],
+      "worker": ["queue_backlog", "dependency_timeout"],
+      "shared-lib": ["dependency_timeout"]
+    }
+  }
 }

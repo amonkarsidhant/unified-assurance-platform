@@ -1,7 +1,16 @@
 {
   "tier": "high",
-  "description": "High-risk changes require dynamic, contract, and performance controls.",
-  "mandatory_controls": ["sast", "sca", "dast", "contract", "perf_smoke"],
+  "description": "High-risk changes require dynamic, contract, performance, and chaos resilience controls.",
+  "mandatory_controls": ["sast", "sca", "dast", "contract", "perf_smoke", "chaos_resilience"],
   "allowed_statuses": ["pass"],
-  "exception_allowed": true
+  "exception_allowed": true,
+  "chaos_policy": {
+    "required": true,
+    "required_module_scenarios": {
+      "api": ["network_latency", "dependency_timeout", "queue_backlog"],
+      "frontend": ["network_latency", "dependency_timeout"],
+      "worker": ["process_kill", "queue_backlog", "resource_stress"],
+      "shared-lib": ["dependency_timeout", "resource_stress"]
+    }
+  }
 }

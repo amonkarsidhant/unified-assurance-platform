@@ -5,7 +5,7 @@ categories:
   functional:
     tests: [unit, integration, contract, e2e_smoke]
   non_functional:
-    tests: [performance_smoke, accessibility, resilience_smoke]
+    tests: [performance_smoke, accessibility, resilience_smoke, chaos_resilience]
   security:
     tests: [sast, dependency_scan, secret_scan, auth_negative]
   data_and_events:
@@ -21,7 +21,7 @@ layer_specific:
   vm_infra:
     tests: [image_hardening, config_drift_scan, node_replacement, capacity_smoke]
   resilience:
-    tests: [db_replica_lag_injection, api_timeout_injection, vm_node_loss_injection, lb_misroute_injection, queue_backlog_injection]
+    tests: [db_replica_lag_injection, api_timeout_injection, vm_node_loss_injection, lb_misroute_injection, queue_backlog_injection, chaos_network_latency, chaos_dependency_timeout, chaos_process_kill, chaos_resource_stress]
   security_layer:
     tests: [least_privilege_review, network_policy_validation, secret_rotation_check]
   observability:

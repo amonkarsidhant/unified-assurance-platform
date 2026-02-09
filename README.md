@@ -206,6 +206,26 @@ Replace those files with your service-specific checks when onboarding your app.
 
 ---
 
+## 🌪️ Agnostic Chaos Integration
+
+Chaos is integrated as a policy control in the golden path, without introducing a custom chaos engine.
+
+Key assets:
+- `scripts/run-chaos-checks.sh`
+- `docs/chaos/experiment-contract.md`
+- `docs/chaos/scenario-catalog.md`
+- `templates/chaos/chaos-experiment-template.yaml`
+- `templates/chaos/chaos-runbook-template.md`
+- `docs/golden-paths/chaos-integration.md`
+
+Run locally (safe defaults):
+```bash
+make chaos-check
+make run-assurance
+make promotion-check ENV=stage || true
+make report
+```
+
 ## 🧱 Golden paths for multi-module apps
 
 Use this for apps with `frontend`, `api`, `worker`, `shared-lib`, etc.

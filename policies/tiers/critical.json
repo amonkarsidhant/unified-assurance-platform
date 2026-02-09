@@ -1,7 +1,16 @@
 {
   "tier": "critical",
-  "description": "Critical changes require all high controls plus resilience validation.",
-  "mandatory_controls": ["sast", "sca", "dast", "contract", "perf_smoke", "resilience"],
+  "description": "Critical changes require all high controls plus resilience and mandatory chaos validation.",
+  "mandatory_controls": ["sast", "sca", "dast", "contract", "perf_smoke", "resilience", "chaos_resilience"],
   "allowed_statuses": ["pass"],
-  "exception_allowed": false
+  "exception_allowed": false,
+  "chaos_policy": {
+    "required": true,
+    "required_module_scenarios": {
+      "api": ["network_latency", "dependency_timeout", "queue_backlog"],
+      "frontend": ["network_latency", "dependency_timeout", "process_kill"],
+      "worker": ["process_kill", "queue_backlog", "resource_stress"],
+      "shared-lib": ["dependency_timeout", "resource_stress", "process_kill"]
+    }
+  }
 }

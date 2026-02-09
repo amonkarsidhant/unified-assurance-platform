@@ -1,0 +1,46 @@
+version: 1
+kind: chaos-experiment
+metadata:
+  name: replace-with-experiment-name
+  module: replace-with-module
+  module_type: api # api|frontend|worker|shared-lib
+  risk_tier: medium # low|medium|high|critical
+
+hypothesis:
+  statement: "System maintains core SLO under injected fault"
+  steady_state:
+    - metric: availability_slo
+      operator: ">="
+      target: 99.9
+    - metric: p95_latency_ms
+      operator: "<="
+      target: 500
+
+blast_radius:
+  environment: local
+  scope: "single module"
+  traffic_slice: "synthetic only"
+
+scenario:
+  type: network_latency # network_latency|dependency_timeout|process_kill|resource_stress|queue_backlog
+  injector: chaos_toolkit
+  parameters:
+    latency_ms: 200
+    duration_s: 60
+
+abort:
+  on:
+    - "error_rate > 5%"
+    - "availability_slo < 99.0"
+    - "manual_abort"
+
+rollback:
+  steps:
+    - "remove injector/fault"
+    - "restart impacted service if needed"
+    - "verify steady state restored"
+
+evidence:
+  output: artifacts/latest/chaos-results.json
+  logs:
+    - artifacts/latest/chaos_resilience.log

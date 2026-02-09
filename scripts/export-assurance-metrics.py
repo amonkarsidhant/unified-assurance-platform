@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap"]
+TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap", "chaos_resilience"]
 RECOMMENDATIONS = ["GO", "CONDITIONAL", "NO-GO"]
 
 
@@ -162,6 +162,7 @@ def main() -> None:
         "security": tests.get("security_scan", tests.get("security")),
         "performance": tests.get("performance_smoke", tests.get("performance")),
         "dast_zap": tests.get("dast_zap"),
+        "chaos_resilience": tests.get("chaos_resilience"),
     }
 
     lines = [
@@ -243,6 +244,16 @@ def main() -> None:
     add_gauge(lines, "assurance_flaky_violations_total", "Flaky policy violations total.", len(flaky_policy.get("reasons") or []))
     add_gauge(lines, "assurance_flaky_count", "Number of flaky tests identified.", int(flaky_policy.get("flaky_count", 0) or 0))
     add_gauge(lines, "assurance_flaky_allowed", "Flaky policy allows promotion.", 1 if flaky_policy.get("allowed") else 0)
+
+    chaos = results.get("chaos", {})
+    chaos_required = 1 if chaos.get("required") else 0
+    chaos_executed = len(chaos.get("executed_scenarios") or [])
+    chaos_passed = 1 if tests.get("chaos_resilience") == "pass" else 0
+    chaos_skipped = 1 if tests.get("chaos_resilience") == "skipped" else 0
+    add_gauge(lines, "assurance_chaos_required", "Chaos validation required for current tier/module.", chaos_required)
+    add_gauge(lines, "assurance_chaos_executed_total", "Executed chaos scenarios count.", chaos_executed)
+    add_gauge(lines, "assurance_chaos_passed", "Chaos resilience gate passed.", chaos_passed)
+    add_gauge(lines, "assurance_chaos_skipped", "Chaos resilience gate skipped.", chaos_skipped)
 
     # Control matrix approximation for dashboard table
     control_matrix = promotion.get("control_matrix")

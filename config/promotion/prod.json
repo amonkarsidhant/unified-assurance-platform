@@ -12,7 +12,8 @@
     "security_scan": ["pass", "skipped"],
     "dependency_scan": ["pass", "skipped"],
     "dast_zap": ["pass", "skipped"],
-    "performance_smoke": ["pass", "skipped"]
+    "performance_smoke": ["pass", "skipped"],
+    "chaos_resilience": ["pass", "skipped"]
   },
   "required_evidence_files": ["results.json", "release-report.md"],
   "require_signed_bundle": true,

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -33,7 +33,13 @@ validate:
 	@test -x scripts/normalize-results-v2.py
 	@test -x scripts/evaluate-flaky-policy.py
 	@test -x scripts/render-pr-comment.py
+	@test -x scripts/run-chaos-checks.sh
 	@test -f docs/compliance/control-traceability.md
+	@test -f docs/chaos/experiment-contract.md
+	@test -f docs/chaos/scenario-catalog.md
+	@test -f templates/chaos/chaos-experiment-template.yaml
+	@test -f templates/chaos/chaos-runbook-template.md
+	@test -f docs/golden-paths/chaos-integration.md
 	@echo "Validation passed."
 
 tooling-check:
@@ -51,6 +57,14 @@ run-assurance-real:
 	@$(MAKE) evaluate-flaky
 	@$(MAKE) normalize-results-v2
 
+chaos-check:
+	@./scripts/run-chaos-checks.sh
+	@echo "Chaos evidence: artifacts/latest/chaos-results.json"
+
+chaos-sample:
+	@ASSURANCE_MODE=pragmatic RISK_TIER=high MODULE_TYPE=api ./scripts/run-chaos-checks.sh
+	@cat artifacts/latest/chaos-results.json
+
 assurance-metrics-export:
 	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --results-v2 artifacts/latest/results.v2.json --exceptions-audit artifacts/latest/exceptions-audit.json --pr-comment artifacts/latest/pr-comment.md
 
@@ -62,7 +76,7 @@ assurance-dashboard-check:
 
 assurance-governance-check:
 	@echo "Checking Prometheus governance metrics..."
-	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total; do \
+	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped; do \
 		curl -fsS "http://localhost:9090/api/v1/query?query=$$q" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "missing metric"'; \
 		echo "✅ Prometheus has $$q"; \
 	done

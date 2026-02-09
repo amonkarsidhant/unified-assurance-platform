@@ -19,6 +19,8 @@ K6_VUS="${K6_VUS:-2}"
 K6_DURATION="${K6_DURATION:-5s}"
 PERF_TARGET_URL="${PERF_TARGET_URL:-https://test.k6.io}"
 SEMGREP_CONFIG="${SEMGREP_CONFIG:-$ROOT_DIR/tests/security/semgrep-rules.yml}"
+RISK_SCORE="${RISK_SCORE:-45}"
+MODULE_TYPE="${MODULE_TYPE:-api}"
 
 ZAP_TARGET_URL="${ZAP_TARGET_URL:-http://127.0.0.1:5678}"
 ZAP_TIMEOUT_MIN="${ZAP_TIMEOUT_MIN:-2}"
@@ -97,9 +99,20 @@ control_to_status() {
     perf_smoke) cat "$ART_DIR/performance_smoke.status" ;;
     contract) cat "$ART_DIR/contract.status" ;;
     resilience) cat "$ART_DIR/resilience.status" ;;
+    chaos_resilience) cat "$ART_DIR/chaos_resilience.status" ;;
     *) echo "unknown" ;;
   esac
 }
+
+if [ "$RISK_SCORE" -ge 90 ]; then
+  RISK_TIER="critical"
+elif [ "$RISK_SCORE" -ge 70 ]; then
+  RISK_TIER="high"
+elif [ "$RISK_SCORE" -ge 30 ]; then
+  RISK_TIER="medium"
+else
+  RISK_TIER="low"
+fi
 
 FAILURES=0
 
@@ -112,6 +125,8 @@ if [ "$ONLY_ZAP_SMOKE" = "1" ]; then
   record_skipped dependency_scan "zap-smoke mode: not executed"
   record_skipped performance_smoke "zap-smoke mode: not executed"
   record_skipped resilience "zap-smoke mode: not executed"
+  record_skipped chaos_resilience "zap-smoke mode: not executed"
+  echo '{"status":"skipped","reason":"zap-smoke mode: not executed"}' >"$ART_DIR/chaos-results.json"
   record_skipped newman_smoke "zap-smoke mode: not executed"
   record_skipped playwright_smoke "zap-smoke mode: not executed"
   run_zap_baseline || FAILURES=$((FAILURES+1))
@@ -171,6 +186,21 @@ else
     fi
   fi
 
+  if [ -x "$ROOT_DIR/scripts/run-chaos-checks.sh" ]; then
+    run_cmd_step chaos_resilience bash -lc "cd '$ROOT_DIR' && ASSURANCE_MODE='$MODE' RISK_TIER='$RISK_TIER' MODULE_TYPE='$MODULE_TYPE' ./scripts/run-chaos-checks.sh"
+    chaos_rc=$?
+    if [ "$chaos_rc" -ne 0 ]; then
+      FAILURES=$((FAILURES+1))
+    else
+      if [ -f "$ART_DIR/chaos_resilience.status" ]; then
+        write_status chaos_resilience "$(cat "$ART_DIR/chaos_resilience.status")"
+      fi
+    fi
+  else
+    record_skipped chaos_resilience "chaos script not found"
+    echo '{"status":"skipped","reason":"chaos script not found"}' >"$ART_DIR/chaos-results.json"
+  fi
+
   NEWMAN_COLLECTION=""
   for candidate in "$ROOT_DIR/tests/api/postman_collection.json" "$ROOT_DIR/tests/api/postman.collection.json" "$ROOT_DIR/tests/postman/collection.json" "$ROOT_DIR/postman/collection.json"; do
     if [ -f "$candidate" ]; then
@@ -215,7 +245,7 @@ fi
 cp "$ART_DIR/security_scan.status" "$ART_DIR/security.status"
 cp "$ART_DIR/performance_smoke.status" "$ART_DIR/performance.status"
 
-TOTAL=9
+TOTAL=10
 PASSED=$(grep -h '^pass$' \
   "$ART_DIR/lint.status" \
   "$ART_DIR/unit.status" \
@@ -225,22 +255,12 @@ PASSED=$(grep -h '^pass$' \
   "$ART_DIR/security_scan.status" \
   "$ART_DIR/performance_smoke.status" \
   "$ART_DIR/dast_zap.status" \
-  "$ART_DIR/resilience.status" | wc -l | tr -d ' ')
+  "$ART_DIR/resilience.status" \
+  "$ART_DIR/chaos_resilience.status" | wc -l | tr -d ' ')
 PASS_RATE=$(python3 - <<PY
 print(round($PASSED/$TOTAL, 4))
 PY
 )
-
-RISK_SCORE="${RISK_SCORE:-45}"
-if [ "$RISK_SCORE" -ge 90 ]; then
-  RISK_TIER="critical"
-elif [ "$RISK_SCORE" -ge 70 ]; then
-  RISK_TIER="high"
-elif [ "$RISK_SCORE" -ge 30 ]; then
-  RISK_TIER="medium"
-else
-  RISK_TIER="low"
-fi
 
 REQUIRED_CONTROLS=$(python3 - <<PY
 import json
@@ -287,6 +307,16 @@ cat > "$ART_DIR/results.json" <<JSON
     "policy_validation_passed": $POLICY_VALIDATION_PASSED,
     "missing_required_controls": [${MISSING_CONTROLS}]
   },
+  "chaos": $(python3 - <<PY
+import json
+from pathlib import Path
+p = Path('$ART_DIR/chaos-results.json')
+if p.exists():
+    print(json.dumps(json.loads(p.read_text())))
+else:
+    print(json.dumps({"status":"skipped","reason":"chaos results not found"}))
+PY
+),
   "metrics": {
     "test_pass_rate": $PASS_RATE,
     "critical_test_failures": $([ "$FAILURES" -gt 0 ] && echo 1 || echo 0)
@@ -301,6 +331,7 @@ cat > "$ART_DIR/results.json" <<JSON
     "dast_zap": "$(cat "$ART_DIR/dast_zap.status")",
     "performance_smoke": "$(cat "$ART_DIR/performance_smoke.status")",
     "resilience": "$(cat "$ART_DIR/resilience.status")",
+    "chaos_resilience": "$(cat "$ART_DIR/chaos_resilience.status")",
     "newman_smoke": "$(cat "$ART_DIR/newman_smoke.status")",
     "playwright_smoke": "$(cat "$ART_DIR/playwright_smoke.status")"
   },
@@ -312,6 +343,11 @@ cat > "$ART_DIR/results.json" <<JSON
         "timeout_min": $ZAP_TIMEOUT_MIN,
         "fail_level": "$ZAP_FAIL_LEVEL",
         "log": "artifacts/latest/dast_zap.log"
+      },
+      "chaos_resilience": {
+        "status": "$(cat "$ART_DIR/chaos_resilience.status")",
+        "result": "artifacts/latest/chaos-results.json",
+        "log": "artifacts/latest/chaos_resilience.log"
       }
     },
     "tool_logs": {
@@ -324,6 +360,7 @@ cat > "$ART_DIR/results.json" <<JSON
       "dependency_scan": "artifacts/latest/dependency_scan.log",
       "performance_smoke": "artifacts/latest/performance_smoke.log",
       "resilience": "artifacts/latest/resilience.log",
+      "chaos_resilience": "artifacts/latest/chaos_resilience.log",
       "newman_smoke": "artifacts/latest/newman_smoke.log",
       "playwright_smoke": "artifacts/latest/playwright_smoke.log"
     },
@@ -331,7 +368,8 @@ cat > "$ART_DIR/results.json" <<JSON
       "semgrep_json": "artifacts/latest/semgrep.json",
       "trivy_json": "artifacts/latest/trivy.json",
       "k6_summary_json": "artifacts/latest/k6-summary.json",
-      "newman_json": "artifacts/latest/newman.json"
+      "newman_json": "artifacts/latest/newman.json",
+      "chaos_results_json": "artifacts/latest/chaos-results.json"
     }
   }
 }

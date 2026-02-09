@@ -13,6 +13,7 @@ CONTROL_TO_TEST = {
     "perf_smoke": "performance_smoke",
     "contract": "contract",
     "resilience": "resilience",
+    "chaos_resilience": "chaos_resilience",
 }
 
 
@@ -116,6 +117,8 @@ def main():
 
     tier_policy = load_json(Path(args.tier_policy_dir) / f"{tier}.json")
     required_controls = tier_policy.get("mandatory_controls", [])
+    if tier in {"high", "critical"} and "chaos_resilience" not in required_controls:
+        required_controls.append("chaos_resilience")
 
     failures = []
     control_matrix = []

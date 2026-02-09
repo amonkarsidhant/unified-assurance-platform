@@ -10,6 +10,10 @@
     "sast",
     "dependency-scan"
   ],
+  "chaosRequiredScenarios": [
+    "network_latency",
+    "dependency_timeout"
+  ],
   "promotionCriteria": {
     "stage": {
       "minPassRate": 0.95,

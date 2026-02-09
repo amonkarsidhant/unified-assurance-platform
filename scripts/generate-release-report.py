@@ -60,6 +60,18 @@ def render(data, promotion, flaky=None):
     for control in risk_context.get("required_controls", []):
         lines.append(f"- {control}: **{control_status.get(control, 'missing')}**")
 
+    chaos = data.get("chaos", {})
+    lines += ["", "## Chaos Resilience", ""]
+    lines.append(f"- Required: **{chaos.get('required', 'n/a')}**")
+    lines.append(f"- Status: **{data.get('tests', {}).get('chaos_resilience', chaos.get('status', 'n/a'))}**")
+    lines.append(f"- Required scenarios: **{', '.join(chaos.get('required_scenarios', [])) or 'n/a'}**")
+    lines.append(f"- Executed scenarios: **{', '.join(chaos.get('executed_scenarios', [])) or 'none'}**")
+    lines.append(f"- Skipped scenarios: **{', '.join(chaos.get('skipped_scenarios', [])) or 'none'}**")
+    if chaos.get("reasons"):
+        lines.append("- Reasons:")
+        for reason in chaos.get("reasons", []):
+            lines.append(f"  - {reason}")
+
     lines += ["", "## Gate Evaluation", "", "### Mandatory Gates"]
     for k in MANDATORY:
         status = "PASS" if k not in mandatory_failed else "FAIL"

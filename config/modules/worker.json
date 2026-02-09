@@ -10,6 +10,11 @@
     "sast",
     "dependency-scan"
   ],
+  "chaosRequiredScenarios": [
+    "process_kill",
+    "queue_backlog",
+    "resource_stress"
+  ],
   "promotionCriteria": {
     "stage": {
       "minPassRate": 0.95,

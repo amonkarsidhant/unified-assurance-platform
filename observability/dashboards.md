@@ -19,3 +19,8 @@
 - High/critical vulnerabilities over time
 - Mean time to remediate by severity
 - Secret scan violations
+
+## 5) Chaos Governance
+- Chaos required / passed / skipped state
+- Chaos executed scenarios count
+- Chaos control in tier-required control matrix

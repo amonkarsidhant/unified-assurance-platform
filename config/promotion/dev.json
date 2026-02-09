@@ -9,7 +9,8 @@
     "integration": ["pass", "skipped"],
     "contract": ["pass", "skipped"],
     "security_scan": ["pass", "skipped"],
-    "dependency_scan": ["pass", "skipped"]
+    "dependency_scan": ["pass", "skipped"],
+    "chaos_resilience": ["pass", "skipped"]
   },
   "signature_required_tiers": ["high", "critical"],
   "signature_fail_closed": true

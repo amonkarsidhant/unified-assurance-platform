@@ -11,6 +11,11 @@
     "dependency-scan",
     "dast-smoke"
   ],
+  "chaosRequiredScenarios": [
+    "network_latency",
+    "dependency_timeout",
+    "queue_backlog"
+  ],
   "promotionCriteria": {
     "stage": {
       "minPassRate": 0.97,

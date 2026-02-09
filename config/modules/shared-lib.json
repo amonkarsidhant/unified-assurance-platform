@@ -9,6 +9,10 @@
     "sast",
     "dependency-scan"
   ],
+  "chaosRequiredScenarios": [
+    "dependency_timeout",
+    "resource_stress"
+  ],
   "promotionCriteria": {
     "stage": {
       "minPassRate": 0.97,

@@ -115,6 +115,28 @@
       "targets": [
         { "expr": "assurance_pr_summary_severity_total", "legendFormat": "{{severity}}", "refId": "A" }
       ]
+    },
+    {
+      "id": 9,
+      "title": "Chaos Control State",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_chaos_required", "legendFormat": "required", "refId": "A" },
+        { "expr": "assurance_chaos_passed", "legendFormat": "passed", "refId": "B" },
+        { "expr": "assurance_chaos_skipped", "legendFormat": "skipped", "refId": "C" }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Chaos Executed Scenarios",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_chaos_executed_total", "refId": "A" }
+      ]
     }
   ]
 }
