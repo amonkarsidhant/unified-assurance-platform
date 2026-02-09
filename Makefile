@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -72,12 +72,26 @@ demo-broken:
 
 demo-site-up:
 	@if [ -f .demo-site.pid ] && kill -0 $$(cat .demo-site.pid) 2>/dev/null; then \
-		echo "Demo site already running at http://127.0.0.1:8790/demo/site/"; \
+		PORT=$$(cat .demo-site.port 2>/dev/null || echo 8790); \
+		echo "Demo site already running at http://127.0.0.1:$$PORT/demo/site/"; \
 	else \
-		nohup python3 -m http.server 8790 > /tmp/uap-demo-site.log 2>&1 & echo $$! > .demo-site.pid; \
+		PORT=""; \
+		for p in 8790 8791 8792; do \
+			if ! python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1', $$p)); s.close()" 2>/dev/null; then \
+				continue; \
+			fi; \
+			PORT=$$p; \
+			break; \
+		done; \
+		if [ -z "$$PORT" ]; then \
+			echo "No free demo-site port found (tried 8790-8792)."; \
+			exit 1; \
+		fi; \
+		nohup python3 -m http.server $$PORT > /tmp/uap-demo-site.log 2>&1 & echo $$! > .demo-site.pid; \
+		echo $$PORT > .demo-site.port; \
 		sleep 1; \
 		if kill -0 $$(cat .demo-site.pid) 2>/dev/null; then \
-			echo "Demo site started: http://127.0.0.1:8790/demo/site/"; \
+			echo "Demo site started: http://127.0.0.1:$$PORT/demo/site/"; \
 		else \
 			echo "Failed to start demo site. Check /tmp/uap-demo-site.log"; \
 			exit 1; \
@@ -86,11 +100,29 @@ demo-site-up:
 
 demo-site-down:
 	@if [ -f .demo-site.pid ] && kill -0 $$(cat .demo-site.pid) 2>/dev/null; then \
-		kill $$(cat .demo-site.pid); rm -f .demo-site.pid; \
+		kill $$(cat .demo-site.pid); rm -f .demo-site.pid .demo-site.port; \
 		echo "Demo site stopped."; \
 	else \
+		rm -f .demo-site.pid .demo-site.port; \
 		echo "Demo site is not running."; \
 	fi
+
+demo-e2e:
+	@$(MAKE) dev-stack-up
+	@$(MAKE) dev-stack-status
+	@./scripts/dev-stack-smoke.sh
+	@$(MAKE) demo-up
+	@$(MAKE) demo-site-up
+	@$(MAKE) tooling-check
+	@$(MAKE) run-assurance-real
+	@$(MAKE) report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/demo-e2e-report.md
+	@PORT=$$(cat .demo-site.port 2>/dev/null || echo 8790); \
+		echo "\n✅ Demo E2E complete"; \
+		echo "- Grafana: http://localhost:3000 (admin/admin)"; \
+		echo "- Prometheus: http://localhost:9090"; \
+		echo "- Demo UI: http://127.0.0.1:$$PORT/demo/site/"; \
+		echo "- Final report: artifacts/latest/demo-e2e-report.md"; \
+		echo "- To stop all: make demo-down && make demo-site-down && make dev-stack-down";
 
 dev-stack-up:
 	@docker compose -f infra/local/docker-compose.yml up -d

@@ -50,6 +50,13 @@ make run-assurance-real
 make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/real-tools-report.md
 ```
 
+## One-command live demo (golden path)
+```bash
+make demo-e2e
+```
+This starts observability + demo app + demo UI, runs real assurance, and generates:
+- `artifacts/latest/demo-e2e-report.md`
+
 ## Start Here (Non-QE)
 If you are new to Quality Engineering, read these first:
 - `docs/qe-primer.md` — plain-English QE basics, test types, and anti-patterns
