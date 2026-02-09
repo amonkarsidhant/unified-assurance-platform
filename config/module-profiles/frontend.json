@@ -1,0 +1,17 @@
+{
+  "module_type": "frontend",
+  "owners": ["frontend-owner", "platform-owner"],
+  "target_runtime_minutes": 10,
+  "default_risk_tier": "medium",
+  "minimal_checks": [
+    {"name": "validate", "command": "make validate"},
+    {"name": "tooling-check", "command": "make tooling-check"}
+  ],
+  "escalation": {
+    "risk_tiers": ["high", "critical"],
+    "changed_file_patterns": ["tests/ui/*", "playwright.config.ts", "scripts/*"],
+    "checks": [
+      {"name": "assurance-run", "command": "MODULE_TYPE=frontend make run-assurance"}
+    ]
+  }
+}

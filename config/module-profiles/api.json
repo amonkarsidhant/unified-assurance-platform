@@ -1,0 +1,18 @@
+{
+  "module_type": "api",
+  "owners": ["api-owner", "security-owner"],
+  "target_runtime_minutes": 12,
+  "default_risk_tier": "high",
+  "minimal_checks": [
+    {"name": "validate", "command": "make validate"},
+    {"name": "tooling-check", "command": "make tooling-check"}
+  ],
+  "escalation": {
+    "risk_tiers": ["high", "critical"],
+    "changed_file_patterns": ["tests/security/*", "policies/*", "scripts/*"],
+    "checks": [
+      {"name": "assurance-run", "command": "MODULE_TYPE=api make run-assurance"},
+      {"name": "promotion-check", "command": "make promotion-check ENV=stage"}
+    ]
+  }
+}

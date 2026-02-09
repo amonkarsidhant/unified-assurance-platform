@@ -76,6 +76,24 @@ make run-assurance
 make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
 ```
 
+## ⚡ Developer quick path (Phase 3 DX)
+
+```bash
+make preflight MODULE=payments-api TYPE=api
+make explain-last-fail
+make suggest-next-steps
+make request-exception CONTROL=dast_zap REASON='Temporary false positive' EXPIRY_DAYS=7
+```
+
+Artifacts generated in `artifacts/latest/`:
+- `preflight-summary.json` + `.md`
+- `failure-explanations.json` + `.md`
+- `next-steps.md`
+
+Exception drafts are generated in `config/exceptions/requests/`.
+
+See `docs/phase3-dx-pack.md` for the full workflow.
+
 ---
 
 ## 🎬 5-minute quick demo (GIF + walkthrough)

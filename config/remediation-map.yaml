@@ -1,0 +1,55 @@
+remediations:
+  lint:
+    severity: medium
+    owner_role: developer
+    fix_hint: "Run lint locally, fix style/type issues, then re-run preflight."
+    playbook: "docs/playbooks/lint.md"
+    sla_target: "2d"
+  unit:
+    severity: high
+    owner_role: developer
+    fix_hint: "Address failing unit assertions and update fixtures/mocks."
+    playbook: "docs/playbooks/unit-tests.md"
+    sla_target: "1d"
+  integration:
+    severity: high
+    owner_role: developer
+    fix_hint: "Stabilize integration dependencies and contracts."
+    playbook: "docs/playbooks/integration.md"
+    sla_target: "1d"
+  contract:
+    severity: high
+    owner_role: api-owner
+    fix_hint: "Fix schema/compatibility drift before promotion."
+    playbook: "docs/playbooks/contract.md"
+    sla_target: "1d"
+  security_scan:
+    severity: high
+    owner_role: security-owner
+    fix_hint: "Review semgrep findings and remediate confirmed issues."
+    playbook: "docs/playbooks/sast.md"
+    sla_target: "1d"
+  dependency_scan:
+    severity: high
+    owner_role: security-owner
+    fix_hint: "Patch/upgrade vulnerable dependencies or document compensating controls."
+    playbook: "docs/playbooks/sca.md"
+    sla_target: "2d"
+  dast_zap:
+    severity: high
+    owner_role: security-owner
+    fix_hint: "Reproduce ZAP alert and apply server-side/input hardening."
+    playbook: "docs/playbooks/dast.md"
+    sla_target: "1d"
+  chaos_resilience:
+    severity: medium
+    owner_role: sre
+    fix_hint: "Run required chaos scenarios and improve fallback behavior."
+    playbook: "docs/playbooks/chaos.md"
+    sla_target: "3d"
+  promotion_gate:
+    severity: critical
+    owner_role: release-manager
+    fix_hint: "Resolve failed mandatory controls or obtain approved exception."
+    playbook: "docs/playbooks/promotion.md"
+    sla_target: "same-day"

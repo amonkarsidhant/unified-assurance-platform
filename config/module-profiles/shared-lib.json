@@ -1,0 +1,17 @@
+{
+  "module_type": "shared-lib",
+  "owners": ["shared-lib-owner", "platform-owner"],
+  "target_runtime_minutes": 8,
+  "default_risk_tier": "medium",
+  "minimal_checks": [
+    {"name": "validate", "command": "make validate"},
+    {"name": "tooling-check", "command": "make tooling-check"}
+  ],
+  "escalation": {
+    "risk_tiers": ["high", "critical"],
+    "changed_file_patterns": ["config/*", "scripts/*", "policies/*"],
+    "checks": [
+      {"name": "assurance-run", "command": "MODULE_TYPE=shared-lib make run-assurance"}
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -34,6 +34,11 @@ validate:
 	@test -x scripts/evaluate-flaky-policy.py
 	@test -x scripts/render-pr-comment.py
 	@test -x scripts/run-chaos-checks.sh
+	@test -x scripts/preflight.py
+	@test -x scripts/explain-failures.py
+	@test -x scripts/suggest-next-steps.py
+	@test -x scripts/request-exception.py
+	@test -f config/remediation-map.yaml
 	@test -f docs/compliance/control-traceability.md
 	@test -f docs/chaos/experiment-contract.md
 	@test -f docs/chaos/scenario-catalog.md
@@ -137,6 +142,29 @@ module-golden-path:
 		exit 1; \
 	fi
 	@./scripts/generate-module-golden-path.py --module "$(MODULE)" --type "$(TYPE)"
+
+preflight:
+	@if [ -z "$(MODULE)" ] || [ -z "$(TYPE)" ]; then \
+		echo "Usage: make preflight MODULE=<module-name> TYPE=<frontend|api|worker|shared-lib>"; \
+		exit 1; \
+	fi
+	@./scripts/preflight.py --module "$(MODULE)" --type "$(TYPE)"
+
+explain-last-fail:
+	@./scripts/explain-failures.py
+
+suggest-next-steps:
+	@./scripts/suggest-next-steps.py
+
+CONTROL ?=
+REASON ?=
+EXPIRY_DAYS ?= 7
+request-exception:
+	@if [ -z "$(CONTROL)" ] || [ -z "$(REASON)" ]; then \
+		echo "Usage: make request-exception CONTROL=<control> REASON='<reason>' [EXPIRY_DAYS=7]"; \
+		exit 1; \
+	fi
+	@./scripts/request-exception.py --control "$(CONTROL)" --reason "$(REASON)" --expiry-days "$(EXPIRY_DAYS)"
 
 demo-up:
 	@if command -v docker >/dev/null 2>&1; then \

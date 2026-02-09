@@ -123,6 +123,7 @@ def main() -> None:
     parser.add_argument("--results-v2", default="artifacts/latest/results.v2.json", help="Path to results.v2 JSON")
     parser.add_argument("--exceptions-audit", default="artifacts/latest/exceptions-audit.json", help="Path to exceptions audit JSON")
     parser.add_argument("--pr-comment", default="artifacts/latest/pr-comment.md", help="Path to rendered PR comment markdown")
+    parser.add_argument("--preflight", default="artifacts/latest/preflight-summary.json", help="Path to preflight summary JSON")
     args = parser.parse_args()
 
     results_path = Path(args.input)
@@ -134,6 +135,7 @@ def main() -> None:
     flaky = read_json(Path(args.flaky))
     results_v2 = read_json(Path(args.results_v2))
     exceptions_audit = read_json(Path(args.exceptions_audit))
+    preflight = read_json(Path(args.preflight))
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -206,6 +208,10 @@ def main() -> None:
         "# TYPE assurance_run_age_seconds gauge",
         f'assurance_run_age_seconds {max(0, now - ts)}',
     ]
+
+    preflight_status = (preflight.get("overall_status") or "").lower()
+    add_gauge(lines, "assurance_preflight_passed", "Latest preflight outcome (1=pass,0=fail).", 1 if preflight_status == "pass" else 0)
+    add_gauge(lines, "assurance_preflight_escalated", "Latest preflight escalation signal (1=escalated).", 1 if preflight.get("escalated") else 0)
 
     # Governance / promotion metrics
     promotion_allowed = 1 if promotion.get("passed") is True else 0

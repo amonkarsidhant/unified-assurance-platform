@@ -114,6 +114,14 @@ def render(data, promotion, flaky=None):
         lines.append("- Flaky policy result not provided.")
 
     lines += ["", "## Compliance Traceability", "", "- Mapping file: `docs/compliance/control-traceability.md`", "- Ownership file: `config/control-ownership.json`"]
+    lines += [
+        "",
+        "## Developer Experience Artifacts",
+        "",
+        "- Preflight summary: `artifacts/latest/preflight-summary.md`",
+        "- Failure explanations: `artifacts/latest/failure-explanations.md`",
+        "- Suggested next steps: `artifacts/latest/next-steps.md`",
+    ]
     return "\n".join(lines) + "\n"
 
 
