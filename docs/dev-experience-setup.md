@@ -33,7 +33,10 @@ make dev-stack-status
 If all checks pass, run assurance workflow:
 
 ```bash
+make tooling-check
 make run-assurance
+make run-assurance-real
+make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/real-tools-report.md
 ```
 
 When done:
@@ -82,3 +85,10 @@ make dev-stack-down
   - Preserve `artifacts/latest/` and `evidence/` as pipeline artifacts
 
 The same make targets can be used both locally and in CI for consistent behavior.
+
+## Real mode caveats
+
+- Real mode (`make run-assurance-real`) prefers installed OSS tools and writes tool-specific evidence under `artifacts/latest/`.
+- Missing optional assets (Postman collection / Playwright smoke spec) are marked as `skipped` with explicit reasons.
+- Trivy is configured non-fatal by default (`TRIVY_EXIT_CODE=0`) so local runs remain practical.
+- Typical laptop runtime target is a few minutes; keep k6 smoke small (`K6_VUS`, `K6_DURATION`).

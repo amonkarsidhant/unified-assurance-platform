@@ -44,8 +44,10 @@ Detailed architecture: `docs/architecture.md` and `docs/reference-architecture/d
 ```bash
 make bootstrap
 make validate
+make tooling-check
 make run-assurance
-make report RESULTS=examples/results/sample-results.json OUT=examples/results/sample-report.md
+make run-assurance-real
+make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/real-tools-report.md
 ```
 
 ## Start Here (Non-QE)
@@ -60,6 +62,23 @@ If you are new to Quality Engineering, read these first:
 Artifacts created in:
 - `artifacts/latest/` (run outputs)
 - `evidence/<timestamp>/` (auditable bundle)
+
+## Real tool mode (open-source scanners + smoke tests)
+
+`make run-assurance` stays pragmatic (simulates when tools are missing).
+
+`make run-assurance-real` forces real-tool mode and marks unavailable tools as `skipped` with reasons in logs:
+- k6 (`tests/perf/smoke.js`)
+- semgrep (`tests/security/semgrep-rules.yml`)
+- trivy (`trivy fs` over repo)
+- optional newman (if collection exists)
+- optional playwright smoke (if test exists)
+
+Useful env overrides:
+- `TRIVY_SEVERITY=CRITICAL,HIGH`
+- `TRIVY_EXIT_CODE=0` (non-fatal default)
+- `PERF_TARGET_URL=https://test.k6.io`
+- `K6_VUS=2 K6_DURATION=5s`
 
 ## New Golden Path: Enterprise Reference Architecture
 For teams deploying transaction platforms with LB + API + VM + DB + queue/cache.

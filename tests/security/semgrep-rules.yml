@@ -1,0 +1,14 @@
+rules:
+  - id: detect-eval-js
+    patterns:
+      - pattern: eval($X)
+    message: Avoid eval() where possible.
+    severity: WARNING
+    languages: [javascript, typescript]
+
+  - id: detect-hardcoded-password
+    patterns:
+      - pattern-regex: '(?i)password\s*[:=]\s*["\''][^"\'']+["\'']'
+    message: Potential hardcoded password string.
+    severity: ERROR
+    languages: [javascript, typescript, python, go, java, yaml]

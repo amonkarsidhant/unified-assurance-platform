@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate run-assurance report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -24,8 +24,14 @@ validate:
 	@test -f templates/self-reflection-template.md
 	@echo "Validation passed."
 
+tooling-check:
+	@./scripts/tooling-check.sh
+
 run-assurance:
 	@./scripts/run-assurance.sh
+
+run-assurance-real:
+	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ./scripts/run-assurance.sh
 
 RESULTS ?= artifacts/latest/results.json
 OUT ?= artifacts/latest/release-report.md
