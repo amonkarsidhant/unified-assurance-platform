@@ -1,0 +1,16 @@
+{
+  "owners": {
+    "sast": {"team": "AppSec", "approval_role": "security-director"},
+    "sca": {"team": "AppSec", "approval_role": "security-director"},
+    "dast": {"team": "Security Engineering", "approval_role": "security-director"},
+    "contract": {"team": "API Platform", "approval_role": "platform-lead"},
+    "perf_smoke": {"team": "Performance Engineering", "approval_role": "platform-lead"},
+    "resilience": {"team": "SRE", "approval_role": "sre-manager"}
+  },
+  "modules": {
+    "api": "API Platform",
+    "frontend": "Web Platform",
+    "worker": "Data Platform",
+    "shared-lib": "Developer Experience"
+  }
+}

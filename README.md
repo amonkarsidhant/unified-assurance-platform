@@ -188,7 +188,7 @@ Core references:
 
 ---
 
-## 🏢 Enterprise readiness (Phase 1)
+## 🏢 Enterprise readiness (Phase 1 + Phase 2)
 
 Included in repo:
 - `.github/workflows/pr.yml`
@@ -196,14 +196,28 @@ Included in repo:
 - `.github/workflows/post-deploy.yml`
 - `.github/workflows/reusable-assurance.yml`
 - `config/promotion/{dev,stage,prod}.json`
+- `policies/tiers/{low,medium,high,critical}.json`
+- `config/exceptions/template.yaml`
+- `config/control-ownership.json`
+- `docs/compliance/control-traceability.md`
 - `.github/CODEOWNERS`
 - `scripts/evaluate-promotion.py`
+- `scripts/validate-exceptions.py`
 - `scripts/create-evidence-bundle.py`
 - `scripts/sign-evidence-bundle.sh`
 
 Setup docs:
 - `docs/phase1-enterprise-cicd.md`
+- `docs/phase2-enterprise-assurance-controls.md`
 - `docs/branch-protection-guidance.md`
+
+Phase 2 key commands:
+```bash
+make run-assurance-real
+make validate-exceptions ENV=stage
+make promotion-check ENV=stage
+make report
+```
 
 ---
 

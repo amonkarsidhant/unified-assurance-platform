@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle validate-exceptions promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -22,6 +22,13 @@ validate:
 	@test -f docs/enterprise-hardening-backlog.md
 	@test -f docs/contribution-standard.md
 	@test -f templates/self-reflection-template.md
+	@test -x scripts/validate-exceptions.py
+	@test -f policies/tiers/low.json
+	@test -f policies/tiers/medium.json
+	@test -f policies/tiers/high.json
+	@test -f policies/tiers/critical.json
+	@test -f config/control-ownership.json
+	@test -f docs/compliance/control-traceability.md
 	@echo "Validation passed."
 
 tooling-check:
@@ -60,6 +67,7 @@ collect-evidence:
 EVIDENCE_SOURCE ?= artifacts/latest
 EVIDENCE_OUT ?= evidence/bundles
 ENV ?= dev
+EXCEPTIONS_DIR ?= config/exceptions
 
 evidence-bundle:
 	@./scripts/create-evidence-bundle.py --source $(EVIDENCE_SOURCE) --out-dir $(EVIDENCE_OUT)
@@ -69,8 +77,14 @@ sign-bundle:
 		if [ -z "$$latest_bundle" ]; then echo "No bundle found in $(EVIDENCE_OUT)"; exit 1; fi; \
 		./scripts/sign-evidence-bundle.sh "$$latest_bundle"
 
+validate-exceptions:
+	@tier=$$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("risk_context",{}).get("risk_tier","low"))'); \
+	service=$$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("service","sample-service"))'); \
+	./scripts/validate-exceptions.py --exceptions-dir $(EXCEPTIONS_DIR) --service $$service --environment $(ENV) --tier $$tier --output artifacts/latest/exceptions-audit.json
+
 promotion-check:
-	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest
+	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest --exceptions-dir $(EXCEPTIONS_DIR)
+	@echo "Promotion decision: artifacts/latest/promotion-decision.json"
 
 MODULE ?=
 TYPE ?=

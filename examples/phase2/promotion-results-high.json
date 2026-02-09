@@ -1,0 +1,33 @@
+{
+  "service": "sample-service",
+  "timestamp": "2026-02-09T21:00:00Z",
+  "risk_context": {
+    "risk_score": 80,
+    "risk_tier": "high",
+    "required_controls": ["sast", "sca", "dast", "contract", "perf_smoke"],
+    "control_status": {
+      "sast": "pass",
+      "sca": "pass",
+      "dast": "fail",
+      "contract": "pass",
+      "perf_smoke": "pass"
+    },
+    "policy_validation_passed": false,
+    "missing_required_controls": ["dast"]
+  },
+  "metrics": {
+    "test_pass_rate": 0.96,
+    "critical_test_failures": 0
+  },
+  "tests": {
+    "lint": "pass",
+    "unit": "pass",
+    "integration": "pass",
+    "contract": "pass",
+    "dependency_scan": "pass",
+    "security_scan": "pass",
+    "dast_zap": "fail",
+    "performance_smoke": "pass",
+    "resilience": "skipped"
+  }
+}

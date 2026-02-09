@@ -1,0 +1,7 @@
+{
+  "tier": "medium",
+  "description": "Medium-risk changes require baseline security and contract confidence.",
+  "mandatory_controls": ["sast", "sca", "contract"],
+  "allowed_statuses": ["pass"],
+  "exception_allowed": true
+}

@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ART_DIR="$ROOT_DIR/artifacts/latest"
-RISK_MODEL="$ROOT_DIR/policies/risk-model.yaml"
 mkdir -p "$ART_DIR"
 
 MODE="${ASSURANCE_MODE:-pragmatic}" # pragmatic|real
@@ -15,7 +14,7 @@ fi
 ONLY_ZAP_SMOKE="${ONLY_ZAP_SMOKE:-0}"
 
 TRIVY_SEVERITY="${TRIVY_SEVERITY:-CRITICAL,HIGH}"
-TRIVY_EXIT_CODE="${TRIVY_EXIT_CODE:-0}" # keep non-fatal by default
+TRIVY_EXIT_CODE="${TRIVY_EXIT_CODE:-0}"
 K6_VUS="${K6_VUS:-2}"
 K6_DURATION="${K6_DURATION:-5s}"
 PERF_TARGET_URL="${PERF_TARGET_URL:-https://test.k6.io}"
@@ -66,38 +65,6 @@ run_npm_or_fallback() {
   fi
 }
 
-required_controls_for_tier() {
-  local tier="$1"
-  awk -v target="$tier" '
-    $0 ~ "^  "target":$" {in_tier=1; next}
-    in_tier && $0 ~ "^  [a-z_]+:$" {in_tier=0}
-    in_tier && $0 ~ /requiredControls:/ {
-      line=$0
-      gsub(/.*\[/, "", line)
-      gsub(/\].*/, "", line)
-      gsub(/, /, "\n", line)
-      print line
-      exit
-    }
-  ' "$RISK_MODEL"
-}
-
-control_to_status() {
-  local control="$1"
-  case "$control" in
-    unit_tests) cat "$ART_DIR/unit.status" ;;
-    lint) cat "$ART_DIR/lint.status" ;;
-    integration_tests) cat "$ART_DIR/integration.status" ;;
-    contract_tests) cat "$ART_DIR/contract.status" ;;
-    dependency_scan) cat "$ART_DIR/dependency_scan.status" ;;
-    security_scan) cat "$ART_DIR/security_scan.status" ;;
-    dast|dast_scan) cat "$ART_DIR/dast_zap.status" ;;
-    performance_smoke) cat "$ART_DIR/performance_smoke.status" ;;
-    authz_negative_tests) echo "skipped" ;;
-    *) echo "unknown" ;;
-  esac
-}
-
 run_zap_baseline() {
   if [ "$MODE" != "real" ]; then
     record_skipped dast_zap "pragmatic mode: ZAP baseline runs only in real mode"
@@ -121,6 +88,19 @@ run_zap_baseline() {
   return 0
 }
 
+control_to_status() {
+  local control="$1"
+  case "$control" in
+    sast) cat "$ART_DIR/security_scan.status" ;;
+    sca) cat "$ART_DIR/dependency_scan.status" ;;
+    dast) cat "$ART_DIR/dast_zap.status" ;;
+    perf_smoke) cat "$ART_DIR/performance_smoke.status" ;;
+    contract) cat "$ART_DIR/contract.status" ;;
+    resilience) cat "$ART_DIR/resilience.status" ;;
+    *) echo "unknown" ;;
+  esac
+}
+
 FAILURES=0
 
 if [ "$ONLY_ZAP_SMOKE" = "1" ]; then
@@ -131,17 +111,16 @@ if [ "$ONLY_ZAP_SMOKE" = "1" ]; then
   record_skipped security_scan "zap-smoke mode: not executed"
   record_skipped dependency_scan "zap-smoke mode: not executed"
   record_skipped performance_smoke "zap-smoke mode: not executed"
+  record_skipped resilience "zap-smoke mode: not executed"
   record_skipped newman_smoke "zap-smoke mode: not executed"
   record_skipped playwright_smoke "zap-smoke mode: not executed"
   run_zap_baseline || FAILURES=$((FAILURES+1))
 else
-  # 1) Core pragmatic checks
   run_npm_or_fallback lint "npm run lint" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
   run_npm_or_fallback unit "npm test" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
   run_npm_or_fallback integration "npm run test:integration" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
   run_npm_or_fallback contract "npm run test:contract" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
 
-  # 2) Real tool: semgrep (security scan)
   if command -v semgrep >/dev/null 2>&1; then
     if [ -f "$SEMGREP_CONFIG" ]; then
       run_cmd_step security_scan bash -lc "cd '$ROOT_DIR' && semgrep --config '$SEMGREP_CONFIG' --error --json --output '$ART_DIR/semgrep.json' ." || FAILURES=$((FAILURES+1))
@@ -156,10 +135,8 @@ else
     fi
   fi
 
-  # 3) Real tool: OWASP ZAP baseline (DAST)
   run_zap_baseline || FAILURES=$((FAILURES+1))
 
-  # 4) Real tool: trivy fs (dependency scan)
   if command -v trivy >/dev/null 2>&1; then
     run_cmd_step dependency_scan bash -lc "cd '$ROOT_DIR' && trivy fs --quiet --severity '$TRIVY_SEVERITY' --exit-code '$TRIVY_EXIT_CODE' --format json --output '$ART_DIR/trivy.json' ." || FAILURES=$((FAILURES+1))
   else
@@ -170,7 +147,6 @@ else
     fi
   fi
 
-  # 5) Real tool: k6 performance smoke
   if command -v k6 >/dev/null 2>&1 && [ -f "$ROOT_DIR/tests/perf/smoke.js" ]; then
     run_cmd_step performance_smoke bash -lc "cd '$ROOT_DIR' && PERF_TARGET_URL='$PERF_TARGET_URL' K6_VUS='$K6_VUS' K6_DURATION='$K6_DURATION' k6 run tests/perf/smoke.js --summary-export '$ART_DIR/k6-summary.json'" || FAILURES=$((FAILURES+1))
   else
@@ -185,7 +161,16 @@ else
     fi
   fi
 
-  # Optional: Newman
+  if [ -f "$ROOT_DIR/tests/resilience/smoke.sh" ]; then
+    run_cmd_step resilience bash -lc "cd '$ROOT_DIR' && bash tests/resilience/smoke.sh" || FAILURES=$((FAILURES+1))
+  else
+    if [ "$MODE" = "real" ]; then
+      record_skipped resilience "real mode: resilience smoke script not found"
+    else
+      run_cmd_step resilience bash -lc "echo 'simulated resilience check (script unavailable)'"
+    fi
+  fi
+
   NEWMAN_COLLECTION=""
   for candidate in "$ROOT_DIR/tests/api/postman.collection.json" "$ROOT_DIR/tests/postman/collection.json" "$ROOT_DIR/postman/collection.json"; do
     if [ -f "$candidate" ]; then
@@ -203,7 +188,6 @@ else
     fi
   fi
 
-  # Optional: Playwright smoke
   PLAYWRIGHT_TEST=""
   for candidate in "$ROOT_DIR/tests/e2e/smoke.spec.ts" "$ROOT_DIR/tests/e2e/smoke.spec.js"; do
     if [ -f "$candidate" ]; then
@@ -222,11 +206,10 @@ else
   fi
 fi
 
-# Backward-compatible aliases for legacy reporting
 cp "$ART_DIR/security_scan.status" "$ART_DIR/security.status"
 cp "$ART_DIR/performance_smoke.status" "$ART_DIR/performance.status"
 
-TOTAL=8
+TOTAL=9
 PASSED=$(grep -h '^pass$' \
   "$ART_DIR/lint.status" \
   "$ART_DIR/unit.status" \
@@ -235,14 +218,17 @@ PASSED=$(grep -h '^pass$' \
   "$ART_DIR/dependency_scan.status" \
   "$ART_DIR/security_scan.status" \
   "$ART_DIR/performance_smoke.status" \
-  "$ART_DIR/dast_zap.status" | wc -l | tr -d ' ')
+  "$ART_DIR/dast_zap.status" \
+  "$ART_DIR/resilience.status" | wc -l | tr -d ' ')
 PASS_RATE=$(python3 - <<PY
 print(round($PASSED/$TOTAL, 4))
 PY
 )
 
 RISK_SCORE="${RISK_SCORE:-45}"
-if [ "$RISK_SCORE" -ge 70 ]; then
+if [ "$RISK_SCORE" -ge 90 ]; then
+  RISK_TIER="critical"
+elif [ "$RISK_SCORE" -ge 70 ]; then
   RISK_TIER="high"
 elif [ "$RISK_SCORE" -ge 30 ]; then
   RISK_TIER="medium"
@@ -250,15 +236,23 @@ else
   RISK_TIER="low"
 fi
 
-REQUIRED_CONTROLS=()
+REQUIRED_CONTROLS=$(python3 - <<PY
+import json
+from pathlib import Path
+p = Path('$ROOT_DIR/policies/tiers/$RISK_TIER.json')
+print('\n'.join(json.loads(p.read_text()).get('mandatory_controls', [])))
+PY
+)
+
+declare -a REQUIRED=()
 while IFS= read -r control; do
-  [ -n "$control" ] && REQUIRED_CONTROLS+=("$control")
-done < <(required_controls_for_tier "$RISK_TIER")
+  [ -n "$control" ] && REQUIRED+=("$control")
+done <<< "$REQUIRED_CONTROLS"
 
 CONTROL_STATUS_JSON=""
 MISSING_CONTROLS=""
 POLICY_VALIDATION_PASSED=true
-for control in "${REQUIRED_CONTROLS[@]}"; do
+for control in "${REQUIRED[@]}"; do
   status="$(control_to_status "$control")"
   write_status "$control" "$status"
   CONTROL_STATUS_JSON+=$'\n      '"\"$control\": \"$status\"," 
@@ -281,7 +275,7 @@ cat > "$ART_DIR/results.json" <<JSON
   "risk_context": {
     "risk_score": $RISK_SCORE,
     "risk_tier": "$RISK_TIER",
-    "required_controls": [$(printf '"%s",' "${REQUIRED_CONTROLS[@]}" | sed 's/,$//')],
+    "required_controls": [$(printf '"%s",' "${REQUIRED[@]}" | sed 's/,$//')],
     "control_status": {${CONTROL_STATUS_JSON}
     },
     "policy_validation_passed": $POLICY_VALIDATION_PASSED,
@@ -300,6 +294,7 @@ cat > "$ART_DIR/results.json" <<JSON
     "security_scan": "$(cat "$ART_DIR/security_scan.status")",
     "dast_zap": "$(cat "$ART_DIR/dast_zap.status")",
     "performance_smoke": "$(cat "$ART_DIR/performance_smoke.status")",
+    "resilience": "$(cat "$ART_DIR/resilience.status")",
     "newman_smoke": "$(cat "$ART_DIR/newman_smoke.status")",
     "playwright_smoke": "$(cat "$ART_DIR/playwright_smoke.status")"
   },
@@ -322,6 +317,7 @@ cat > "$ART_DIR/results.json" <<JSON
       "dast_zap": "artifacts/latest/dast_zap.log",
       "dependency_scan": "artifacts/latest/dependency_scan.log",
       "performance_smoke": "artifacts/latest/performance_smoke.log",
+      "resilience": "artifacts/latest/resilience.log",
       "newman_smoke": "artifacts/latest/newman_smoke.log",
       "playwright_smoke": "artifacts/latest/playwright_smoke.log"
     },

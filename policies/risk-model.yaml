@@ -7,8 +7,11 @@ riskTiers:
     scoreRange: [30, 69]
     requiredControls: [unit_tests, integration_tests, contract_tests, dependency_scan]
   high:
-    scoreRange: [70, 100]
+    scoreRange: [70, 89]
     requiredControls: [unit_tests, integration_tests, contract_tests, security_scan, performance_smoke, authz_negative_tests]
+  critical:
+    scoreRange: [90, 100]
+    requiredControls: [unit_tests, integration_tests, contract_tests, security_scan, performance_smoke, authz_negative_tests, resilience]
 controlMappings:
   security_scan:
     aliases: [dast, dast_scan, dast_zap]

@@ -1,0 +1,11 @@
+exceptions:
+  - id: "EXC-PHASE2-EXPIRED-001"
+    service: "sample-service"
+    environment: "stage"
+    tier: "high"
+    control: "dast"
+    reason: "Expired risk acceptance sample"
+    approver: "security-director"
+    approved_at: "2026-01-01T10:00:00Z"
+    expires_at: "2026-01-15T10:00:00Z"
+    ticket: "SEC-0000"

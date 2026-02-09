@@ -1,0 +1,7 @@
+{
+  "tier": "critical",
+  "description": "Critical changes require all high controls plus resilience validation.",
+  "mandatory_controls": ["sast", "sca", "dast", "contract", "perf_smoke", "resilience"],
+  "allowed_statuses": ["pass"],
+  "exception_allowed": false
+}

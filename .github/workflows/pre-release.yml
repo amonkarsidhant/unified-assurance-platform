@@ -35,11 +35,19 @@ jobs:
         with:
           name: assurance-real
           path: artifacts/latest
-      - name: Evaluate promotion gate
+      - name: Validate exceptions + evaluate promotion gate
         run: |
+          tier=$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("risk_context",{}).get("risk_tier","low"))')
+          service=$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("service","sample-service"))')
+          python3 scripts/validate-exceptions.py \
+            --exceptions-dir config/exceptions \
+            --service "$service" \
+            --environment "${{ inputs.target-environment || 'stage' }}" \
+            --tier "$tier"
           python3 scripts/evaluate-promotion.py \
             --environment "${{ inputs.target-environment || 'stage' }}" \
-            --results artifacts/latest/results.json
+            --results artifacts/latest/results.json \
+            --exceptions-dir config/exceptions
 
   evidence-bundle:
     name: evidence-bundle-and-sign

@@ -33,17 +33,10 @@ def evaluate(metrics, risk_context):
     return decision, mandatory_failed, soft_failed
 
 
-def render(data):
+def render(data, promotion):
     metrics = data.get("metrics", {})
     risk_context = data.get("risk_context", {})
     decision, mandatory_failed, soft_failed = evaluate(metrics, risk_context)
-
-    if decision == "GO":
-        plain_summary = "Release is ready. Mandatory and soft gates passed for the current risk context."
-    elif decision == "CONDITIONAL":
-        plain_summary = "Release can proceed with caution. Mandatory gates passed, but follow-up is needed on soft signals."
-    else:
-        plain_summary = "Release is not ready. Mandatory quality or risk-policy controls failed."
 
     lines = [
         "# Release Assurance Report",
@@ -52,44 +45,51 @@ def render(data):
         f"- Timestamp: **{data.get('timestamp', 'unknown')}**",
         f"- Recommendation: **{decision}**",
         "",
-        "## Plain-Language Summary (Stakeholders)",
-        "",
-        f"- {plain_summary}",
-        "",
         "## Risk Context",
         "",
         f"- Risk score: **{risk_context.get('risk_score', 'n/a')}**",
         f"- Risk tier: **{risk_context.get('risk_tier', 'n/a')}**",
         f"- Policy validation passed: **{risk_context.get('policy_validation_passed', 'n/a')}**",
+        f"- Required controls by tier: **{', '.join(risk_context.get('required_controls', [])) or 'n/a'}**",
+        "",
+        "## Control Pass/Fail Matrix",
+        "",
     ]
 
-    req_controls = risk_context.get("required_controls", [])
-    if req_controls:
-        lines.append(f"- Required controls: **{', '.join(req_controls)}**")
-    missing = risk_context.get("missing_required_controls", [])
-    lines.append(f"- Missing required controls: **{', '.join(missing) if missing else 'none'}**")
+    control_status = risk_context.get("control_status", {})
+    for control in risk_context.get("required_controls", []):
+        lines.append(f"- {control}: **{control_status.get(control, 'missing')}**")
 
     lines += ["", "## Gate Evaluation", "", "### Mandatory Gates"]
     for k in MANDATORY:
         status = "PASS" if k not in mandatory_failed else "FAIL"
         lines.append(f"- {k}: {metrics.get(k)} ({status})")
 
-    if "risk_policy_required_controls" in mandatory_failed:
-        lines.append("- risk_policy_required_controls: policy validation failed (FAIL)")
-
     lines += ["", "### Soft Gates"]
     for k in SOFT:
         status = "PASS" if k not in soft_failed else "FAIL"
         lines.append(f"- {k}: {metrics.get(k)} ({status})")
 
-    lines += ["", "## Notes"]
-    if decision == "GO":
-        lines.append("- All mandatory and soft gates passed for this risk context.")
-    elif decision == "CONDITIONAL":
-        lines.append("- Mandatory gates passed; soft signals need tracked follow-up.")
+    lines += ["", "## Promotion & Exceptions", ""]
+    if promotion:
+        lines.append(f"- Promotion passed: **{promotion.get('passed')}**")
+        lines.append(f"- Compliance trace summary: **{promotion.get('compliance_trace', 'docs/compliance/control-traceability.md')}**")
+        if promotion.get("exceptions_used"):
+            lines.append("- Exceptions used:")
+            for exc in promotion.get("exceptions_used", []):
+                lines.append(
+                    f"  - {exc.get('id')}: control={exc.get('control')}, approver={exc.get('approver')}, expires={exc.get('expires_at')}"
+                )
+        else:
+            lines.append("- Exceptions used: none")
+        if promotion.get("failures"):
+            lines.append("- Promotion failures:")
+            for f in promotion.get("failures", []):
+                lines.append(f"  - {f}")
     else:
-        lines.append("- Fix mandatory failures before release. Include risk-control remediation.")
+        lines.append("- Promotion decision file not provided.")
 
+    lines += ["", "## Compliance Traceability", "", "- Mapping file: `docs/compliance/control-traceability.md`", "- Ownership file: `config/control-ownership.json`"]
     return "\n".join(lines) + "\n"
 
 
@@ -97,11 +97,16 @@ def main():
     parser = argparse.ArgumentParser(description="Generate markdown release report from JSON results")
     parser.add_argument("--input", required=True, help="Path to input JSON results")
     parser.add_argument("--output", required=True, help="Path to output markdown report")
+    parser.add_argument("--promotion", default="artifacts/latest/promotion-decision.json", help="Optional promotion decision JSON")
     args = parser.parse_args()
 
     data = json.loads(Path(args.input).read_text())
-    report = render(data)
+    promotion = None
+    p = Path(args.promotion)
+    if p.exists():
+        promotion = json.loads(p.read_text())
 
+    report = render(data, promotion)
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(report)

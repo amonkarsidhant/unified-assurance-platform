@@ -1,0 +1,7 @@
+{
+  "tier": "low",
+  "description": "Low-risk changes require baseline static controls.",
+  "mandatory_controls": ["sast", "sca"],
+  "allowed_statuses": ["pass"],
+  "exception_allowed": true
+}

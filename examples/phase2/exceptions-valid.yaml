@@ -1,0 +1,11 @@
+exceptions:
+  - id: "EXC-PHASE2-VALID-001"
+    service: "sample-service"
+    environment: "stage"
+    tier: "high"
+    control: "dast"
+    reason: "Temporary ZAP runner issue with manual pentest evidence"
+    approver: "security-director"
+    approved_at: "2026-02-08T10:00:00Z"
+    expires_at: "2026-03-01T10:00:00Z"
+    ticket: "SEC-2201"

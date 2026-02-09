@@ -34,11 +34,19 @@ jobs:
         with:
           name: assurance-real
           path: artifacts/latest
-      - name: Evaluate deployment gate
+      - name: Validate exceptions + evaluate deployment gate
         run: |
+          tier=$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("risk_context",{}).get("risk_tier","low"))')
+          service=$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("service","sample-service"))')
+          python3 scripts/validate-exceptions.py \
+            --exceptions-dir config/exceptions \
+            --service "$service" \
+            --environment "${{ inputs.target-environment || 'prod' }}" \
+            --tier "$tier"
           python3 scripts/evaluate-promotion.py \
             --environment "${{ inputs.target-environment || 'prod' }}" \
-            --results artifacts/latest/results.json
+            --results artifacts/latest/results.json \
+            --exceptions-dir config/exceptions
       - name: Create and sign evidence bundle
         run: |
           python3 scripts/create-evidence-bundle.py --source artifacts/latest --out-dir evidence/bundles
