@@ -1,0 +1,23 @@
+version: 1
+releaseDecision:
+  states: [GO, CONDITIONAL, NO_GO]
+mandatoryGates:
+  test_pass_rate_min: 0.95
+  critical_test_failures_max: 0
+  high_vulnerabilities_max: 0
+  availability_slo_min: 99.9
+  p95_latency_ms_max: 400
+softGates:
+  medium_vulnerabilities_max: 5
+  flaky_tests_max: 3
+  test_coverage_min: 0.75
+rules:
+  - name: no-go-on-mandatory-fail
+    when: mandatory_gate_failed
+    decision: NO_GO
+  - name: conditional-on-soft-fail-only
+    when: soft_gate_failed_only
+    decision: CONDITIONAL
+  - name: go-on-all-pass
+    when: all_gates_pass
+    decision: GO

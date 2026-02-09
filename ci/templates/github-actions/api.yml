@@ -1,0 +1,21 @@
+name: api-assurance
+on:
+  pull_request:
+    paths: ['services/api/**', '.github/workflows/api-assurance.yml']
+  workflow_dispatch:
+
+jobs:
+  api-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: make bootstrap
+      - run: make run-assurance
+      - run: make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-assurance-artifacts
+          path: artifacts/latest/

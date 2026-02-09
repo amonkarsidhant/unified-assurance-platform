@@ -1,0 +1,18 @@
+name: event-assurance
+on:
+  pull_request:
+    paths: ['services/events/**', '.github/workflows/event-assurance.yml']
+  workflow_dispatch:
+
+jobs:
+  event-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make validate
+      - run: make run-assurance
+      - run: make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: event-assurance-artifacts
+          path: artifacts/latest/

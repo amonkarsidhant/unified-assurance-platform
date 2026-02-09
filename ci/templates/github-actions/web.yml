@@ -1,0 +1,21 @@
+name: web-assurance
+on:
+  pull_request:
+    paths: ['services/web/**', '.github/workflows/web-assurance.yml']
+  workflow_dispatch:
+
+jobs:
+  web-assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: make bootstrap
+      - run: make run-assurance
+      - run: make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-assurance-artifacts
+          path: artifacts/latest/

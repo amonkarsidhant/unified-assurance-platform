@@ -1,0 +1,21 @@
+name: security-assurance
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: make validate
+      - run: make run-assurance
+      - run: make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-assurance-artifacts
+          path: artifacts/latest/
