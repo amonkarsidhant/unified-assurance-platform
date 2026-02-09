@@ -102,6 +102,13 @@ Notes for macOS:
 - For localhost targets, Docker path automatically uses `host.docker.internal` so ZAP can reach host services.
 - If Gatekeeper blocks downloaded binaries, install via Homebrew (or allow the binary in Privacy & Security) and retry.
 
+## Grafana auto-provisioned dashboard
+When `make dev-stack-up` runs, Grafana now auto-loads:
+- Folder: `UAP`
+- Dashboard: `UAP Local Observability Overview`
+
+Open Grafana at `http://localhost:3000` (`admin/admin`) and go to **Dashboards → UAP**.
+
 ## New Golden Path: Enterprise Reference Architecture
 For teams deploying transaction platforms with LB + API + VM + DB + queue/cache.
 
