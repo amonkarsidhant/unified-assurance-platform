@@ -1,191 +1,220 @@
-# Unified Assurance Platform (UAP)
+# 🛡️ Unified Assurance Platform (UAP)
 
-A production-ready starter repository for building a **Unified Assurance Platform**: one place to define quality gates, risk policy, test catalogs, CI templates, observability hooks, and release evidence.
+> **One platform for quality gates, real test evidence, observability, and release decisions.**
 
-## Vision
-Ship faster with confidence by making quality decisions:
-- **Policy-driven** (quality gates + risk model)
-- **Automated** (CI templates + executable scripts)
-- **Auditable** (evidence collection + release reports)
-- **Pragmatic** (works for API, web, event-driven, and auth/payments flows)
+Make releases predictable with a practical, policy-driven assurance system developers can actually use.
 
-## Architecture (v1)
-1. **Policy layer**: `policies/quality-gates.yaml`, `policies/risk-model.yaml`
-2. **Execution layer**: `scripts/run-assurance.sh`, CI templates in `ci/templates/github-actions/`
-3. **Evidence + reporting**: `scripts/collect-evidence.sh`, `scripts/generate-release-report.py`, `reporting/`
-4. **Telemetry layer**: `observability/otel-collector-config.yaml`, dashboard guidance
-5. **Domain onboarding**: golden paths and sample service descriptors in `docs/golden-paths/` and `examples/services/`
+---
 
-### Architecture diagram
+## ✨ Why this exists
+
+Most teams have tests. Fewer teams have **trusted release decisions**.
+
+UAP connects:
+- ✅ test execution
+- ✅ risk policy
+- ✅ CI/CD gates
+- ✅ evidence bundles
+- ✅ Grafana visibility
+
+So stakeholders get: **GO / CONDITIONAL / NO-GO** with traceable reasons.
+
+---
+
+## 🧭 What you get
+
+- 📋 **Quality gates + risk model** (`policies/`)
+- ⚙️ **Assurance runner** (`scripts/run-assurance.sh`)
+- 🔎 **Real-tool mode** (k6, semgrep, trivy, ZAP; optional newman/playwright)
+- 📦 **Evidence + report generation**
+- 📈 **Autoprovisioned dashboards** (infra + assurance)
+- 🧱 **Golden paths** for API/web/event/payments/auth + multi-module apps
+- 🏭 **Enterprise CI/CD Phase 1** (PR/pre-release/post-deploy workflows)
+
+---
+
+## 🏗️ Platform architecture
+
 ```mermaid
 flowchart LR
-  U[Users / Stakeholders] --> LB[Load Balancer / Ingress]
-  LB --> API[API Services on VM/Containers]
-  API --> DB[(Primary DB)]
-  API --> REP[(Read Replica)]
-  API --> C[(Cache)]
-  API --> Q[(Queue)]
-  Q --> W[Async Workers]
+  Dev[👨‍💻 Developer] --> PR[🔀 Pull Request]
+  PR --> CI[⚙️ CI Assurance Pipeline]
 
-  API --> OTEL[OpenTelemetry Collector]
-  W --> OTEL
-  OTEL --> OBS[(Metrics / Logs / Traces Dashboards)]
+  CI --> Tests[🧪 Tests & Scans\nLint/Unit/Integration/Contract\nSAST/SCA/DAST/Perf]
+  CI --> Policy[📋 Risk + Quality Policy]
 
-  P[Policies\nquality-gates + risk-model] --> CI[CI/CD Assurance Pipelines]
-  TC[Test Catalog] --> CI
-  CI --> API
-  CI --> RPT[Release Report + Evidence Bundle]
-  RPT --> U
+  Tests --> Decision[🚦 Release Decision\nGO / CONDITIONAL / NO-GO]
+  Policy --> Decision
+
+  Decision --> Evidence[📦 Evidence Bundle\nChecksums + Optional Signature]
+  Evidence --> Report[📝 Release Report]
+
+  Tests --> Metrics[📡 Assurance Metrics Export]
+  Metrics --> Prom[📈 Prometheus]
+  Prom --> Grafana[📊 Grafana Dashboards]
+
+  Report --> Stakeholders[👥 Eng + Security + Product + Leadership]
+  Grafana --> Stakeholders
 ```
 
-Detailed architecture: `docs/architecture.md` and `docs/reference-architecture/diagram.md`
+---
 
-## Quick start
+## 🚀 Quick start
+
 ```bash
 make bootstrap
 make validate
 make tooling-check
 make run-assurance
-make run-assurance-real
-make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/real-tools-report.md
+make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
 ```
 
-## One-command live demo (golden path)
+---
+
+## 🔥 One-command live demo (golden path)
+
 ```bash
 make demo-e2e
 ```
-This starts observability + demo app + demo UI, runs real assurance, and generates:
-- `artifacts/latest/demo-e2e-report.md`
 
-## Start Here (Non-QE)
-If you are new to Quality Engineering, read these first:
-- `docs/qe-primer.md` — plain-English QE basics, test types, and anti-patterns
-- `docs/methodology-map.md` — how shift-left, risk-based testing, gates, CI/CD, and observability fit together
-- `docs/roles-and-consumption.md` — what each stakeholder role should read and do
-- `docs/demo-walkthrough.md` — 10-minute walkthrough for happy vs broken release scenarios
-- `demo/README.md` — runnable local demo quickstart
-- `demo/site/index.html` — stakeholder-friendly demo website UI
+This will:
+1. Start local observability stack
+2. Start demo service + demo UI
+3. Run real assurance flow
+4. Export assurance metrics
+5. Generate final report
 
-Artifacts created in:
-- `artifacts/latest/` (run outputs)
-- `evidence/<timestamp>/` (auditable bundle)
+### Open these after `make demo-e2e`
+- 🌐 Demo UI: `http://127.0.0.1:8790/demo/site/` (auto-fallback to 8791/8792)
+- 📊 Grafana: `http://localhost:3000`
+- 📈 Prometheus: `http://localhost:9090`
+- 📝 Final report: `artifacts/latest/demo-e2e-report.md`
 
-## Real tool mode (open-source scanners + smoke tests)
+Stop everything:
+```bash
+make demo-down && make demo-site-down && make dev-stack-down
+```
 
-`make run-assurance` stays pragmatic (simulates when tools are missing).
+---
 
-`make run-assurance-real` forces real-tool mode and marks unavailable tools as `skipped` with reasons in logs:
-- k6 (`tests/perf/smoke.js`)
-- semgrep (`tests/security/semgrep-rules.yml`)
-- trivy (`trivy fs` over repo)
-- OWASP ZAP baseline (`dast_zap`) against a target URL
-- optional newman (if collection exists)
-- optional playwright smoke (if test exists)
+## 📊 Dashboards (autoprovisioned)
 
-Useful env overrides:
-- `TRIVY_SEVERITY=CRITICAL,HIGH`
-- `TRIVY_EXIT_CODE=0` (non-fatal default)
-- `PERF_TARGET_URL=https://test.k6.io`
-- `K6_VUS=2 K6_DURATION=5s`
-- `ZAP_TARGET_URL=http://127.0.0.1:5678`
-- `ZAP_TIMEOUT_MIN=2`
-- `ZAP_FAIL_LEVEL=medium`
+In Grafana (`http://localhost:3000`):
 
-Run only the lightweight ZAP step (laptop-friendly):
+- **UAP Local Observability Overview**
+  - infra and collector health
+- **UAP Assurance Dashboard**
+  - release recommendation
+  - test statuses
+  - risk score/tier
+  - policy validation
+  - vulnerability and failure signals
+  - trends over time (local persistence caveats apply)
 
+---
+
+## 🧪 Real tool mode
+
+`make run-assurance` = pragmatic mode (graceful simulation where needed)
+
+`make run-assurance-real` = force real tools:
+- ⚡ k6
+- 🔐 semgrep
+- 🧬 trivy
+- 🕷️ OWASP ZAP baseline
+- 📮 optional newman
+- 🎭 optional playwright
+
+Run only ZAP smoke:
 ```bash
 make zap-smoke
 ```
 
-Notes for macOS:
-- If `zap-baseline.py` is not installed locally, the script falls back to Dockerized ZAP when Docker is available.
-- For localhost targets, Docker path automatically uses `host.docker.internal` so ZAP can reach host services.
-- If Gatekeeper blocks downloaded binaries, install via Homebrew (or allow the binary in Privacy & Security) and retry.
-
-## Assurance Dashboard (Grafana)
-After an assurance run, export metrics and view release-quality outcomes in Grafana.
-
-Dashboards auto-provisioned under folder `UAP`:
-- `UAP Local Observability Overview`
-- `UAP Assurance Dashboard`
-
-### Quick steps
+Useful env overrides:
 ```bash
-make dev-stack-up
+TRIVY_SEVERITY=CRITICAL,HIGH TRIVY_EXIT_CODE=0 \
+K6_VUS=2 K6_DURATION=5s PERF_TARGET_URL=https://test.k6.io \
+ZAP_TARGET_URL=http://127.0.0.1:5678 ZAP_TIMEOUT_MIN=2 ZAP_FAIL_LEVEL=medium \
 make run-assurance-real
-make assurance-dashboard-check
 ```
 
-This flow writes `artifacts/metrics/assurance.prom`, Prometheus scrapes it via node-exporter, and Grafana shows:
-- Last release recommendation (GO / CONDITIONAL / NO-GO)
-- Pass rate and trend
-- Policy validation pass/fail
-- Risk score + tier
-- Test status table
-- Security findings (high/medium)
-- Critical failures
+---
 
-Open Grafana at `http://localhost:3000` (`admin/admin`) and go to **Dashboards → UAP**.
+## 🧱 Golden paths for multi-module apps
 
-> Trend note: trend is based on Prometheus time series of the latest exported metrics. Keep Prometheus volume/state if you want history across stack restarts.
+Use this for apps with `frontend`, `api`, `worker`, `shared-lib`, etc.
 
-## New Golden Path: Enterprise Reference Architecture
-For teams deploying transaction platforms with LB + API + VM + DB + queue/cache.
-
-Quick links:
-- `docs/reference-architecture/overview.md`
-- `docs/reference-architecture/diagram.md`
-- `docs/reference-architecture/component-contracts.md`
-- `docs/golden-paths/reference-architecture.md`
-- `ci/templates/github-actions/reference-architecture.yml`
-- `demo/reference-scenarios.md`
-- `reporting/reference-architecture-scorecard.md`
-
-## Golden paths for multi-module apps
-For monorepos with multiple module teams, use the module golden-path assets in this repo:
-
-- Guidance: `docs/golden-paths/multi-module-app.md`
-- Onboarding template: `templates/module-onboarding-template.md`
-- Assurance profile template: `templates/module-assurance-profile.yaml`
-- Reusable module CI example: `templates/module-ci-template.yml`
-- Module config examples: `config/modules/*.json`
-- Generator script: `scripts/generate-module-golden-path.py`
-
-Generate module-specific onboarding docs:
-
+Generate module-specific golden paths:
 ```bash
 make module-golden-path MODULE=checkout-ui TYPE=frontend
 make module-golden-path MODULE=payments-api TYPE=api
 ```
 
-Direct script usage:
+Generated outputs:
+- `docs/generated/checkout-ui.md`
+- `docs/generated/payments-api.md`
 
-```bash
-python3 scripts/generate-module-golden-path.py --module fraud-worker --type worker
-python3 scripts/generate-module-golden-path.py --module shared-types --type shared-lib
-```
+Core references:
+- `docs/golden-paths/multi-module-app.md`
+- `templates/module-onboarding-template.md`
+- `templates/module-assurance-profile.yaml`
+- `templates/module-ci-template.yml`
 
-Generated files are written to `docs/generated/<module>.md` and should be committed with module onboarding changes.
+---
 
-## Repo map
-- `docs/` product + technical guidance
-- `policies/` release gates and risk scoring
-- `catalog/` test inventory by category
-- `ci/templates/github-actions/` reusable pipeline templates
-- `observability/` OpenTelemetry starter config and dashboard contract
-- `reporting/` KPI and audit formats
-- `scripts/` executable assurance orchestration
+## 🏢 Enterprise readiness (Phase 1)
 
-## Intended consumers
-- Engineering teams adopting a standard quality baseline
-- QE/Platform teams building centralized assurance workflows
-- Product/security/compliance stakeholders requiring clear release decisions
+Included in repo:
+- `.github/workflows/pr.yml`
+- `.github/workflows/pre-release.yml`
+- `.github/workflows/post-deploy.yml`
+- `.github/workflows/reusable-assurance.yml`
+- `config/promotion/{dev,stage,prod}.json`
+- `.github/CODEOWNERS`
+- `scripts/evaluate-promotion.py`
+- `scripts/create-evidence-bundle.py`
+- `scripts/sign-evidence-bundle.sh`
 
-## Contribution standard
-For major design docs and stakeholder-facing reports, follow:
-- `docs/contribution-standard.md`
-- `templates/self-reflection-template.md` (required self-reflection block)
+Setup docs:
+- `docs/phase1-enterprise-cicd.md`
+- `docs/branch-protection-guidance.md`
 
-## Agentic-QE enterprise alignment
+---
+
+## 🗂️ Repo map
+
+- `docs/` → guides, architecture, golden paths
+- `policies/` → quality gates + risk model
+- `catalog/` → test catalog
+- `config/` → promotion + module configs
+- `ci/templates/` → CI templates
+- `infra/local/` → local observability stack + provisioning
+- `reporting/` → KPI/scorecard formats
+- `scripts/` → assurance engine + helpers
+- `templates/` → onboarding and governance templates
+
+---
+
+## 🤝 Contribution standard
+
+For major design docs and stakeholder-facing reports:
+- follow `docs/contribution-standard.md`
+- include `templates/self-reflection-template.md`
+
+---
+
+## 🧠 Agentic-QE inspired alignment
+
 - `docs/agentic-alignment-matrix.md`
 - `docs/enterprise-hardening-backlog.md`
+
+---
+
+## ⚠️ macOS notes
+
+- If Gatekeeper blocks tools (like ZAP), allow in **Privacy & Security** or install via Homebrew.
+- For localhost scans in Dockerized ZAP path, use `host.docker.internal` where required.
+
+---
+
+Built for practical teams: **ship faster, break less, prove quality.** 🚀
