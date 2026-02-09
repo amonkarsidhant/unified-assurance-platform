@@ -1,5 +1,12 @@
 # 🛡️ Unified Assurance Platform (UAP)
 
+![Platform](https://img.shields.io/badge/platform-unified%20assurance-1f6feb)
+![Status](https://img.shields.io/badge/status-active-success)
+![CI](https://img.shields.io/badge/ci-github%20actions-2088FF)
+![Observability](https://img.shields.io/badge/observability-grafana%2Bprometheus-F46800)
+![Security](https://img.shields.io/badge/security-sast%20%7C%20sca%20%7C%20dast-8A2BE2)
+![License](https://img.shields.io/badge/license-internal-lightgrey)
+
 > **One platform for quality gates, real test evidence, observability, and release decisions.**
 
 Make releases predictable with a practical, policy-driven assurance system developers can actually use.
@@ -68,6 +75,25 @@ make tooling-check
 make run-assurance
 make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
 ```
+
+---
+
+## 🎬 5-minute quick demo (GIF + walkthrough)
+
+> Add your demo GIF at `docs/assets/uap-demo.gif` and it will render below.
+
+![UAP quick demo](docs/assets/uap-demo.gif)
+
+No GIF yet? Run this walkthrough live:
+
+```bash
+make demo-e2e
+```
+
+Then show these screens in order:
+1. `http://127.0.0.1:8790/demo/site/` → Happy vs Broken path toggle
+2. `http://localhost:3000` → UAP Assurance Dashboard
+3. `artifacts/latest/demo-e2e-report.md` → Final GO/NO-GO report
 
 ---
 
