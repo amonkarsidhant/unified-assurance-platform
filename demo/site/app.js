@@ -25,17 +25,17 @@ const scenarios = {
   }
 };
 
-async function checkApi() {
-  try {
-    const res = await fetch('http://127.0.0.1:5678/');
-    const text = await res.text();
-    const ok = res.ok && text.includes('demo-api-ok');
-    apiStatus.textContent = ok ? 'Healthy (demo-api-ok)' : `Unexpected response: ${text}`;
-    apiStatus.className = ok ? 'ok' : 'bad';
-  } catch {
+function checkApi() {
+  const img = new Image();
+  img.onload = () => {
+    apiStatus.textContent = 'Healthy (service reachable on :5678)';
+    apiStatus.className = 'ok';
+  };
+  img.onerror = () => {
     apiStatus.textContent = 'API not reachable. Run: make demo-up';
     apiStatus.className = 'bad';
-  }
+  };
+  img.src = `http://127.0.0.1:5678/?_ts=${Date.now()}`;
 }
 
 function loadScenario(name) {
