@@ -125,6 +125,6 @@ The same make targets can be used both locally and in CI for consistent behavior
 - ZAP tuning env vars: `ZAP_TARGET_URL` (default `http://127.0.0.1:5678`), `ZAP_TIMEOUT_MIN` (default `2`), `ZAP_FAIL_LEVEL` (default `medium`).
 - Run only ZAP (fast smoke): `make zap-smoke`.
 - On macOS, if Gatekeeper blocks downloaded security tools, prefer Homebrew installs or explicitly allow binaries in **System Settings → Privacy & Security**.
-- Missing optional assets (Postman collection / Playwright smoke spec) are marked as `skipped` with explicit reasons.
+- Default sample assets are included (`tests/api/postman_collection.json`, `tests/ui/smoke.spec.ts`), so Newman/Playwright run by default in real mode.
 - Trivy is configured non-fatal by default (`TRIVY_EXIT_CODE=0`) so local runs remain practical.
 - Typical laptop runtime target is a few minutes; keep k6 smoke small (`K6_VUS`, `K6_DURATION`) and ZAP baseline short (`ZAP_TIMEOUT_MIN`).

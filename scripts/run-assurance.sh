@@ -172,14 +172,18 @@ else
   fi
 
   NEWMAN_COLLECTION=""
-  for candidate in "$ROOT_DIR/tests/api/postman.collection.json" "$ROOT_DIR/tests/postman/collection.json" "$ROOT_DIR/postman/collection.json"; do
+  for candidate in "$ROOT_DIR/tests/api/postman_collection.json" "$ROOT_DIR/tests/api/postman.collection.json" "$ROOT_DIR/tests/postman/collection.json" "$ROOT_DIR/postman/collection.json"; do
     if [ -f "$candidate" ]; then
       NEWMAN_COLLECTION="$candidate"
       break
     fi
   done
+  NEWMAN_ENV_ARGS=""
+  if [ -f "$ROOT_DIR/tests/api/postman_environment.json" ]; then
+    NEWMAN_ENV_ARGS="--environment '$ROOT_DIR/tests/api/postman_environment.json'"
+  fi
   if command -v newman >/dev/null 2>&1 && [ -n "$NEWMAN_COLLECTION" ]; then
-    run_cmd_step newman_smoke bash -lc "cd '$ROOT_DIR' && newman run '$NEWMAN_COLLECTION' --reporters cli,json --reporter-json-export '$ART_DIR/newman.json'"
+    run_cmd_step newman_smoke bash -lc "cd '$ROOT_DIR' && newman run '$NEWMAN_COLLECTION' $NEWMAN_ENV_ARGS --env-var baseUrl='${NEWMAN_BASE_URL:-http://127.0.0.1:5678}' --reporters cli,json --reporter-json-export '$ART_DIR/newman.json'" || FAILURES=$((FAILURES+1))
   else
     if [ -z "$NEWMAN_COLLECTION" ]; then
       record_skipped newman_smoke "collection not found"
@@ -189,20 +193,22 @@ else
   fi
 
   PLAYWRIGHT_TEST=""
-  for candidate in "$ROOT_DIR/tests/e2e/smoke.spec.ts" "$ROOT_DIR/tests/e2e/smoke.spec.js"; do
+  for candidate in "$ROOT_DIR/tests/ui/smoke.spec.ts" "$ROOT_DIR/tests/ui/smoke.spec.js" "$ROOT_DIR/tests/e2e/smoke.spec.ts" "$ROOT_DIR/tests/e2e/smoke.spec.js"; do
     if [ -f "$candidate" ]; then
       PLAYWRIGHT_TEST="$candidate"
       break
     fi
   done
-  if command -v npx >/dev/null 2>&1 && [ -n "$PLAYWRIGHT_TEST" ]; then
-    run_cmd_step playwright_smoke bash -lc "cd '$ROOT_DIR' && npx playwright test '$PLAYWRIGHT_TEST' --reporter=line"
-  else
-    if [ -z "$PLAYWRIGHT_TEST" ]; then
-      record_skipped playwright_smoke "smoke test not found"
+  if [ -n "$PLAYWRIGHT_TEST" ]; then
+    if command -v npm >/dev/null 2>&1 && [ -f "$ROOT_DIR/package.json" ] && grep -q '"test:ui:smoke"' "$ROOT_DIR/package.json"; then
+      run_cmd_step playwright_smoke bash -lc "cd '$ROOT_DIR' && npm run test:ui:smoke" || FAILURES=$((FAILURES+1))
+    elif command -v npx >/dev/null 2>&1; then
+      run_cmd_step playwright_smoke bash -lc "cd '$ROOT_DIR' && npx playwright test '$PLAYWRIGHT_TEST' --config '$ROOT_DIR/playwright.config.ts' --reporter=line" || FAILURES=$((FAILURES+1))
     else
       record_skipped playwright_smoke "npx unavailable"
     fi
+  else
+    record_skipped playwright_smoke "smoke test not found"
   fi
 fi
 

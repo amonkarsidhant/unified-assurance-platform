@@ -1,0 +1,16 @@
+{
+  "name": "unified-assurance-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Minimal scripts for local assurance smoke flow",
+  "scripts": {
+    "lint": "echo 'lint placeholder: no JS source lint configured'",
+    "test": "echo 'unit placeholder: no JS unit tests configured'",
+    "test:integration": "echo 'integration placeholder: no JS integration tests configured'",
+    "test:contract": "echo 'contract placeholder: no JS contract tests configured'",
+    "test:ui:smoke": "npx playwright test tests/ui/smoke.spec.ts --config=playwright.config.ts --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0"
+  }
+}

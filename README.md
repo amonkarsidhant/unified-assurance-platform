@@ -32,7 +32,7 @@ So stakeholders get: **GO / CONDITIONAL / NO-GO** with traceable reasons.
 
 - 📋 **Quality gates + risk model** (`policies/`)
 - ⚙️ **Assurance runner** (`scripts/run-assurance.sh`)
-- 🔎 **Real-tool mode** (k6, semgrep, trivy, ZAP; optional newman/playwright)
+- 🔎 **Real-tool mode** (k6, semgrep, trivy, ZAP, newman, playwright)
 - 📦 **Evidence + report generation**
 - 📈 **Autoprovisioned dashboards** (infra + assurance)
 - 🧱 **Golden paths** for API/web/event/payments/auth + multi-module apps
@@ -148,8 +148,8 @@ In Grafana (`http://localhost:3000`):
 - 🔐 semgrep
 - 🧬 trivy
 - 🕷️ OWASP ZAP baseline
-- 📮 optional newman
-- 🎭 optional playwright
+- 📮 newman API smoke (`tests/api/postman_collection.json`)
+- 🎭 playwright UI smoke (`tests/ui/smoke.spec.ts`)
 
 Run only ZAP smoke:
 ```bash
@@ -161,8 +161,15 @@ Useful env overrides:
 TRIVY_SEVERITY=CRITICAL,HIGH TRIVY_EXIT_CODE=0 \
 K6_VUS=2 K6_DURATION=5s PERF_TARGET_URL=https://test.k6.io \
 ZAP_TARGET_URL=http://127.0.0.1:5678 ZAP_TIMEOUT_MIN=2 ZAP_FAIL_LEVEL=medium \
+NEWMAN_BASE_URL=http://127.0.0.1:5678 PLAYWRIGHT_BASE_URL=http://127.0.0.1:8790 \
 make run-assurance-real
 ```
+
+Default sample assets are included so Newman/Playwright run without extra setup:
+- API: `tests/api/postman_collection.json` (+ `tests/api/postman_environment.json`)
+- UI: `tests/ui/smoke.spec.ts` with `playwright.config.ts`
+
+Replace those files with your service-specific checks when onboarding your app.
 
 ---
 
