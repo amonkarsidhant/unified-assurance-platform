@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unified Assurance Platform – Demo</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="hero">
+    <h1>Unified Assurance Platform</h1>
+    <p>Live demo dashboard for stakeholder-friendly release readiness</p>
+  </header>
+
+  <main class="container">
+    <section class="grid">
+      <article class="card">
+        <h2>Demo API Health</h2>
+        <p id="apiStatus">Checking…</p>
+        <button id="checkApi">Re-check API</button>
+      </article>
+
+      <article class="card">
+        <h2>Release Recommendation</h2>
+        <p id="recommendation">Load a scenario</p>
+        <div class="btn-row">
+          <button data-scenario="happy">Load Happy Path</button>
+          <button data-scenario="broken">Load Broken Path</button>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Key Signals</h2>
+        <ul id="signals"></ul>
+      </article>
+    </section>
+
+    <section class="card full">
+      <h2>How this demo works</h2>
+      <ol>
+        <li>Run <code>make demo-up</code> to start the mock service.</li>
+        <li>Open this page via local server.</li>
+        <li>Switch between happy and broken scenarios to see GO vs NO-GO behavior.</li>
+        <li>Generate markdown reports via <code>make demo-happy</code> / <code>make demo-broken</code>.</li>
+      </ol>
+      <p class="muted">Source data: <code>examples/results/demo-happy.json</code> and <code>examples/results/demo-broken.json</code></p>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -55,6 +55,7 @@ If you are new to Quality Engineering, read these first:
 - `docs/roles-and-consumption.md` — what each stakeholder role should read and do
 - `docs/demo-walkthrough.md` — 10-minute walkthrough for happy vs broken release scenarios
 - `demo/README.md` — runnable local demo quickstart
+- `demo/site/index.html` — stakeholder-friendly demo website UI
 
 Artifacts created in:
 - `artifacts/latest/` (run outputs)
