@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate run-assurance report collect-evidence
+.PHONY: bootstrap validate run-assurance report collect-evidence demo-up demo-down demo-happy demo-broken
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -32,3 +32,27 @@ report:
 
 collect-evidence:
 	@./scripts/collect-evidence.sh
+
+demo-up:
+	@if command -v docker >/dev/null 2>&1; then \
+		docker compose -f demo/docker-compose.yml up -d; \
+		echo "Demo services started."; \
+	else \
+		echo "Docker not installed. Skipping demo-up (file-based demo still works)."; \
+	fi
+
+demo-down:
+	@if command -v docker >/dev/null 2>&1; then \
+		docker compose -f demo/docker-compose.yml down; \
+		echo "Demo services stopped."; \
+	else \
+		echo "Docker not installed. Nothing to stop."; \
+	fi
+
+demo-happy:
+	@./scripts/generate-release-report.py --input examples/results/demo-happy.json --output artifacts/latest/demo-happy-report.md
+	@echo "Happy demo report: artifacts/latest/demo-happy-report.md"
+
+demo-broken:
+	@./scripts/generate-release-report.py --input examples/results/demo-broken.json --output artifacts/latest/demo-broken-report.md
+	@echo "Broken demo report: artifacts/latest/demo-broken-report.md"

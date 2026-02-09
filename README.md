@@ -26,6 +26,14 @@ make run-assurance
 make report RESULTS=examples/results/sample-results.json OUT=examples/results/sample-report.md
 ```
 
+## Start Here (Non-QE)
+If you are new to Quality Engineering, read these first:
+- `docs/qe-primer.md` — plain-English QE basics, test types, and anti-patterns
+- `docs/methodology-map.md` — how shift-left, risk-based testing, gates, CI/CD, and observability fit together
+- `docs/roles-and-consumption.md` — what each stakeholder role should read and do
+- `docs/demo-walkthrough.md` — 10-minute walkthrough for happy vs broken release scenarios
+- `demo/README.md` — runnable local demo quickstart
+
 Artifacts created in:
 - `artifacts/latest/` (run outputs)
 - `evidence/<timestamp>/` (auditable bundle)

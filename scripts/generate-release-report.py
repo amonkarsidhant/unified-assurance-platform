@@ -32,12 +32,33 @@ def evaluate(metrics):
 def render(data):
     metrics = data.get("metrics", {})
     decision, mandatory_failed, soft_failed = evaluate(metrics)
+
+    if decision == "GO":
+        plain_summary = (
+            "Release is ready. All mandatory and soft quality gates passed, "
+            "so risk is currently within acceptable policy thresholds."
+        )
+    elif decision == "CONDITIONAL":
+        plain_summary = (
+            "Release can proceed with caution. Mandatory gates passed, but some "
+            "non-blocking quality signals need follow-up and documented ownership."
+        )
+    else:
+        plain_summary = (
+            "Release is not ready. One or more mandatory gates failed, which means "
+            "there is elevated customer or operational risk if shipped now."
+        )
+
     lines = [
         "# Release Assurance Report",
         "",
         f"- Service: **{data.get('service', 'unknown')}**",
         f"- Timestamp: **{data.get('timestamp', 'unknown')}**",
         f"- Recommendation: **{decision}**",
+        "",
+        "## Plain-Language Summary (Stakeholders)",
+        "",
+        f"- {plain_summary}",
         "",
         "## Gate Evaluation",
         "",

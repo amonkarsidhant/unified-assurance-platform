@@ -1,0 +1,22 @@
+{
+  "service": "demo-service",
+  "timestamp": "2026-02-09T19:05:00Z",
+  "metrics": {
+    "test_pass_rate": 0.67,
+    "critical_test_failures": 2,
+    "high_vulnerabilities": 1,
+    "medium_vulnerabilities": 9,
+    "flaky_tests": 6,
+    "test_coverage": 0.62,
+    "availability_slo": 99.1,
+    "p95_latency_ms": 680
+  },
+  "tests": {
+    "lint": "pass",
+    "unit": "fail",
+    "integration": "fail",
+    "contract": "pass",
+    "security": "fail",
+    "performance": "fail"
+  }
+}

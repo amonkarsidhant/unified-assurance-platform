@@ -1,0 +1,13 @@
+services:
+  demo-api:
+    image: hashicorp/http-echo:1.0
+    command: ["-listen=:5678", "-text=demo-api-ok"]
+    ports:
+      - "5678:5678"
+
+  demo-api-broken:
+    image: hashicorp/http-echo:1.0
+    command: ["-listen=:5679", "-status-code=500", "-text=demo-api-error"]
+    ports:
+      - "5679:5679"
+    profiles: ["broken"]
