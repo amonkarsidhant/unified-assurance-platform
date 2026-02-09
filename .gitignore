@@ -1,5 +1,7 @@
-artifacts/
-evidence/
+artifacts/*
+!artifacts/.gitkeep
+evidence/*
+!evidence/.gitkeep
 .DS_Store
 *.pyc
 __pycache__/
