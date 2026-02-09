@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke report collect-evidence evidence-bundle sign-bundle promotion-check demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle promotion-check demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -29,9 +29,20 @@ tooling-check:
 
 run-assurance:
 	@./scripts/run-assurance.sh
+	@$(MAKE) assurance-metrics-export
 
 run-assurance-real:
 	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ./scripts/run-assurance.sh
+	@$(MAKE) assurance-metrics-export
+
+assurance-metrics-export:
+	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom
+
+assurance-dashboard-check:
+	@echo "Checking Prometheus assurance metrics..."
+	@curl -fsS "http://localhost:9090/api/v1/query?query=assurance_pass_rate" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "assurance_pass_rate missing"; print("✅ Prometheus has assurance_pass_rate")'
+	@echo "Checking Grafana dashboard provisioning..."
+	@curl -fsS -u admin:admin "http://localhost:3000/api/search?query=UAP%20Assurance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Dashboard") for x in r), "Dashboard not found"; print("✅ Grafana dashboard found")'
 
 zap-smoke:
 	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ONLY_ZAP_SMOKE=1 ./scripts/run-assurance.sh
@@ -140,6 +151,7 @@ demo-e2e:
 		echo "- To stop all: make demo-down && make demo-site-down && make dev-stack-down";
 
 dev-stack-up:
+	@mkdir -p artifacts/metrics
 	@docker compose -f infra/local/docker-compose.yml up -d
 	@echo "Local observability stack is up."
 

@@ -39,6 +39,38 @@ make run-assurance-real
 make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/real-tools-report.md
 ```
 
+## Assurance Dashboard
+
+The local stack includes `node-exporter` textfile collector wired to `artifacts/metrics/`.
+
+`make run-assurance` and `make run-assurance-real` automatically export assurance metrics to:
+- `artifacts/metrics/assurance.prom`
+
+### Exact flow
+
+```bash
+make dev-stack-down && make dev-stack-up
+make run-assurance-real
+make assurance-dashboard-check
+```
+
+Manual export (if needed):
+
+```bash
+make assurance-metrics-export
+```
+
+What `make assurance-dashboard-check` validates:
+- Prometheus query returns `assurance_pass_rate`
+- Grafana API search finds `UAP Assurance Dashboard`
+
+Dashboard location in Grafana:
+- **Dashboards → UAP → UAP Assurance Dashboard**
+
+Trend persistence caveat:
+- Trend panels reflect Prometheus time series over scrape time.
+- If local stack is torn down without persistent Prometheus data, trend history resets.
+
 When done:
 
 ```bash

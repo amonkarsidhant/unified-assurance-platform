@@ -102,12 +102,32 @@ Notes for macOS:
 - For localhost targets, Docker path automatically uses `host.docker.internal` so ZAP can reach host services.
 - If Gatekeeper blocks downloaded binaries, install via Homebrew (or allow the binary in Privacy & Security) and retry.
 
-## Grafana auto-provisioned dashboard
-When `make dev-stack-up` runs, Grafana now auto-loads:
-- Folder: `UAP`
-- Dashboard: `UAP Local Observability Overview`
+## Assurance Dashboard (Grafana)
+After an assurance run, export metrics and view release-quality outcomes in Grafana.
+
+Dashboards auto-provisioned under folder `UAP`:
+- `UAP Local Observability Overview`
+- `UAP Assurance Dashboard`
+
+### Quick steps
+```bash
+make dev-stack-up
+make run-assurance-real
+make assurance-dashboard-check
+```
+
+This flow writes `artifacts/metrics/assurance.prom`, Prometheus scrapes it via node-exporter, and Grafana shows:
+- Last release recommendation (GO / CONDITIONAL / NO-GO)
+- Pass rate and trend
+- Policy validation pass/fail
+- Risk score + tier
+- Test status table
+- Security findings (high/medium)
+- Critical failures
 
 Open Grafana at `http://localhost:3000` (`admin/admin`) and go to **Dashboards → UAP**.
+
+> Trend note: trend is based on Prometheus time series of the latest exported metrics. Keep Prometheus volume/state if you want history across stack restarts.
 
 ## New Golden Path: Enterprise Reference Architecture
 For teams deploying transaction platforms with LB + API + VM + DB + queue/cache.

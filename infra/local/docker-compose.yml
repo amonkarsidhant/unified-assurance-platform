@@ -13,6 +13,19 @@ services:
       - "9090:9090"
     depends_on:
       - otel-collector
+      - node-exporter
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: uap-node-exporter
+    command:
+      - --collector.disable-defaults
+      - --collector.textfile
+      - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+    volumes:
+      - ../../artifacts/metrics:/var/lib/node_exporter/textfile_collector:ro
+    ports:
+      - "9100:9100"
 
   loki:
     image: grafana/loki:2.9.10

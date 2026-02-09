@@ -1,0 +1,114 @@
+{
+  "id": null,
+  "uid": "uap-assurance",
+  "title": "UAP Assurance Dashboard",
+  "tags": ["uap", "assurance"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Last Release Recommendation",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "max by (recommendation) (assurance_release_recommendation)", "legendFormat": "{{recommendation}}", "refId": "A" }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "name", "colorMode": "background" }
+    },
+    {
+      "id": 2,
+      "title": "Pass Rate",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_pass_rate * 100", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": 0 }, { "color": "yellow", "value": 70 }, { "color": "green", "value": 95 } ] } } }
+    },
+    {
+      "id": 3,
+      "title": "Policy Validation",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_policy_validation_passed", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "mappings": [ { "type": "value", "options": { "0": { "text": "FAIL" }, "1": { "text": "PASS" } } } ] } }
+    },
+    {
+      "id": 4,
+      "title": "Risk Score (+ tier)",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_risk_score", "legendFormat": "{{risk_tier}}", "refId": "A" }
+      ],
+      "options": { "textMode": "value_and_name" }
+    },
+    {
+      "id": 5,
+      "title": "Test Status Table",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_test_status", "instant": true, "refId": "A" }
+      ],
+      "transformations": [
+        { "id": "labelsToFields", "options": { "mode": "columns" } }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Security Findings (High / Medium)",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_security_vulnerabilities", "legendFormat": "{{severity}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Critical Failures",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_critical_failures", "refId": "A" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Pass Rate Trend",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_pass_rate * 100", "legendFormat": "Pass rate %", "refId": "A" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent" } }
+    },
+    {
+      "id": 9,
+      "title": "Run Age (seconds)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "assurance_run_age_seconds", "legendFormat": "run age", "refId": "A" }
+      ]
+    }
+  ]
+}
