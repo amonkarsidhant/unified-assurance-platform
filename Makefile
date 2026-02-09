@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle validate-exceptions promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -28,6 +28,11 @@ validate:
 	@test -f policies/tiers/high.json
 	@test -f policies/tiers/critical.json
 	@test -f config/control-ownership.json
+	@test -f config/flaky-policy.json
+	@test -f schemas/results-v2.schema.json
+	@test -x scripts/normalize-results-v2.py
+	@test -x scripts/evaluate-flaky-policy.py
+	@test -x scripts/render-pr-comment.py
 	@test -f docs/compliance/control-traceability.md
 	@echo "Validation passed."
 
@@ -37,10 +42,14 @@ tooling-check:
 run-assurance:
 	@./scripts/run-assurance.sh
 	@$(MAKE) assurance-metrics-export
+	@$(MAKE) evaluate-flaky
+	@$(MAKE) normalize-results-v2
 
 run-assurance-real:
 	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ./scripts/run-assurance.sh
 	@$(MAKE) assurance-metrics-export
+	@$(MAKE) evaluate-flaky
+	@$(MAKE) normalize-results-v2
 
 assurance-metrics-export:
 	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom
@@ -82,8 +91,17 @@ validate-exceptions:
 	service=$$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("service","sample-service"))'); \
 	./scripts/validate-exceptions.py --exceptions-dir $(EXCEPTIONS_DIR) --service $$service --environment $(ENV) --tier $$tier --output artifacts/latest/exceptions-audit.json
 
+evaluate-flaky:
+	@./scripts/evaluate-flaky-policy.py --policy config/flaky-policy.json --results artifacts/latest/results.json --output artifacts/latest/flaky-policy.json
+
+normalize-results-v2:
+	@./scripts/normalize-results-v2.py --input artifacts/latest/results.json --output artifacts/latest/results.v2.json --exceptions artifacts/latest/exceptions-audit.json --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json
+
+render-pr-comment:
+	@./scripts/render-pr-comment.py --results artifacts/latest/results.json --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --output artifacts/latest/pr-comment.md
+
 promotion-check:
-	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest --exceptions-dir $(EXCEPTIONS_DIR)
+	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest --exceptions-dir $(EXCEPTIONS_DIR) --flaky-result artifacts/latest/flaky-policy.json
 	@echo "Promotion decision: artifacts/latest/promotion-decision.json"
 
 MODULE ?=

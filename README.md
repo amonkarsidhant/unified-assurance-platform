@@ -241,6 +241,24 @@ make promotion-check ENV=stage
 make report
 ```
 
+### Phase 2.5 (P0) additions
+
+- Standardized results contract: `artifacts/latest/results.v2.json` (`schemas/results-v2.schema.json`)
+- Flaky policy evaluation: `config/flaky-policy.json` + `scripts/evaluate-flaky-policy.py`
+- PR summary rendering: `scripts/render-pr-comment.py` + PR artifact/comment workflow
+- Tier-based evidence integrity gate (high/critical fail-closed configurable)
+
+Commands:
+```bash
+make run-assurance
+make evaluate-flaky
+make promotion-check ENV=stage
+make normalize-results-v2
+make render-pr-comment
+```
+
+Detailed guide: `docs/phase2-5-p0.md`
+
 ---
 
 ## 🗂️ Repo map

@@ -87,6 +87,12 @@ def load_active_exceptions(exceptions_dir: Path, service: str, environment: str,
     return active, invalid
 
 
+def load_optional_json(path: Path):
+    if not path.exists():
+        return None
+    return json.loads(path.read_text())
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluate promotion eligibility against environment policy")
     parser.add_argument("--environment", required=True, choices=["dev", "stage", "prod"])
@@ -95,6 +101,8 @@ def main():
     parser.add_argument("--policy-dir", default="config/promotion", help="Directory containing promotion policy JSON files")
     parser.add_argument("--tier-policy-dir", default="policies/tiers", help="Directory containing risk-tier control policies")
     parser.add_argument("--exceptions-dir", default="config/exceptions", help="Directory containing exception YAML files")
+    parser.add_argument("--flaky-result", default="artifacts/latest/flaky-policy.json", help="Flaky policy result JSON")
+    parser.add_argument("--evidence-bundle-dir", default="evidence/bundles", help="Signed evidence bundle location")
     parser.add_argument("--output", default="artifacts/latest/promotion-decision.json")
     args = parser.parse_args()
 
@@ -111,6 +119,7 @@ def main():
 
     failures = []
     control_matrix = []
+    audit_reasons = []
 
     min_pass_rate = float(policy.get("minimum_test_pass_rate", 0))
     actual_pass_rate = float(metrics.get("test_pass_rate", 0))
@@ -136,6 +145,7 @@ def main():
         if not passed and exception:
             waived = True
             passed = True
+            audit_reasons.append(f"control {control} waived by exception {exception['id']}")
         if not passed:
             failures.append(f"mandatory control failed: {control} -> {test_key}={status}")
         control_matrix.append({
@@ -146,6 +156,7 @@ def main():
             "passed": passed,
             "exception_used": bool(exception),
             "exception": exception,
+            "waived": waived,
         })
 
     if tier == "critical" and active_exceptions:
@@ -169,10 +180,37 @@ def main():
         if not (evidence_dir / required_file).exists():
             failures.append(f"required evidence file missing: {(evidence_dir / required_file)}")
 
-    if policy.get("require_signed_bundle", False):
-        bundle_dir = Path("evidence/bundles")
-        has_signature = any(bundle_dir.glob("*.sig"))
-        has_skip_reason = any(bundle_dir.glob("*.sig.skip.txt"))
+    flaky = load_optional_json(Path(args.flaky_result))
+    if flaky and flaky.get("evaluated"):
+        if not flaky.get("allowed", True):
+            failures.append(f"flaky policy failed: {'; '.join(flaky.get('reasons', [])) or 'unknown reason'}")
+
+    signature_required_tiers = set(policy.get("signature_required_tiers", ["high", "critical"]))
+    fail_closed = bool(policy.get("signature_fail_closed", True))
+    bundle_dir = Path(args.evidence_bundle_dir)
+    has_signature = any(bundle_dir.glob("*.sig"))
+    has_attestation = any(bundle_dir.glob("*.cert"))
+    has_skip_reason = any(bundle_dir.glob("*.sig.skip.txt"))
+
+    evidence_integrity = {
+        "tier": tier,
+        "signature_required": tier in signature_required_tiers,
+        "signature_fail_closed": fail_closed,
+        "bundle_dir": str(bundle_dir),
+        "has_signature": has_signature,
+        "has_attestation": has_attestation,
+        "has_skip_reason": has_skip_reason,
+    }
+
+    if evidence_integrity["signature_required"]:
+        if not (has_signature and has_attestation):
+            reason = "signature/attestation missing for required tier"
+            audit_reasons.append(reason)
+            if has_skip_reason:
+                audit_reasons.append("explicit skip reason present (*.sig.skip.txt)")
+            if fail_closed:
+                failures.append(reason)
+    elif policy.get("require_signed_bundle", False):
         if not has_signature and not has_skip_reason:
             failures.append("no signature output found in evidence/bundles (*.sig or *.sig.skip.txt)")
 
@@ -183,6 +221,9 @@ def main():
         "required_controls": required_controls,
         "control_matrix": control_matrix,
         "exceptions_used": active_exceptions,
+        "flaky_policy": flaky or {"evaluated": False},
+        "evidence_integrity": evidence_integrity,
+        "audit_reasons": audit_reasons,
         "failures": failures,
         "passed": len(failures) == 0,
         "generated_at": datetime.now(timezone.utc).isoformat(),

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://uap.local/schemas/results-v2.schema.json",
+  "title": "Unified Assurance results.v2",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "service",
+    "timestamp",
+    "summary",
+    "sections"
+  ],
+  "properties": {
+    "contract_version": {"const": "results.v2"},
+    "service": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "summary": {
+      "type": "object",
+      "required": ["recommendation", "risk_tier", "policy_validation_passed"],
+      "properties": {
+        "recommendation": {"type": "string", "enum": ["GO", "CONDITIONAL", "NO-GO"]},
+        "risk_tier": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+        "risk_score": {"type": ["number", "integer"]},
+        "policy_validation_passed": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "sections": {
+      "type": "object",
+      "required": ["tests", "security", "performance", "policy", "exceptions", "evidence"],
+      "properties": {
+        "tests": {"type": "object"},
+        "security": {"type": "object"},
+        "performance": {"type": "object"},
+        "policy": {"type": "object"},
+        "exceptions": {"type": "object"},
+        "evidence": {"type": "object"}
+      },
+      "additionalProperties": true
+    },
+    "legacy_results_path": {"type": "string"}
+  },
+  "additionalProperties": true
+}

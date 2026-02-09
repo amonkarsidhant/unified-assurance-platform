@@ -33,7 +33,7 @@ def evaluate(metrics, risk_context):
     return decision, mandatory_failed, soft_failed
 
 
-def render(data, promotion):
+def render(data, promotion, flaky=None):
     metrics = data.get("metrics", {})
     risk_context = data.get("risk_context", {})
     decision, mandatory_failed, soft_failed = evaluate(metrics, risk_context)
@@ -89,6 +89,18 @@ def render(data, promotion):
     else:
         lines.append("- Promotion decision file not provided.")
 
+    lines += ["", "## Flaky Test Policy", ""]
+    if flaky:
+        lines.append(f"- Evaluated: **{flaky.get('evaluated')}**")
+        lines.append(f"- Allowed: **{flaky.get('allowed')}**")
+        lines.append(f"- Flaky count: **{flaky.get('flaky_count', 0)}** / max **{flaky.get('max_flaky_tests', 'n/a')}**")
+        for item in flaky.get("flaky_tests", []):
+            lines.append(f"  - {item.get('test')}: rate={item.get('flaky_rate')} ({item.get('fail_count')}/{item.get('observations')})")
+        for reason in flaky.get("reasons", []):
+            lines.append(f"  - reason: {reason}")
+    else:
+        lines.append("- Flaky policy result not provided.")
+
     lines += ["", "## Compliance Traceability", "", "- Mapping file: `docs/compliance/control-traceability.md`", "- Ownership file: `config/control-ownership.json`"]
     return "\n".join(lines) + "\n"
 
@@ -98,15 +110,20 @@ def main():
     parser.add_argument("--input", required=True, help="Path to input JSON results")
     parser.add_argument("--output", required=True, help="Path to output markdown report")
     parser.add_argument("--promotion", default="artifacts/latest/promotion-decision.json", help="Optional promotion decision JSON")
+    parser.add_argument("--flaky", default="artifacts/latest/flaky-policy.json", help="Optional flaky policy JSON")
     args = parser.parse_args()
 
     data = json.loads(Path(args.input).read_text())
     promotion = None
+    flaky = None
     p = Path(args.promotion)
     if p.exists():
         promotion = json.loads(p.read_text())
+    f = Path(args.flaky)
+    if f.exists():
+        flaky = json.loads(f.read_text())
 
-    report = render(data, promotion)
+    report = render(data, promotion, flaky)
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(report)

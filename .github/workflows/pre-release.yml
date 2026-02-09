@@ -44,10 +44,14 @@ jobs:
             --service "$service" \
             --environment "${{ inputs.target-environment || 'stage' }}" \
             --tier "$tier"
+          python3 scripts/evaluate-flaky-policy.py --policy config/flaky-policy.json --results artifacts/latest/results.json --output artifacts/latest/flaky-policy.json
           python3 scripts/evaluate-promotion.py \
             --environment "${{ inputs.target-environment || 'stage' }}" \
             --results artifacts/latest/results.json \
-            --exceptions-dir config/exceptions
+            --exceptions-dir config/exceptions \
+            --flaky-result artifacts/latest/flaky-policy.json
+          python3 scripts/normalize-results-v2.py --input artifacts/latest/results.json --output artifacts/latest/results.v2.json --exceptions artifacts/latest/exceptions-audit.json --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json
+          python3 scripts/render-pr-comment.py --results artifacts/latest/results.json --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --output artifacts/latest/pr-comment.md
 
   evidence-bundle:
     name: evidence-bundle-and-sign

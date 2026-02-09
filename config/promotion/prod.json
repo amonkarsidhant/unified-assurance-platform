@@ -15,5 +15,7 @@
     "performance_smoke": ["pass", "skipped"]
   },
   "required_evidence_files": ["results.json", "release-report.md"],
-  "require_signed_bundle": true
+  "require_signed_bundle": true,
+  "signature_required_tiers": ["high", "critical"],
+  "signature_fail_closed": true
 }

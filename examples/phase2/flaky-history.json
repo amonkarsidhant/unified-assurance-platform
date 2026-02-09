@@ -1,0 +1,7 @@
+[
+  {"timestamp":"2026-02-01T10:00:00Z","tests":{"unit":"pass","integration":"pass","contract":"pass","dast_zap":"pass"}},
+  {"timestamp":"2026-02-02T10:00:00Z","tests":{"unit":"fail","integration":"pass","contract":"pass","dast_zap":"pass"}},
+  {"timestamp":"2026-02-03T10:00:00Z","tests":{"unit":"pass","integration":"fail","contract":"pass","dast_zap":"pass"}},
+  {"timestamp":"2026-02-04T10:00:00Z","tests":{"unit":"fail","integration":"pass","contract":"pass","dast_zap":"fail"}},
+  {"timestamp":"2026-02-05T10:00:00Z","tests":{"unit":"pass","integration":"pass","contract":"pass","dast_zap":"pass"}}
+]

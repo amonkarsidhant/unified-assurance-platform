@@ -1,0 +1,8 @@
+{
+  "window_runs": 10,
+  "min_observations": 3,
+  "flaky_rate_threshold": 0.2,
+  "max_flaky_tests": 3,
+  "fail_closed_if_missing_history": false,
+  "history_file": "artifacts/history/test-history.json"
+}

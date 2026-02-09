@@ -47,10 +47,16 @@ jobs:
         run: make run-assurance
       - name: Validate exceptions
         run: make validate-exceptions ENV=stage
+      - name: Evaluate flaky test policy
+        run: make evaluate-flaky
       - name: Evaluate promotion policy (stage)
         run: make promotion-check ENV=stage
       - name: Generate report
         run: make report
+      - name: Normalize results (results.v2)
+        run: make normalize-results-v2
+      - name: Render PR comment preview
+        run: make render-pr-comment
       - name: Upload assurance artifacts
         if: ${{ inputs.upload-artifacts }}
         uses: actions/upload-artifact@v4
@@ -74,10 +80,16 @@ jobs:
         run: make run-assurance-real
       - name: Validate exceptions
         run: make validate-exceptions ENV=stage
+      - name: Evaluate flaky test policy
+        run: make evaluate-flaky
       - name: Evaluate promotion policy (stage)
         run: make promotion-check ENV=stage
       - name: Generate report
         run: make report
+      - name: Normalize results (results.v2)
+        run: make normalize-results-v2
+      - name: Render PR comment preview
+        run: make render-pr-comment
       - name: Upload assurance artifacts (real)
         if: ${{ inputs.upload-artifacts }}
         uses: actions/upload-artifact@v4

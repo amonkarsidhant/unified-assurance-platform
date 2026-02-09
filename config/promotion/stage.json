@@ -14,5 +14,7 @@
     "dast_zap": ["pass", "skipped"],
     "performance_smoke": ["pass", "skipped"]
   },
-  "required_evidence_files": ["results.json", "release-report.md"]
+  "required_evidence_files": ["results.json", "release-report.md"],
+  "signature_required_tiers": ["high", "critical"],
+  "signature_fail_closed": true
 }
