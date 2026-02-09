@@ -5,7 +5,7 @@
   "tags": ["uap", "local", "autoprovisioned"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "10s",
   "time": {
     "from": "now-15m",
@@ -14,105 +14,68 @@
   "panels": [
     {
       "id": 1,
-      "title": "Targets Up",
+      "title": "Up by Job",
       "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
-        {
-          "expr": "up",
-          "legendFormat": "{{job}} @ {{instance}}",
-          "refId": "A"
-        }
+        { "expr": "up", "legendFormat": "{{job}}", "refId": "A" }
       ]
     },
     {
       "id": 2,
-      "title": "Prometheus Scrape Duration (p95)",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "title": "Total Healthy Targets",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
       "targets": [
-        {
-          "expr": "histogram_quantile(0.95, sum(rate(prometheus_target_interval_length_seconds_bucket[5m])) by (le, job))",
-          "legendFormat": "{{job}}",
-          "refId": "A"
-        }
-      ]
+        { "expr": "sum(up)", "refId": "A" }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "auto"
+      }
     },
     {
       "id": 3,
-      "title": "OTel Collector Uptime (seconds)",
+      "title": "Prometheus TSDB Series",
       "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {"h": 7, "w": 8, "x": 0, "y": 8},
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
       "targets": [
-        {
-          "expr": "otelcol_process_uptime",
-          "refId": "A"
-        }
+        { "expr": "prometheus_tsdb_head_series", "refId": "A" }
       ],
       "options": {
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
         "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "value"
+        "textMode": "auto"
       }
     },
     {
       "id": 4,
-      "title": "Prometheus Build Info",
-      "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {"h": 7, "w": 8, "x": 8, "y": 8},
+      "title": "OTel Collector Uptime (s)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
-        {
-          "expr": "prometheus_build_info",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "auto",
-        "textMode": "name",
-        "colorMode": "none"
-      }
+        { "expr": "otelcol_process_uptime", "legendFormat": "uptime", "refId": "A" }
+      ]
     },
     {
       "id": 5,
-      "title": "Collector Exporter Queue Size",
+      "title": "Prometheus HTTP Requests/s",
       "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "gridPos": {"h": 7, "w": 8, "x": 16, "y": 8},
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "targets": [
-        {
-          "expr": "otelcol_exporter_queue_size",
-          "legendFormat": "{{exporter}}",
-          "refId": "A"
-        }
+        { "expr": "sum(rate(prometheus_http_requests_total[1m]))", "legendFormat": "req/s", "refId": "A" }
       ]
     }
   ]
