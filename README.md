@@ -165,9 +165,24 @@ NEWMAN_BASE_URL=http://127.0.0.1:5678 PLAYWRIGHT_BASE_URL=http://127.0.0.1:8790 
 make run-assurance-real
 ```
 
-Default sample assets are included so Newman/Playwright run without extra setup:
+Default sample assets are included so Newman/Playwright run by default:
 - API: `tests/api/postman_collection.json` (+ `tests/api/postman_environment.json`)
 - UI: `tests/ui/smoke.spec.ts` with `playwright.config.ts`
+
+One-time local setup (recommended):
+```bash
+npm install
+npx playwright install chromium
+```
+
+Quick verification:
+```bash
+make demo-up
+make demo-site-up
+make run-assurance-real || true
+cat artifacts/latest/newman_smoke.status
+cat artifacts/latest/playwright_smoke.status
+```
 
 Replace those files with your service-specific checks when onboarding your app.
 
