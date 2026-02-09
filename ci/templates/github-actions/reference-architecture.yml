@@ -1,0 +1,76 @@
+name: reference-architecture-assurance
+on:
+  pull_request:
+    paths:
+      - 'services/**'
+      - 'infra/**'
+      - 'db/**'
+      - '.github/workflows/reference-architecture-assurance.yml'
+  workflow_dispatch:
+
+jobs:
+  pr-gate:
+    name: PR Gate (fast checks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make bootstrap
+      - run: make validate
+      - run: make run-assurance
+      - name: Gate evidence mapping (PR)
+        run: |
+          cat <<'MAP' > artifacts/latest/pr-gate-evidence.md
+          Stage: PR Gate
+          Required evidence:
+          - lint/type/config validation outputs
+          - unit/integration/contract results
+          - LB/API basic smoke summary
+          MAP
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reference-architecture-pr-gate
+          path: artifacts/latest/
+
+  pre-release-gate:
+    name: Pre-release Gate (resilience + security)
+    runs-on: ubuntu-latest
+    needs: [pr-gate]
+    steps:
+      - uses: actions/checkout@v4
+      - run: make bootstrap
+      - run: make run-assurance
+      - name: Gate evidence mapping (Pre-release)
+        run: |
+          cat <<'MAP' > artifacts/latest/pre-release-gate-evidence.md
+          Stage: Pre-release Gate
+          Required evidence:
+          - resilience scenario outputs (DB lag/API timeout/VM loss/LB misroute/queue backlog)
+          - security scan outputs (SAST/dependency/secret/auth negative)
+          - performance smoke (p95/error-rate)
+          MAP
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reference-architecture-pre-release-gate
+          path: artifacts/latest/
+
+  post-deploy-gate:
+    name: Post-deploy Gate (runtime confidence)
+    runs-on: ubuntu-latest
+    needs: [pre-release-gate]
+    steps:
+      - uses: actions/checkout@v4
+      - run: make bootstrap
+      - run: make run-assurance
+      - name: Gate evidence mapping (Post-deploy)
+        run: |
+          cat <<'MAP' > artifacts/latest/post-deploy-gate-evidence.md
+          Stage: Post-deploy Gate
+          Required evidence:
+          - synthetic transaction check results
+          - SLO/error-budget snapshot
+          - alert pipeline verification
+          MAP
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reference-architecture-post-deploy-gate
+          path: artifacts/latest/

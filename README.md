@@ -38,6 +38,18 @@ Artifacts created in:
 - `artifacts/latest/` (run outputs)
 - `evidence/<timestamp>/` (auditable bundle)
 
+## New Golden Path: Enterprise Reference Architecture
+For teams deploying transaction platforms with LB + API + VM + DB + queue/cache.
+
+Quick links:
+- `docs/reference-architecture/overview.md`
+- `docs/reference-architecture/diagram.md`
+- `docs/reference-architecture/component-contracts.md`
+- `docs/golden-paths/reference-architecture.md`
+- `ci/templates/github-actions/reference-architecture.yml`
+- `demo/reference-scenarios.md`
+- `reporting/reference-architecture-scorecard.md`
+
 ## Repo map
 - `docs/` product + technical guidance
 - `policies/` release gates and risk scoring
