@@ -1,0 +1,20 @@
+name: pr-assurance
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-assurance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assurance:
+    uses: ./.github/workflows/reusable-assurance.yml
+    with:
+      assurance-mode: pragmatic
+      run-real: false
+      upload-artifacts: true

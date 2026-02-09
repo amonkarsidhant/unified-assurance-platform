@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke report collect-evidence demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke report collect-evidence evidence-bundle sign-bundle promotion-check demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -45,6 +45,21 @@ report:
 
 collect-evidence:
 	@./scripts/collect-evidence.sh
+
+EVIDENCE_SOURCE ?= artifacts/latest
+EVIDENCE_OUT ?= evidence/bundles
+ENV ?= dev
+
+evidence-bundle:
+	@./scripts/create-evidence-bundle.py --source $(EVIDENCE_SOURCE) --out-dir $(EVIDENCE_OUT)
+
+sign-bundle:
+	@latest_bundle=$$(ls -1 $(EVIDENCE_OUT)/*.tar.gz | tail -n1); \
+		if [ -z "$$latest_bundle" ]; then echo "No bundle found in $(EVIDENCE_OUT)"; exit 1; fi; \
+		./scripts/sign-evidence-bundle.sh "$$latest_bundle"
+
+promotion-check:
+	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest
 
 demo-up:
 	@if command -v docker >/dev/null 2>&1; then \

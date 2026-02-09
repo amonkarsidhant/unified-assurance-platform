@@ -1,0 +1,83 @@
+name: reusable-assurance
+
+on:
+  workflow_call:
+    inputs:
+      assurance-mode:
+        required: false
+        type: string
+        default: pragmatic
+      run-real:
+        required: false
+        type: boolean
+        default: false
+      upload-artifacts:
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run validate
+        run: make validate
+
+  tooling-check:
+    name: tooling-check
+    runs-on: ubuntu-latest
+    needs: [validate]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tooling check
+        run: make tooling-check
+
+  run-assurance:
+    name: run-assurance
+    runs-on: ubuntu-latest
+    needs: [tooling-check]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run assurance (pragmatic)
+        run: make run-assurance
+      - name: Generate report
+        run: make report
+      - name: Upload assurance artifacts
+        if: ${{ inputs.upload-artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: assurance-pragmatic
+          path: |
+            artifacts/latest/results.json
+            artifacts/latest/release-report.md
+            artifacts/latest/*.status
+            artifacts/latest/*.log
+            artifacts/latest/*.json
+
+  run-assurance-real:
+    name: run-assurance-real
+    runs-on: ubuntu-latest
+    needs: [tooling-check]
+    if: ${{ inputs.run-real }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run assurance (real)
+        run: make run-assurance-real
+      - name: Generate report
+        run: make report
+      - name: Upload assurance artifacts (real)
+        if: ${{ inputs.upload-artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: assurance-real
+          path: |
+            artifacts/latest/results.json
+            artifacts/latest/release-report.md
+            artifacts/latest/*.status
+            artifacts/latest/*.log
+            artifacts/latest/*.json

@@ -1,0 +1,8 @@
+# Default ownership for all repository content
+* @your-org/platform-owners
+
+# CI/CD and security policy ownership
+/.github/ @your-org/platform-owners @your-org/security-engineering
+/policies/ @your-org/security-engineering
+/scripts/ @your-org/platform-owners
+/docs/ @your-org/platform-owners

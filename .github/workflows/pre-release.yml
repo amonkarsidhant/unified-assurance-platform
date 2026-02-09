@@ -1,0 +1,75 @@
+name: pre-release-assurance
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      target-environment:
+        description: Promotion target
+        required: true
+        default: stage
+        type: choice
+        options: [dev, stage, prod]
+
+permissions:
+  contents: read
+
+jobs:
+  assurance:
+    uses: ./.github/workflows/reusable-assurance.yml
+    with:
+      assurance-mode: real
+      run-real: true
+      upload-artifacts: true
+
+  promotion-gate:
+    name: promotion-gate
+    runs-on: ubuntu-latest
+    needs: [assurance]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download real artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: assurance-real
+          path: artifacts/latest
+      - name: Evaluate promotion gate
+        run: |
+          python3 scripts/evaluate-promotion.py \
+            --environment "${{ inputs.target-environment || 'stage' }}" \
+            --results artifacts/latest/results.json
+
+  evidence-bundle:
+    name: evidence-bundle-and-sign
+    runs-on: ubuntu-latest
+    needs: [promotion-gate]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download real artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: assurance-real
+          path: artifacts/latest
+      - name: Create immutable evidence bundle
+        run: |
+          python3 scripts/create-evidence-bundle.py --source artifacts/latest --out-dir evidence/bundles
+      - name: Attempt cosign signature
+        run: |
+          latest_bundle=$(ls -1 evidence/bundles/*.tar.gz | tail -n1)
+          scripts/sign-evidence-bundle.sh "$latest_bundle"
+      - name: Upload evidence bundle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-bundle
+          path: |
+            evidence/bundles/*.tar.gz
+            evidence/bundles/*.sha256
+            evidence/bundles/*.manifest.txt
+            evidence/bundles/*.sig
+            evidence/bundles/*.cert
+            evidence/bundles/*.sig.skip.txt

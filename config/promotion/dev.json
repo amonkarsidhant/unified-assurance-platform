@@ -1,0 +1,14 @@
+{
+  "environment": "dev",
+  "minimum_test_pass_rate": 0.3,
+  "allow_critical_test_failures": false,
+  "required_checks": ["validate", "tooling-check", "run-assurance"],
+  "required_result_statuses": {
+    "lint": ["pass", "skipped"],
+    "unit": ["pass", "skipped"],
+    "integration": ["pass", "skipped"],
+    "contract": ["pass", "skipped"],
+    "security_scan": ["pass", "skipped"],
+    "dependency_scan": ["pass", "skipped"]
+  }
+}
