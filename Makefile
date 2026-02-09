@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -52,13 +52,22 @@ run-assurance-real:
 	@$(MAKE) normalize-results-v2
 
 assurance-metrics-export:
-	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom
+	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --results-v2 artifacts/latest/results.v2.json --exceptions-audit artifacts/latest/exceptions-audit.json --pr-comment artifacts/latest/pr-comment.md
 
 assurance-dashboard-check:
 	@echo "Checking Prometheus assurance metrics..."
 	@curl -fsS "http://localhost:9090/api/v1/query?query=assurance_pass_rate" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "assurance_pass_rate missing"; print("✅ Prometheus has assurance_pass_rate")'
 	@echo "Checking Grafana dashboard provisioning..."
 	@curl -fsS -u admin:admin "http://localhost:3000/api/search?query=UAP%20Assurance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Dashboard") for x in r), "Dashboard not found"; print("✅ Grafana dashboard found")'
+
+assurance-governance-check:
+	@echo "Checking Prometheus governance metrics..."
+	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total; do \
+		curl -fsS "http://localhost:9090/api/v1/query?query=$$q" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "missing metric"'; \
+		echo "✅ Prometheus has $$q"; \
+	done
+	@echo "Checking Grafana governance dashboard provisioning..."
+	@curl -fsS -u admin:admin "http://localhost:3000/api/search?query=UAP%20Assurance%20Governance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Governance Dashboard") for x in r), "Governance dashboard not found"; print("✅ Grafana governance dashboard found")'
 
 zap-smoke:
 	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ONLY_ZAP_SMOKE=1 ./scripts/run-assurance.sh
@@ -68,6 +77,7 @@ OUT ?= artifacts/latest/release-report.md
 
 report:
 	@./scripts/generate-release-report.py --input $(RESULTS) --output $(OUT)
+	@$(MAKE) assurance-metrics-export
 	@echo "Report generated at $(OUT)"
 
 collect-evidence:
@@ -102,6 +112,7 @@ render-pr-comment:
 
 promotion-check:
 	@./scripts/evaluate-promotion.py --environment $(ENV) --results artifacts/latest/results.json --evidence-dir artifacts/latest --exceptions-dir $(EXCEPTIONS_DIR) --flaky-result artifacts/latest/flaky-policy.json
+	@$(MAKE) assurance-metrics-export
 	@echo "Promotion decision: artifacts/latest/promotion-decision.json"
 
 MODULE ?=

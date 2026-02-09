@@ -53,6 +53,18 @@ cat artifacts/latest/promotion-decision.high-sample.json
 
 Expected: failure includes `signature/attestation missing for required tier` when no valid `.sig` + `.cert` exist.
 
+## Grafana mapping (artifact → metric → panel)
+
+| Artifact source | Exported metric(s) | Governance dashboard panel |
+|---|---|---|
+| `promotion-decision.json` (`passed`) | `assurance_promotion_allowed` | Promotion Allowed |
+| `promotion-decision.json` (`failures[]`) | `assurance_promotion_failed_gates_total`, `assurance_promotion_failed_gate{gate=...}` | Failed Gates (count/list) |
+| `promotion-decision.json` (`evidence_integrity`) | `assurance_evidence_signature_required`, `assurance_evidence_signature_present`, `assurance_evidence_attestation_present`, `assurance_evidence_fail_closed` | Evidence Integrity |
+| `exceptions-audit.json` (+ fallback `promotion-decision.json.exceptions_used`) | `assurance_exceptions_active_total`, `assurance_exceptions_expired_total`, `assurance_exceptions_violations_total` | Exceptions Active/Expired/Violations |
+| `flaky-policy.json` (+ fallback `promotion-decision.json.flaky_policy`) | `assurance_flaky_violations_total`, `assurance_flaky_count`, `assurance_flaky_allowed` | Flaky Violations / Count / Allowed |
+| `results.v2.json` or `promotion-decision.json` (`control_matrix`) | `assurance_control_required{control=...}`, `assurance_control_pass{control=...,status=...}` | Tier-required Controls Pass/Fail Matrix |
+| `pr-comment.md` (fallback to results-derived counts) | `assurance_pr_summary_severity_total{severity=...}` | PR Summary Severity Signals |
+
 ## Notes
 
 - Backward compatibility is preserved: existing scripts still consume `results.json`.

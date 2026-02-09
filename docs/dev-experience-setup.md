@@ -50,8 +50,10 @@ The local stack includes `node-exporter` textfile collector wired to `artifacts/
 
 ```bash
 make dev-stack-down && make dev-stack-up
-make run-assurance-real
+make run-assurance-real || true
+make promotion-check ENV=stage || true
 make assurance-dashboard-check
+make assurance-governance-check
 ```
 
 Manual export (if needed):
@@ -64,8 +66,20 @@ What `make assurance-dashboard-check` validates:
 - Prometheus query returns `assurance_pass_rate`
 - Grafana API search finds `UAP Assurance Dashboard`
 
+What `make assurance-governance-check` validates:
+- Prometheus returns governance metrics including:
+  - `assurance_promotion_allowed`
+  - `assurance_promotion_failed_gates_total`
+  - `assurance_evidence_signature_required`
+  - `assurance_exceptions_active_total`
+  - `assurance_flaky_violations_total`
+  - `assurance_control_pass`
+  - `assurance_pr_summary_severity_total`
+- Grafana API search finds `UAP Assurance Governance Dashboard`
+
 Dashboard location in Grafana:
 - **Dashboards → UAP → UAP Assurance Dashboard**
+- **Dashboards → UAP → UAP Assurance Governance Dashboard**
 
 Trend persistence caveat:
 - Trend panels reflect Prometheus time series over scrape time.

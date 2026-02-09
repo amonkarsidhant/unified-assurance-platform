@@ -50,6 +50,22 @@ Phase 2 hardens UAP from advisory risk signals to policy-enforced, auditable rel
 - Exception validation (`make validate-exceptions ENV=<env>`) enforces governance rules.
 - Promotion gate (`make promotion-check ENV=<env>`) creates auditable decision output.
 - Release report (`make report`) combines assurance + promotion context.
+- Metrics export (`make assurance-metrics-export`) now includes governance outputs from `promotion-decision.json`, `exceptions-audit.json`, `flaky-policy.json`, `results.v2.json`, and `pr-comment.md` fallback.
+
+## Observability / reporting
+
+Grafana now has two assurance views:
+- `UAP Assurance Dashboard` (core quality/risk health)
+- `UAP Assurance Governance Dashboard` (promotion, evidence integrity, exceptions, flaky policy, controls matrix, PR-style severity signals)
+
+Validation commands:
+
+```bash
+make assurance-dashboard-check
+make assurance-governance-check
+```
+
+These checks validate both Prometheus metrics availability and Grafana dashboard provisioning via API.
 
 ## Phase 2 local verification
 

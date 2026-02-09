@@ -136,6 +136,24 @@ In Grafana (`http://localhost:3000`):
   - policy validation
   - vulnerability and failure signals
   - trends over time (local persistence caveats apply)
+- **UAP Assurance Governance Dashboard**
+  - promotion allowed (blocked/allowed)
+  - failed gates list + count
+  - evidence integrity state (signature required/present, attestation present, fail-closed)
+  - exceptions active/expired/violations
+  - flaky policy signals (violations/count/allowed)
+  - tier-required controls pass/fail matrix approximation
+  - PR-summary-style severity signals
+
+### Grafana vs artifact files (exact split)
+
+- **Grafana shows** aggregated/operational signals exported in `artifacts/metrics/assurance.prom` (Prometheus-scraped).
+- **Artifacts remain source-of-truth details**:
+  - `artifacts/latest/promotion-decision.json` → full promotion rationale, failed gates, evidence integrity, exceptions used.
+  - `artifacts/latest/exceptions-audit.json` → exception governance details and violations.
+  - `artifacts/latest/flaky-policy.json` → flaky-policy evaluation details.
+  - `artifacts/latest/results.v2.json` → normalized cross-section contract used for downstream/reporting.
+  - `artifacts/latest/pr-comment.md` → human-readable PR summary text (severity metric export falls back to results-derived counts if absent).
 
 ---
 
