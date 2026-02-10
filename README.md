@@ -382,6 +382,12 @@ Detailed guide: `docs/phase2-5-p0.md`
 
 ---
 
+## 🧭 Platform Trial Pack (next 2 weeks)
+
+- Implementation plan: `docs/roadmap/platform-trial-pack-2week-plan.md`
+- Prioritized backlog: `docs/roadmap/platform-trial-pack-backlog.md`
+- Architecture + extension points: `docs/roadmap/platform-trial-pack-architecture.md`
+
 ## 🗂️ Repo map
 
 - `docs/` → guides, architecture, golden paths
