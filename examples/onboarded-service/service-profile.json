@@ -1,0 +1,19 @@
+{
+  "service": "orders-api",
+  "type": "api",
+  "tier": "high",
+  "owners": [
+    "@orders-owner",
+    "@security-owner"
+  ],
+  "onboarding": {
+    "mode": "developer-onboarding",
+    "current_stage": "A",
+    "target_stage": "C",
+    "generated_at": "2026-02-10T06:40:00Z"
+  },
+  "preflight": {
+    "command": "make preflight MODULE=orders-api TYPE=api",
+    "notes": "Run once in Stage A and then per release candidate."
+  }
+}

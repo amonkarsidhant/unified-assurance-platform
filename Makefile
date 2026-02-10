@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -189,6 +189,18 @@ onboarding-plan:
 	@./scripts/onboarding-plan.py --service "$(SERVICE)" | tee artifacts/latest/onboarding/$(SERVICE)-plan.md
 	@echo "Saved: artifacts/latest/onboarding/$(SERVICE)-plan.md"
 	@$(MAKE) assurance-metrics-export-if-ready
+
+consumer-quickstart:
+	@printf "%s\n" "# UAP Consumer Quickstart (first run)"
+	@printf "%s\n" "git clone <your-uap-repo-url>"
+	@printf "%s\n" "cd unified-assurance-platform"
+	@printf "%s\n" "make bootstrap"
+	@printf "%s\n" "make validate"
+	@printf "%s\n" "make onboard SERVICE=payments-api TYPE=api TIER=high OWNERS=api-owner,security-owner"
+	@printf "%s\n" "make preflight MODULE=payments-api TYPE=api"
+	@printf "%s\n" "make onboarding-score SERVICE=payments-api"
+	@printf "%s\n" "make onboarding-plan SERVICE=payments-api"
+	@printf "%s\n" "make dev-stack-up && make assurance-governance-check"
 
 explain-last-fail:
 	@./scripts/explain-failures.py

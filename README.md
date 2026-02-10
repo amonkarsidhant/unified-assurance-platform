@@ -85,6 +85,21 @@ make suggest-next-steps
 make request-exception CONTROL=dast_zap REASON='Temporary false positive' EXPIRY_DAYS=7
 ```
 
+## 🧭 New Consumer Start Here
+
+If you are onboarding to UAP for the first time, start with:
+
+- 10-minute onboarding path: `docs/consumer-quickstart.md`
+- Tool installs + verification: `docs/required-tooling.md`
+- Common failure fixes: `docs/troubleshooting.md`
+- Completed sample onboarding bundle: `examples/onboarded-service/`
+
+One-command path to onboarding mode:
+
+```bash
+make consumer-quickstart
+```
+
 Artifacts generated in `artifacts/latest/`:
 - `preflight-summary.json` + `.md`
 - `failure-explanations.json` + `.md`

@@ -1,0 +1,22 @@
+{
+  "environment": "stage",
+  "service": "orders-api",
+  "risk_tier": "high",
+  "required_controls": [
+    "sast",
+    "sca",
+    "dast",
+    "perf_smoke",
+    "contract",
+    "resilience",
+    "chaos_resilience"
+  ],
+  "failures": [],
+  "passed": true,
+  "audit_reasons": [
+    "all mandatory controls passed",
+    "signature and attestation present"
+  ],
+  "generated_at": "2026-02-10T06:49:09Z",
+  "compliance_trace": "docs/compliance/control-traceability.md"
+}
