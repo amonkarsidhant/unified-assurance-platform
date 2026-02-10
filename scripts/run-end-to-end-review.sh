@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ART_DIR="$ROOT_DIR/artifacts/latest"
+REVIEW_ENV="${ENV:-stage}"
 mkdir -p "$ART_DIR"
 
 log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
@@ -27,7 +28,7 @@ fi
 
 log "5) Report + promotion decision"
 make report
-make promotion-check ENV=stage || true
+make promotion-check ENV="$REVIEW_ENV" || true
 
 log "6) Governance checks (if stack is running)"
 if curl -fsS "http://localhost:9090/-/healthy" >/dev/null 2>&1; then
@@ -48,10 +49,11 @@ patterns = {
   'hardcoded_basic_auth': re.compile(r'curl[^\n]*\s-u\s+[^\s]'),
 }
 rows = []
+allowed_extensions = {'.sh', '.py', '.yml', '.yaml', '.json', '.md'}
 for p in root.rglob('*'):
     if not p.is_file() or '.git' in p.parts or p.parts[0] in ('node_modules', 'artifacts', 'evidence'):
         continue
-    if p.suffix.lower() not in {'.sh','.py','.yml','.yaml','.json','.md',''} and p.name != 'Makefile':
+    if p.name != 'Makefile' and (not p.suffix or p.suffix.lower() not in allowed_extensions):
         continue
     try:
         text = p.read_text(errors='ignore')
@@ -74,23 +76,28 @@ print(f'Wrote {out}')
 PY
 
 log "8) Summarize review status"
-python3 - <<'PY'
+REVIEW_ENV="$REVIEW_ENV" python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 res_p = Path('artifacts/latest/results.json')
 promo_p = Path('artifacts/latest/promotion-decision.json')
 summary_p = Path('artifacts/latest/end-to-end-review-summary.md')
 res = json.loads(res_p.read_text()) if res_p.exists() else {}
 promo = json.loads(promo_p.read_text()) if promo_p.exists() else {}
-checks = ['lint','unit','integration','contract','security_scan','dependency_scan','dast_zap','performance_smoke','chaos_resilience','secret_scan','api_fuzz_contract','dockerfile_policy','iac_policy','newman_smoke','playwright_smoke']
+default_checks = ['lint','unit','integration','contract','security_scan','dependency_scan','dast_zap','performance_smoke','chaos_resilience','secret_scan','api_fuzz_contract','dockerfile_policy','iac_policy','newman_smoke','playwright_smoke']
+test_keys = list(res.get('tests', {}).keys())
+checks = (default_checks + [k for k in test_keys if k not in default_checks]) if test_keys else default_checks
+review_env = os.environ.get('REVIEW_ENV', 'stage')
 with summary_p.open('w') as f:
     f.write('# End-to-End Review Summary\n\n')
     f.write(f"- pass_rate: `{res.get('metrics',{}).get('test_pass_rate','n/a')}`\n")
     f.write(f"- critical_test_failures: `{res.get('metrics',{}).get('critical_test_failures','n/a')}`\n")
-    f.write(f"- promotion_passed(stage): `{promo.get('passed','n/a')}`\n\n")
+    f.write(f"- promotion_passed({review_env}): `{promo.get('passed','n/a')}`\n\n")
     f.write('## Check statuses\n')
+    tests = res.get('tests', {})
     for c in checks:
-        f.write(f"- {c}: `{res.get('tests',{}).get(c,'missing')}`\n")
+        f.write(f"- {c}: `{tests.get(c,'missing')}`\n")
     f.write('\n## Artifacts\n')
     for p in [
         'artifacts/latest/results.json',
