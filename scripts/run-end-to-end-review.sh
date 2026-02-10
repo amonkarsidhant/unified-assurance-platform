@@ -21,9 +21,10 @@ log "3) Phase A security/policy checks"
 PATH="$HOME/.local/bin:$PATH" make phase-a-checks || true
 
 log "4) Assurance execution (prefer real mode, fallback pragmatic)"
-if ! PATH="$HOME/.local/bin:$PATH" make run-assurance-real; then
+REVIEW_PATH="$HOME/.local/bin:$PATH"
+if ! PATH="$REVIEW_PATH" make run-assurance-real; then
   log "run-assurance-real failed, running pragmatic assurance for baseline artifacts"
-  make run-assurance
+  PATH="$REVIEW_PATH" make run-assurance
 fi
 
 log "5) Report + promotion decision"
@@ -72,7 +73,8 @@ with out.open('w') as f:
     else:
         f.write('| file | line | pattern | snippet |\n|---|---:|---|---|\n')
         for r in rows:
-            f.write(f'| `{r[0]}` | {r[1]} | `{r[2]}` | `{r[3].replace("|","\\|")}` |\n')
+            snippet = r[3].replace("|", "\\|").replace("`", "&#96;")
+            f.write(f'| `{r[0]}` | {r[1]} | `{r[2]}` | `{snippet}` |\n')
 print(f'Wrote {out}')
 PY
 
