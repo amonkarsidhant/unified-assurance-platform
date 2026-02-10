@@ -26,6 +26,7 @@ ZAP_TARGET_URL="${ZAP_TARGET_URL:-http://127.0.0.1:5678}"
 ZAP_TIMEOUT_MIN="${ZAP_TIMEOUT_MIN:-2}"
 ZAP_FAIL_LEVEL="${ZAP_FAIL_LEVEL:-medium}"
 ZAP_DOCKER_IMAGE="${ZAP_DOCKER_IMAGE:-ghcr.io/zaproxy/zaproxy:stable}"
+CURL_TIMEOUT_SEC="${CURL_TIMEOUT_SEC:-5}"
 
 log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
 
@@ -95,14 +96,41 @@ run_wrapper_step() {
   fi
 }
 
+normalize_zap_level() {
+  local level="$(echo "${1:-WARN}" | tr '[:lower:]' '[:upper:]')"
+  case "$level" in
+    LOW) echo "INFO" ;;
+    MEDIUM) echo "WARN" ;;
+    HIGH|CRITICAL) echo "FAIL" ;;
+    PASS|IGNORE|INFO|WARN|FAIL) echo "$level" ;;
+    *) echo "WARN" ;;
+  esac
+}
+
+is_url_reachable() {
+  local url="$1"
+  if ! command -v curl >/dev/null 2>&1; then
+    return 0
+  fi
+  curl -fsS --max-time "$CURL_TIMEOUT_SEC" "$url" >/dev/null 2>&1
+}
+
 run_zap_baseline() {
   if [ "$MODE" != "real" ]; then
     record_skipped dast_zap "pragmatic mode: ZAP baseline runs only in real mode"
     return 0
   fi
 
+  if ! is_url_reachable "$ZAP_TARGET_URL"; then
+    record_skipped dast_zap "real mode: zap target unreachable ($ZAP_TARGET_URL)"
+    return 0
+  fi
+
+  local zap_level
+  zap_level="$(normalize_zap_level "$ZAP_FAIL_LEVEL")"
+
   if command -v zap-baseline.py >/dev/null 2>&1; then
-    run_cmd_step dast_zap bash -lc "zap-baseline.py -t '$ZAP_TARGET_URL' -m '$ZAP_TIMEOUT_MIN' -l '$ZAP_FAIL_LEVEL'"
+    run_cmd_step dast_zap bash -lc "zap-baseline.py -t '$ZAP_TARGET_URL' -m '$ZAP_TIMEOUT_MIN' -l '$zap_level'"
     return $?
   fi
 
@@ -110,7 +138,7 @@ run_zap_baseline() {
     local docker_target="$ZAP_TARGET_URL"
     docker_target="${docker_target/127.0.0.1/host.docker.internal}"
     docker_target="${docker_target/localhost/host.docker.internal}"
-    run_cmd_step dast_zap bash -lc "docker run --rm -t '$ZAP_DOCKER_IMAGE' zap-baseline.py -t '$docker_target' -m '$ZAP_TIMEOUT_MIN' -l '$ZAP_FAIL_LEVEL'"
+    run_cmd_step dast_zap bash -lc "docker run --rm -t '$ZAP_DOCKER_IMAGE' zap-baseline.py -t '$docker_target' -m '$ZAP_TIMEOUT_MIN' -l '$zap_level'"
     return $?
   fi
 
@@ -253,8 +281,13 @@ else
   if [ -f "$ROOT_DIR/tests/api/postman_environment.json" ]; then
     NEWMAN_ENV_ARGS="--environment '$ROOT_DIR/tests/api/postman_environment.json'"
   fi
+  NEWMAN_BASE_URL_EFFECTIVE="${NEWMAN_BASE_URL:-http://127.0.0.1:5678}"
   if command -v newman >/dev/null 2>&1 && [ -n "$NEWMAN_COLLECTION" ]; then
-    run_cmd_step newman_smoke bash -lc "cd '$ROOT_DIR' && newman run '$NEWMAN_COLLECTION' $NEWMAN_ENV_ARGS --env-var baseUrl='${NEWMAN_BASE_URL:-http://127.0.0.1:5678}' --reporters cli,json --reporter-json-export '$ART_DIR/newman.json'" || FAILURES=$((FAILURES+1))
+    if ! is_url_reachable "$NEWMAN_BASE_URL_EFFECTIVE"; then
+      record_skipped newman_smoke "newman baseUrl unreachable ($NEWMAN_BASE_URL_EFFECTIVE)"
+    else
+      run_cmd_step newman_smoke bash -lc "cd '$ROOT_DIR' && newman run '$NEWMAN_COLLECTION' $NEWMAN_ENV_ARGS --env-var baseUrl='$NEWMAN_BASE_URL_EFFECTIVE' --reporters cli,json --reporter-json-export '$ART_DIR/newman.json'" || FAILURES=$((FAILURES+1))
+    fi
   else
     if [ -z "$NEWMAN_COLLECTION" ]; then
       record_skipped newman_smoke "collection not found"
