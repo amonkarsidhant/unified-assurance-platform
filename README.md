@@ -93,6 +93,7 @@ If you are onboarding to UAP for the first time, start with:
 - Tool installs + verification: `docs/required-tooling.md`
 - Common failure fixes: `docs/troubleshooting.md`
 - Completed sample onboarding bundle: `examples/onboarded-service/`
+- Full review framework: `docs/end-to-end-review.md`
 
 One-command path to onboarding mode:
 
