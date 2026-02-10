@@ -2,6 +2,7 @@
 import argparse
 import json
 from pathlib import Path
+from typing import Optional
 
 
 def recommendation(metrics: dict, risk_context: dict) -> str:
@@ -14,7 +15,7 @@ def recommendation(metrics: dict, risk_context: dict) -> str:
     return "GO"
 
 
-def normalize(data: dict, exceptions: dict | None, promotion: dict | None, flaky: dict | None) -> dict:
+def normalize(data: dict, exceptions: Optional[dict], promotion: Optional[dict], flaky: Optional[dict]) -> dict:
     risk = data.get("risk_context", {})
     metrics = data.get("metrics", {})
     tests = data.get("tests", {})
@@ -90,7 +91,7 @@ def normalize(data: dict, exceptions: dict | None, promotion: dict | None, flaky
     }
 
 
-def load_optional(path: str | None):
+def load_optional(path: Optional[str]):
     if not path:
         return None
     p = Path(path)
