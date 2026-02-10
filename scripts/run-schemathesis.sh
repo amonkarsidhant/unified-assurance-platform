@@ -26,8 +26,23 @@ if [ ! -f "$OPENAPI_FILE" ]; then
 fi
 
 log "Running schemathesis contract fuzz check" > "$LOG_FILE"
+HAS_DRY_RUN=0
+if schemathesis run --help 2>/dev/null | grep -q -- "--dry-run"; then
+  HAS_DRY_RUN=1
+fi
+
+check_reachability_or_skip() {
+  local url="$1"
+  if ! command -v curl >/dev/null 2>&1; then
+    skip "curl not installed; cannot verify SCHEMATHESIS_BASE_URL reachability"
+  fi
+  if ! curl -fsS --connect-timeout 2 --max-time 5 "$url" >/dev/null 2>&1; then
+    skip "SCHEMATHESIS_BASE_URL unreachable: $url"
+  fi
+}
+
 if [ "$SCHEMATHESIS_DRY_RUN" = "1" ]; then
-  if schemathesis run --help 2>/dev/null | grep -q -- "--dry-run"; then
+  if [ "$HAS_DRY_RUN" = "1" ]; then
     if schemathesis run "$OPENAPI_FILE" --dry-run >> "$LOG_FILE" 2>&1; then
       pass
     else
@@ -36,12 +51,9 @@ if [ "$SCHEMATHESIS_DRY_RUN" = "1" ]; then
   else
     # Compatibility path for newer schemathesis versions that removed --dry-run.
     if [ -z "$SCHEMATHESIS_BASE_URL" ]; then
-      SCHEMATHESIS_BASE_URL="http://127.0.0.1:5678"
-      log "SCHEMATHESIS_BASE_URL not provided; defaulting to $SCHEMATHESIS_BASE_URL for compatibility run" >> "$LOG_FILE"
+      skip "SCHEMATHESIS_BASE_URL not set and --dry-run is unavailable for this Schemathesis version"
     fi
-    if command -v curl >/dev/null 2>&1 && ! curl -fsS --connect-timeout 2 --max-time 5 "$SCHEMATHESIS_BASE_URL" >/dev/null 2>&1; then
-      skip "SCHEMATHESIS_BASE_URL unreachable: $SCHEMATHESIS_BASE_URL"
-    fi
+    check_reachability_or_skip "$SCHEMATHESIS_BASE_URL"
     if schemathesis run "$OPENAPI_FILE" --url "$SCHEMATHESIS_BASE_URL" --phases examples --max-examples 1 --workers 1 >> "$LOG_FILE" 2>&1; then
       pass
     else
@@ -52,9 +64,7 @@ else
   if [ -z "$SCHEMATHESIS_BASE_URL" ]; then
     skip "SCHEMATHESIS_BASE_URL not set (required when SCHEMATHESIS_DRY_RUN=0)"
   fi
-  if command -v curl >/dev/null 2>&1 && ! curl -fsS --connect-timeout 2 --max-time 5 "$SCHEMATHESIS_BASE_URL" >/dev/null 2>&1; then
-    skip "SCHEMATHESIS_BASE_URL unreachable: $SCHEMATHESIS_BASE_URL"
-  fi
+  check_reachability_or_skip "$SCHEMATHESIS_BASE_URL"
   if schemathesis run "$OPENAPI_FILE" --url "$SCHEMATHESIS_BASE_URL" >> "$LOG_FILE" 2>&1; then
     pass
   else
