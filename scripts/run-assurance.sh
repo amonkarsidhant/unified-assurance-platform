@@ -67,6 +67,34 @@ run_npm_or_fallback() {
   fi
 }
 
+run_wrapper_step() {
+  local script_path="$1" status_name="$2"
+  local status_file="$ART_DIR/${status_name}.status"
+
+  if [ ! -x "$script_path" ]; then
+    record_skipped "$status_name" "wrapper missing or not executable: $script_path"
+    return 0
+  fi
+
+  log "Running wrapper: $status_name"
+  ASSURANCE_MODE="$MODE" "$script_path" || true
+
+  if [ ! -f "$status_file" ]; then
+    record_skipped "$status_name" "wrapper did not emit status file"
+    return 0
+  fi
+
+  local status
+  status="$(cat "$status_file")"
+  if [ "$status" = "fail" ]; then
+    FAILURES=$((FAILURES+1))
+    log "FAIL: $status_name (see $ART_DIR/${status_name}.log)"
+  else
+    status_upper="$(echo "$status" | tr '[:lower:]' '[:upper:]')"
+    log "$status_upper: $status_name"
+  fi
+}
+
 run_zap_baseline() {
   if [ "$MODE" != "real" ]; then
     record_skipped dast_zap "pragmatic mode: ZAP baseline runs only in real mode"
@@ -100,6 +128,10 @@ control_to_status() {
     contract) cat "$ART_DIR/contract.status" ;;
     resilience) cat "$ART_DIR/resilience.status" ;;
     chaos_resilience) cat "$ART_DIR/chaos_resilience.status" ;;
+    secret_scan) cat "$ART_DIR/secret_scan.status" ;;
+    api_fuzz_contract) cat "$ART_DIR/api_fuzz_contract.status" ;;
+    dockerfile_policy) cat "$ART_DIR/dockerfile_policy.status" ;;
+    iac_policy) cat "$ART_DIR/iac_policy.status" ;;
     *) echo "unknown" ;;
   esac
 }
@@ -126,6 +158,10 @@ if [ "$ONLY_ZAP_SMOKE" = "1" ]; then
   record_skipped performance_smoke "zap-smoke mode: not executed"
   record_skipped resilience "zap-smoke mode: not executed"
   record_skipped chaos_resilience "zap-smoke mode: not executed"
+  record_skipped secret_scan "zap-smoke mode: not executed"
+  record_skipped api_fuzz_contract "zap-smoke mode: not executed"
+  record_skipped dockerfile_policy "zap-smoke mode: not executed"
+  record_skipped iac_policy "zap-smoke mode: not executed"
   echo '{"status":"skipped","reason":"zap-smoke mode: not executed"}' >"$ART_DIR/chaos-results.json"
   record_skipped newman_smoke "zap-smoke mode: not executed"
   record_skipped playwright_smoke "zap-smoke mode: not executed"
@@ -135,6 +171,11 @@ else
   run_npm_or_fallback unit "npm test" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
   run_npm_or_fallback integration "npm run test:integration" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
   run_npm_or_fallback contract "npm run test:contract" || [ $? -eq 2 ] || FAILURES=$((FAILURES+1))
+
+  run_wrapper_step "$ROOT_DIR/scripts/run-gitleaks.sh" "secret_scan"
+  run_wrapper_step "$ROOT_DIR/scripts/run-schemathesis.sh" "api_fuzz_contract"
+  run_wrapper_step "$ROOT_DIR/scripts/run-hadolint.sh" "dockerfile_policy"
+  run_wrapper_step "$ROOT_DIR/scripts/run-checkov.sh" "iac_policy"
 
   if command -v semgrep >/dev/null 2>&1; then
     if [ -f "$SEMGREP_CONFIG" ]; then
@@ -245,7 +286,7 @@ fi
 cp "$ART_DIR/security_scan.status" "$ART_DIR/security.status"
 cp "$ART_DIR/performance_smoke.status" "$ART_DIR/performance.status"
 
-TOTAL=10
+TOTAL=14
 PASSED=$(grep -h '^pass$' \
   "$ART_DIR/lint.status" \
   "$ART_DIR/unit.status" \
@@ -256,7 +297,11 @@ PASSED=$(grep -h '^pass$' \
   "$ART_DIR/performance_smoke.status" \
   "$ART_DIR/dast_zap.status" \
   "$ART_DIR/resilience.status" \
-  "$ART_DIR/chaos_resilience.status" | wc -l | tr -d ' ')
+  "$ART_DIR/chaos_resilience.status" \
+  "$ART_DIR/secret_scan.status" \
+  "$ART_DIR/api_fuzz_contract.status" \
+  "$ART_DIR/dockerfile_policy.status" \
+  "$ART_DIR/iac_policy.status" | wc -l | tr -d ' ')
 PASS_RATE=$(python3 - <<PY
 print(round($PASSED/$TOTAL, 4))
 PY
@@ -332,6 +377,10 @@ PY
     "performance_smoke": "$(cat "$ART_DIR/performance_smoke.status")",
     "resilience": "$(cat "$ART_DIR/resilience.status")",
     "chaos_resilience": "$(cat "$ART_DIR/chaos_resilience.status")",
+    "secret_scan": "$(cat "$ART_DIR/secret_scan.status")",
+    "api_fuzz_contract": "$(cat "$ART_DIR/api_fuzz_contract.status")",
+    "dockerfile_policy": "$(cat "$ART_DIR/dockerfile_policy.status")",
+    "iac_policy": "$(cat "$ART_DIR/iac_policy.status")",
     "newman_smoke": "$(cat "$ART_DIR/newman_smoke.status")",
     "playwright_smoke": "$(cat "$ART_DIR/playwright_smoke.status")"
   },
@@ -362,14 +411,21 @@ PY
       "resilience": "artifacts/latest/resilience.log",
       "chaos_resilience": "artifacts/latest/chaos_resilience.log",
       "newman_smoke": "artifacts/latest/newman_smoke.log",
-      "playwright_smoke": "artifacts/latest/playwright_smoke.log"
+      "playwright_smoke": "artifacts/latest/playwright_smoke.log",
+      "secret_scan": "artifacts/latest/secret_scan.log",
+      "api_fuzz_contract": "artifacts/latest/api_fuzz_contract.log",
+      "dockerfile_policy": "artifacts/latest/dockerfile_policy.log",
+      "iac_policy": "artifacts/latest/iac_policy.log"
     },
     "tool_outputs": {
       "semgrep_json": "artifacts/latest/semgrep.json",
       "trivy_json": "artifacts/latest/trivy.json",
       "k6_summary_json": "artifacts/latest/k6-summary.json",
       "newman_json": "artifacts/latest/newman.json",
-      "chaos_results_json": "artifacts/latest/chaos-results.json"
+      "chaos_results_json": "artifacts/latest/chaos-results.json",
+      "gitleaks_json": "artifacts/latest/gitleaks.json",
+      "hadolint_json": "artifacts/latest/hadolint.json",
+      "checkov_json": "artifacts/latest/checkov.json"
     }
   }
 }

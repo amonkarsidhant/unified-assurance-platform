@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -49,6 +49,13 @@ validate:
 	@test -f templates/chaos/chaos-experiment-template.yaml
 	@test -f templates/chaos/chaos-runbook-template.md
 	@test -f docs/golden-paths/chaos-integration.md
+	@test -x scripts/run-gitleaks.sh
+	@test -x scripts/run-schemathesis.sh
+	@test -x scripts/run-hadolint.sh
+	@test -x scripts/run-checkov.sh
+	@test -f examples/openapi/sample-openapi.yaml
+	@test -f examples/docker/Dockerfile.sample
+	@test -d examples/iac/sample-terraform
 	@echo "Validation passed."
 
 tooling-check:
@@ -65,6 +72,25 @@ run-assurance-real:
 	@$(MAKE) assurance-metrics-export
 	@$(MAKE) evaluate-flaky
 	@$(MAKE) normalize-results-v2
+
+
+phase-a-checks:
+	@./scripts/run-gitleaks.sh
+	@./scripts/run-schemathesis.sh
+	@./scripts/run-hadolint.sh
+	@./scripts/run-checkov.sh
+
+gitleaks-check:
+	@./scripts/run-gitleaks.sh
+
+schemathesis-check:
+	@./scripts/run-schemathesis.sh
+
+hadolint-check:
+	@./scripts/run-hadolint.sh
+
+checkov-check:
+	@./scripts/run-checkov.sh
 
 chaos-check:
 	@./scripts/run-chaos-checks.sh

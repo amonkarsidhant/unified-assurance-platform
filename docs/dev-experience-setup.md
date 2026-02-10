@@ -142,3 +142,27 @@ The same make targets can be used both locally and in CI for consistent behavior
 - Default sample assets are included (`tests/api/postman_collection.json`, `tests/ui/smoke.spec.ts`), so Newman/Playwright run by default in real mode.
 - Trivy is configured non-fatal by default (`TRIVY_EXIT_CODE=0`) so local runs remain practical.
 - Typical laptop runtime target is a few minutes; keep k6 smoke small (`K6_VUS`, `K6_DURATION`) and ZAP baseline short (`ZAP_TIMEOUT_MIN`).
+
+
+## Phase A open-source integrations
+
+Run wrappers directly or via Make targets:
+
+```bash
+make phase-a-checks
+make gitleaks-check
+make schemathesis-check
+make hadolint-check
+make checkov-check
+```
+
+Each wrapper is laptop-safe by default and writes:
+- status: `artifacts/latest/<control>.status`
+- log: `artifacts/latest/<control>.log`
+
+Controls emitted:
+- `secret_scan`
+- `api_fuzz_contract`
+- `dockerfile_policy`
+- `iac_policy`
+

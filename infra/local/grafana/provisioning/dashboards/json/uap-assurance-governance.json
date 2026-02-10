@@ -221,7 +221,7 @@
     },
     {
       "id": 7,
-      "title": "Tier-required Controls Pass/Fail Matrix",
+      "title": "Tier-required Controls Pass/Fail Matrix (includes Phase A controls)",
       "type": "table",
       "gridPos": {
         "h": 8,

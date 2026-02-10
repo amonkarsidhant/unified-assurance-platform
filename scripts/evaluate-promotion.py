@@ -14,6 +14,10 @@ CONTROL_TO_TEST = {
     "contract": "contract",
     "resilience": "resilience",
     "chaos_resilience": "chaos_resilience",
+    "secret_scan": "secret_scan",
+    "api_fuzz_contract": "api_fuzz_contract",
+    "dockerfile_policy": "dockerfile_policy",
+    "iac_policy": "iac_policy",
 }
 
 

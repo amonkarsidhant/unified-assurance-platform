@@ -1,16 +1,43 @@
 {
   "tier": "high",
   "description": "High-risk changes require dynamic, contract, performance, and chaos resilience controls.",
-  "mandatory_controls": ["sast", "sca", "dast", "contract", "perf_smoke", "chaos_resilience"],
-  "allowed_statuses": ["pass"],
+  "mandatory_controls": [
+    "sast",
+    "sca",
+    "secret_scan",
+    "dast",
+    "contract",
+    "api_fuzz_contract",
+    "dockerfile_policy",
+    "iac_policy",
+    "perf_smoke",
+    "chaos_resilience"
+  ],
+  "allowed_statuses": [
+    "pass"
+  ],
   "exception_allowed": true,
   "chaos_policy": {
     "required": true,
     "required_module_scenarios": {
-      "api": ["network_latency", "dependency_timeout", "queue_backlog"],
-      "frontend": ["network_latency", "dependency_timeout"],
-      "worker": ["process_kill", "queue_backlog", "resource_stress"],
-      "shared-lib": ["dependency_timeout", "resource_stress"]
+      "api": [
+        "network_latency",
+        "dependency_timeout",
+        "queue_backlog"
+      ],
+      "frontend": [
+        "network_latency",
+        "dependency_timeout"
+      ],
+      "worker": [
+        "process_kill",
+        "queue_backlog",
+        "resource_stress"
+      ],
+      "shared-lib": [
+        "dependency_timeout",
+        "resource_stress"
+      ]
     }
   }
 }

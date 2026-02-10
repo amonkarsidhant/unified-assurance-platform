@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap", "chaos_resilience"]
+TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap", "chaos_resilience", "secret_scan", "api_fuzz_contract", "dockerfile_policy", "iac_policy"]
 RECOMMENDATIONS = ["GO", "CONDITIONAL", "NO-GO"]
 
 
@@ -221,6 +221,10 @@ def main() -> None:
         "performance": tests.get("performance_smoke", tests.get("performance")),
         "dast_zap": tests.get("dast_zap"),
         "chaos_resilience": tests.get("chaos_resilience"),
+        "secret_scan": tests.get("secret_scan"),
+        "api_fuzz_contract": tests.get("api_fuzz_contract"),
+        "dockerfile_policy": tests.get("dockerfile_policy"),
+        "iac_policy": tests.get("iac_policy"),
     }
 
     lines = [

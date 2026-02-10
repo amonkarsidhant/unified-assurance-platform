@@ -261,6 +261,33 @@ Replace those files with your service-specific checks when onboarding your app.
 
 ---
 
+
+### Phase A open-source checks
+
+Laptop-safe wrappers (graceful skip with explicit reasons):
+- `scripts/run-gitleaks.sh` → `secret_scan`
+- `scripts/run-schemathesis.sh` → `api_fuzz_contract`
+- `scripts/run-hadolint.sh` → `dockerfile_policy`
+- `scripts/run-checkov.sh` → `iac_policy`
+
+Run all Phase A checks:
+```bash
+make phase-a-checks
+```
+
+Per-tool:
+```bash
+make gitleaks-check
+make schemathesis-check
+make hadolint-check
+make checkov-check
+```
+
+Sample assets for quick local runs:
+- `examples/openapi/sample-openapi.yaml`
+- `examples/docker/Dockerfile.sample`
+- `examples/iac/sample-terraform/`
+
 ## 🌪️ Agnostic Chaos Integration
 
 Chaos is integrated as a policy control in the golden path, without introducing a custom chaos engine.

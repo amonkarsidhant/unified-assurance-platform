@@ -1,11 +1,45 @@
 {
   "owners": {
-    "sast": {"team": "AppSec", "approval_role": "security-director"},
-    "sca": {"team": "AppSec", "approval_role": "security-director"},
-    "dast": {"team": "Security Engineering", "approval_role": "security-director"},
-    "contract": {"team": "API Platform", "approval_role": "platform-lead"},
-    "perf_smoke": {"team": "Performance Engineering", "approval_role": "platform-lead"},
-    "resilience": {"team": "SRE", "approval_role": "sre-manager"}
+    "sast": {
+      "team": "AppSec",
+      "approval_role": "security-director"
+    },
+    "sca": {
+      "team": "AppSec",
+      "approval_role": "security-director"
+    },
+    "dast": {
+      "team": "Security Engineering",
+      "approval_role": "security-director"
+    },
+    "contract": {
+      "team": "API Platform",
+      "approval_role": "platform-lead"
+    },
+    "perf_smoke": {
+      "team": "Performance Engineering",
+      "approval_role": "platform-lead"
+    },
+    "resilience": {
+      "team": "SRE",
+      "approval_role": "sre-manager"
+    },
+    "secret_scan": {
+      "team": "AppSec",
+      "approval_role": "security-director"
+    },
+    "api_fuzz_contract": {
+      "team": "API Platform",
+      "approval_role": "platform-lead"
+    },
+    "dockerfile_policy": {
+      "team": "Platform Engineering",
+      "approval_role": "platform-lead"
+    },
+    "iac_policy": {
+      "team": "Cloud Security",
+      "approval_role": "security-director"
+    }
   },
   "modules": {
     "api": "API Platform",

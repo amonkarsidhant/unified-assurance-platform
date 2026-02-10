@@ -20,7 +20,7 @@ def normalize(data: dict, exceptions: dict | None, promotion: dict | None, flaky
     tests = data.get("tests", {})
     evidence = data.get("evidence", {})
 
-    security_tests = {k: tests.get(k, "missing") for k in ["security_scan", "dependency_scan", "dast_zap"]}
+    security_tests = {k: tests.get(k, "missing") for k in ["security_scan", "dependency_scan", "dast_zap", "secret_scan", "api_fuzz_contract", "dockerfile_policy", "iac_policy"]}
     performance_tests = {k: tests.get(k, "missing") for k in ["performance_smoke", "resilience"]}
 
     return {
@@ -52,6 +52,10 @@ def normalize(data: dict, exceptions: dict | None, promotion: dict | None, flaky
                     "semgrep_json": evidence.get("tool_outputs", {}).get("semgrep_json"),
                     "trivy_json": evidence.get("tool_outputs", {}).get("trivy_json"),
                     "dast_log": evidence.get("tool_logs", {}).get("dast_zap"),
+                    "gitleaks_log": evidence.get("tool_logs", {}).get("secret_scan"),
+                    "schemathesis_log": evidence.get("tool_logs", {}).get("api_fuzz_contract"),
+                    "hadolint_log": evidence.get("tool_logs", {}).get("dockerfile_policy"),
+                    "checkov_log": evidence.get("tool_logs", {}).get("iac_policy"),
                 },
             },
             "performance": {

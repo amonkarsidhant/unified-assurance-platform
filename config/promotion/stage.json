@@ -3,19 +3,73 @@
   "minimum_test_pass_rate": 0.35,
   "allow_critical_test_failures": false,
   "require_policy_validation": true,
-  "required_checks": ["validate", "tooling-check", "run-assurance-real", "promotion-gate"],
+  "required_checks": [
+    "validate",
+    "tooling-check",
+    "run-assurance-real",
+    "promotion-gate"
+  ],
   "required_result_statuses": {
-    "lint": ["pass", "skipped"],
-    "unit": ["pass", "skipped"],
-    "integration": ["pass", "skipped"],
-    "contract": ["pass", "skipped"],
-    "security_scan": ["pass", "skipped"],
-    "dependency_scan": ["pass", "skipped"],
-    "dast_zap": ["pass", "skipped"],
-    "performance_smoke": ["pass", "skipped"],
-    "chaos_resilience": ["pass", "skipped"]
+    "lint": [
+      "pass",
+      "skipped"
+    ],
+    "unit": [
+      "pass",
+      "skipped"
+    ],
+    "integration": [
+      "pass",
+      "skipped"
+    ],
+    "contract": [
+      "pass",
+      "skipped"
+    ],
+    "security_scan": [
+      "pass",
+      "skipped"
+    ],
+    "dependency_scan": [
+      "pass",
+      "skipped"
+    ],
+    "dast_zap": [
+      "pass",
+      "skipped"
+    ],
+    "performance_smoke": [
+      "pass",
+      "skipped"
+    ],
+    "chaos_resilience": [
+      "pass",
+      "skipped"
+    ],
+    "secret_scan": [
+      "pass",
+      "skipped"
+    ],
+    "api_fuzz_contract": [
+      "pass",
+      "skipped"
+    ],
+    "dockerfile_policy": [
+      "pass",
+      "skipped"
+    ],
+    "iac_policy": [
+      "pass",
+      "skipped"
+    ]
   },
-  "required_evidence_files": ["results.json", "release-report.md"],
-  "signature_required_tiers": ["high", "critical"],
+  "required_evidence_files": [
+    "results.json",
+    "release-report.md"
+  ],
+  "signature_required_tiers": [
+    "high",
+    "critical"
+  ],
   "signature_fail_closed": true
 }

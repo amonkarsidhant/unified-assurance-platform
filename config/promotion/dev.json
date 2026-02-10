@@ -2,16 +2,60 @@
   "environment": "dev",
   "minimum_test_pass_rate": 0.3,
   "allow_critical_test_failures": false,
-  "required_checks": ["validate", "tooling-check", "run-assurance"],
+  "required_checks": [
+    "validate",
+    "tooling-check",
+    "run-assurance"
+  ],
   "required_result_statuses": {
-    "lint": ["pass", "skipped"],
-    "unit": ["pass", "skipped"],
-    "integration": ["pass", "skipped"],
-    "contract": ["pass", "skipped"],
-    "security_scan": ["pass", "skipped"],
-    "dependency_scan": ["pass", "skipped"],
-    "chaos_resilience": ["pass", "skipped"]
+    "lint": [
+      "pass",
+      "skipped"
+    ],
+    "unit": [
+      "pass",
+      "skipped"
+    ],
+    "integration": [
+      "pass",
+      "skipped"
+    ],
+    "contract": [
+      "pass",
+      "skipped"
+    ],
+    "security_scan": [
+      "pass",
+      "skipped"
+    ],
+    "dependency_scan": [
+      "pass",
+      "skipped"
+    ],
+    "chaos_resilience": [
+      "pass",
+      "skipped"
+    ],
+    "secret_scan": [
+      "pass",
+      "skipped"
+    ],
+    "api_fuzz_contract": [
+      "pass",
+      "skipped"
+    ],
+    "dockerfile_policy": [
+      "pass",
+      "skipped"
+    ],
+    "iac_policy": [
+      "pass",
+      "skipped"
+    ]
   },
-  "signature_required_tiers": ["high", "critical"],
+  "signature_required_tiers": [
+    "high",
+    "critical"
+  ],
   "signature_fail_closed": true
 }
