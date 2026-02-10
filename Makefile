@@ -114,7 +114,7 @@ assurance-dashboard-check:
 	@echo "Checking Prometheus assurance metrics..."
 	@curl -fsS "http://localhost:9090/api/v1/query?query=assurance_pass_rate" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "assurance_pass_rate missing"; print("✅ Prometheus has assurance_pass_rate")'
 	@echo "Checking Grafana dashboard provisioning..."
-	@curl -fsS -u admin:admin "http://localhost:3000/api/search?query=UAP%20Assurance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Dashboard") for x in r), "Dashboard not found"; print("✅ Grafana dashboard found")'
+	@curl -fsS "http://localhost:3000/api/search?query=UAP%20Assurance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Dashboard") for x in r), "Dashboard not found"; print("✅ Grafana dashboard found")'
 
 assurance-governance-check:
 	@echo "Checking Prometheus governance metrics..."
@@ -123,7 +123,7 @@ assurance-governance-check:
 		echo "✅ Prometheus has $$q"; \
 	done
 	@echo "Checking Grafana governance dashboard provisioning..."
-	@curl -fsS -u admin:admin "http://localhost:3000/api/search?query=UAP%20Assurance%20Governance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Governance Dashboard") for x in r), "Governance dashboard not found"; print("✅ Grafana governance dashboard found")'
+	@curl -fsS "http://localhost:3000/api/search?query=UAP%20Assurance%20Governance%20Dashboard" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert any((x.get("title")=="UAP Assurance Governance Dashboard") for x in r), "Governance dashboard not found"; print("✅ Grafana governance dashboard found")'
 
 zap-smoke:
 	@ASSURANCE_MODE=real FORCE_REAL_TOOLS=1 ONLY_ZAP_SMOKE=1 ./scripts/run-assurance.sh
