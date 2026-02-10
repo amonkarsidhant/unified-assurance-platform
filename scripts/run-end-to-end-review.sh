@@ -50,8 +50,9 @@ patterns = {
 }
 rows = []
 allowed_extensions = {'.sh', '.py', '.yml', '.yaml', '.json', '.md'}
+excluded_dirs = {'node_modules', 'artifacts', 'evidence', '.git'}
 for p in root.rglob('*'):
-    if not p.is_file() or '.git' in p.parts or p.parts[0] in ('node_modules', 'artifacts', 'evidence'):
+    if not p.is_file() or any(part in excluded_dirs for part in p.parts):
         continue
     if p.name != 'Makefile' and (not p.suffix or p.suffix.lower() not in allowed_extensions):
         continue
