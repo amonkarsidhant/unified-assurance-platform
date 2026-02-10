@@ -8,7 +8,9 @@ check_tool() {
   local version_cmd="$2"
   if command -v "$name" >/dev/null 2>&1; then
     local version
-    version=$(bash -lc "$version_cmd" 2>/dev/null | head -n1)
+    # Avoid SIGPIPE failures under `set -o pipefail` when the producer emits
+    # multiple lines and `head` exits early.
+    version=$(bash -lc "$version_cmd" 2>/dev/null | sed -n '1p')
     echo "✅ $name: ${version:-installed}"
   else
     echo "⚠️  $name: not installed"

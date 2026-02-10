@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "description": "Minimal scripts for local assurance smoke flow",
   "scripts": {
-    "lint": "echo 'lint placeholder: no JS source lint configured'",
-    "test": "echo 'unit placeholder: no JS unit tests configured'",
-    "test:integration": "echo 'integration placeholder: no JS integration tests configured'",
-    "test:contract": "echo 'contract placeholder: no JS contract tests configured'",
-    "test:ui:smoke": "npx playwright test tests/ui/smoke.spec.ts --config=playwright.config.ts --reporter=line"
+    "lint": "node scripts/lint-js.mjs",
+    "test": "node --test tests/unit/**/*.test.mjs",
+    "test:integration": "node --test tests/integration/**/*.test.mjs",
+    "test:contract": "node --test tests/contract/**/*.test.mjs",
+    "test:ui:smoke": "node scripts/ensure-playwright.mjs && npx playwright test tests/ui/smoke.spec.ts --config=playwright.config.ts --reporter=line"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2"
