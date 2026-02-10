@@ -43,16 +43,25 @@ jobs:
     needs: [tooling-check]
     steps:
       - uses: actions/checkout@v4
+      - name: Install required CI tools
+        run: |
+          if ! command -v gitleaks >/dev/null 2>&1; then
+            GITLEAKS_VERSION="8.30.0"
+            curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+              | tar -xz
+            sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          fi
+          gitleaks version
       - name: Run assurance (pragmatic)
         run: make run-assurance
+      - name: Generate report
+        run: make report
       - name: Validate exceptions
         run: make validate-exceptions ENV=stage
       - name: Evaluate flaky test policy
         run: make evaluate-flaky
       - name: Evaluate promotion policy (stage)
         run: make promotion-check ENV=stage
-      - name: Generate report
-        run: make report
       - name: Normalize results (results.v2)
         run: make normalize-results-v2
       - name: Render PR comment preview
@@ -76,16 +85,25 @@ jobs:
     if: ${{ inputs.run-real }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install required CI tools
+        run: |
+          if ! command -v gitleaks >/dev/null 2>&1; then
+            GITLEAKS_VERSION="8.30.0"
+            curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+              | tar -xz
+            sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          fi
+          gitleaks version
       - name: Run assurance (real)
         run: make run-assurance-real
+      - name: Generate report
+        run: make report
       - name: Validate exceptions
         run: make validate-exceptions ENV=stage
       - name: Evaluate flaky test policy
         run: make evaluate-flaky
       - name: Evaluate promotion policy (stage)
         run: make promotion-check ENV=stage
-      - name: Generate report
-        run: make report
       - name: Normalize results (results.v2)
         run: make normalize-results-v2
       - name: Render PR comment preview
