@@ -47,8 +47,28 @@ jobs:
         run: |
           if ! command -v gitleaks >/dev/null 2>&1; then
             GITLEAKS_VERSION="8.30.0"
-            curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-              | tar -xz
+            ARCHIVE="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+            CHECKSUMS="gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+            BASE_URL="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+
+            curl -fsSLO "${BASE_URL}/${ARCHIVE}"
+            curl -fsSLO "${BASE_URL}/${CHECKSUMS}"
+
+            expected_checksum=$(grep "  ${ARCHIVE}$" "${CHECKSUMS}" | awk '{print $1}')
+            if [ -z "${expected_checksum}" ]; then
+              echo "Failed to resolve expected checksum for ${ARCHIVE}" >&2
+              exit 1
+            fi
+
+            actual_checksum=$(sha256sum "${ARCHIVE}" | awk '{print $1}')
+            if [ "${actual_checksum}" != "${expected_checksum}" ]; then
+              echo "Checksum verification failed for ${ARCHIVE}" >&2
+              echo "expected=${expected_checksum}" >&2
+              echo "actual=${actual_checksum}" >&2
+              exit 1
+            fi
+
+            tar -xzf "${ARCHIVE}" gitleaks
             sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
           fi
           gitleaks version
@@ -89,8 +109,28 @@ jobs:
         run: |
           if ! command -v gitleaks >/dev/null 2>&1; then
             GITLEAKS_VERSION="8.30.0"
-            curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-              | tar -xz
+            ARCHIVE="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+            CHECKSUMS="gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+            BASE_URL="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+
+            curl -fsSLO "${BASE_URL}/${ARCHIVE}"
+            curl -fsSLO "${BASE_URL}/${CHECKSUMS}"
+
+            expected_checksum=$(grep "  ${ARCHIVE}$" "${CHECKSUMS}" | awk '{print $1}')
+            if [ -z "${expected_checksum}" ]; then
+              echo "Failed to resolve expected checksum for ${ARCHIVE}" >&2
+              exit 1
+            fi
+
+            actual_checksum=$(sha256sum "${ARCHIVE}" | awk '{print $1}')
+            if [ "${actual_checksum}" != "${expected_checksum}" ]; then
+              echo "Checksum verification failed for ${ARCHIVE}" >&2
+              echo "expected=${expected_checksum}" >&2
+              echo "actual=${actual_checksum}" >&2
+              exit 1
+            fi
+
+            tar -xzf "${ARCHIVE}" gitleaks
             sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
           fi
           gitleaks version
