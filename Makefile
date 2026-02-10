@@ -176,7 +176,9 @@ onboarding-plan:
 		echo "Usage: make onboarding-plan SERVICE=<service>"; \
 		exit 1; \
 	fi
-	@./scripts/onboarding-plan.py --service "$(SERVICE)"
+	@mkdir -p artifacts/latest/onboarding
+	@./scripts/onboarding-plan.py --service "$(SERVICE)" | tee artifacts/latest/onboarding/$(SERVICE)-plan.md
+	@echo "Saved: artifacts/latest/onboarding/$(SERVICE)-plan.md"
 
 explain-last-fail:
 	@./scripts/explain-failures.py
