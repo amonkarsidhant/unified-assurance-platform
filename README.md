@@ -94,6 +94,26 @@ Exception drafts are generated in `config/exceptions/requests/`.
 
 See `docs/phase3-dx-pack.md` for the full workflow.
 
+## 🧩 Developer onboarding mode
+
+Onboard a new service with one scaffolding command + staged adoption:
+
+```bash
+make onboard SERVICE=payments-api TYPE=api TIER=high OWNERS=api-owner,security-owner
+make preflight MODULE=payments-api TYPE=api
+make onboarding-score SERVICE=payments-api
+make onboarding-plan SERVICE=payments-api
+```
+
+Generated assets:
+- `config/services/<service>.json`
+- `docs/generated/onboarding-<service>.md`
+- `artifacts/latest/onboarding/<service>-codeowners.txt`
+- `artifacts/latest/onboarding/<service>-score.json`
+- `artifacts/latest/onboarding/<service>-score.md`
+
+Full guide: `docs/onboarding-mode.md`.
+
 ---
 
 ## 🎬 5-minute quick demo (GIF + walkthrough)

@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "purpose": "Staged onboarding model for low-friction service adoption into UAP.",
+  "stages": {
+    "A": {
+      "name": "visibility-only",
+      "description": "Collect signals without blocking merges or promotions.",
+      "default_duration_days": 7,
+      "entry_criteria": [
+        "service profile exists in config/services/<service>.json",
+        "owners declared",
+        "onboarding checklist generated"
+      ],
+      "exit_criteria": [
+        "preflight command executed at least once",
+        "baseline dashboard visibility confirmed",
+        "initial exception process owner acknowledged"
+      ]
+    },
+    "B": {
+      "name": "soft-gates",
+      "description": "Surface gate failures as warnings and require owner acknowledgment.",
+      "default_duration_days": 14,
+      "entry_criteria": [
+        "all Stage A exit criteria met",
+        "onboarding score >= 60"
+      ],
+      "exit_criteria": [
+        "critical/high findings triaged",
+        "owners responding to soft-gate alerts",
+        "onboarding score >= 80"
+      ]
+    },
+    "C": {
+      "name": "hard-gates",
+      "description": "Enforce policy gates for promotion and release decisions.",
+      "default_duration_days": 0,
+      "entry_criteria": [
+        "all Stage B exit criteria met",
+        "onboarding score >= 85",
+        "service runbook and rollback notes linked"
+      ],
+      "exit_criteria": [
+        "steady-state operation under enforced gates"
+      ]
+    }
+  }
+}

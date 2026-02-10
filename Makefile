@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -35,6 +35,10 @@ validate:
 	@test -x scripts/render-pr-comment.py
 	@test -x scripts/run-chaos-checks.sh
 	@test -x scripts/preflight.py
+	@test -x scripts/onboard-service.py
+	@test -x scripts/onboarding-score.py
+	@test -x scripts/onboarding-plan.py
+	@test -f config/onboarding-stages.json
 	@test -x scripts/explain-failures.py
 	@test -x scripts/suggest-next-steps.py
 	@test -x scripts/request-exception.py
@@ -149,6 +153,30 @@ preflight:
 		exit 1; \
 	fi
 	@./scripts/preflight.py --module "$(MODULE)" --type "$(TYPE)"
+
+SERVICE ?=
+TIER ?=
+OWNERS ?=
+onboard:
+	@if [ -z "$(SERVICE)" ] || [ -z "$(TYPE)" ] || [ -z "$(TIER)" ] || [ -z "$(OWNERS)" ]; then \
+		echo "Usage: make onboard SERVICE=<service> TYPE=<api|frontend|worker|shared-lib> TIER=<low|medium|high|critical> OWNERS=<owner1,owner2>"; \
+		exit 1; \
+	fi
+	@./scripts/onboard-service.py --service "$(SERVICE)" --type "$(TYPE)" --tier "$(TIER)" --owners "$(OWNERS)"
+
+onboarding-score:
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Usage: make onboarding-score SERVICE=<service>"; \
+		exit 1; \
+	fi
+	@./scripts/onboarding-score.py --service "$(SERVICE)"
+
+onboarding-plan:
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Usage: make onboarding-plan SERVICE=<service>"; \
+		exit 1; \
+	fi
+	@./scripts/onboarding-plan.py --service "$(SERVICE)"
 
 explain-last-fail:
 	@./scripts/explain-failures.py
