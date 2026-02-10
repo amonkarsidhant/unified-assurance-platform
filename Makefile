@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -227,6 +227,9 @@ consumer-quickstart:
 	@printf "%s\n" "make onboarding-score SERVICE=payments-api"
 	@printf "%s\n" "make onboarding-plan SERVICE=payments-api"
 	@printf "%s\n" "make dev-stack-up && make assurance-governance-check"
+
+end-to-end-review:
+	@./scripts/run-end-to-end-review.sh
 
 explain-last-fail:
 	@./scripts/explain-failures.py
