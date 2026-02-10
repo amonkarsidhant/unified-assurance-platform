@@ -2,10 +2,15 @@
   "id": null,
   "uid": "uap-assurance-governance",
   "title": "UAP Assurance Governance Dashboard",
-  "tags": ["uap", "assurance", "governance", "phase2.5"],
+  "tags": [
+    "uap",
+    "assurance",
+    "governance",
+    "phase2.5"
+  ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "15s",
   "time": {
     "from": "now-24h",
@@ -16,15 +21,36 @@
       "id": 1,
       "title": "Promotion Allowed",
       "type": "stat",
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_promotion_allowed", "refId": "A" }
+        {
+          "expr": "assurance_promotion_allowed",
+          "refId": "A"
+        }
       ],
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "type": "value", "options": { "0": { "text": "BLOCKED" }, "1": { "text": "ALLOWED" } } }
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "BLOCKED"
+                },
+                "1": {
+                  "text": "ALLOWED"
+                }
+              }
+            }
           ]
         }
       }
@@ -33,110 +59,405 @@
       "id": 2,
       "title": "Failed Gates (count)",
       "type": "stat",
-      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_promotion_failed_gates_total", "refId": "A" }
+        {
+          "expr": "assurance_promotion_failed_gates_total",
+          "refId": "A"
+        }
       ]
     },
     {
       "id": 3,
       "title": "Evidence Integrity",
       "type": "table",
-      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_evidence_signature_required", "legendFormat": "signature_required", "instant": true, "refId": "A" },
-        { "expr": "assurance_evidence_signature_present", "legendFormat": "signature_present", "instant": true, "refId": "B" },
-        { "expr": "assurance_evidence_attestation_present", "legendFormat": "attestation_present", "instant": true, "refId": "C" },
-        { "expr": "assurance_evidence_fail_closed", "legendFormat": "fail_closed", "instant": true, "refId": "D" }
+        {
+          "expr": "assurance_evidence_signature_required",
+          "legendFormat": "signature_required",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_evidence_signature_present",
+          "legendFormat": "signature_present",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "assurance_evidence_attestation_present",
+          "legendFormat": "attestation_present",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "expr": "assurance_evidence_fail_closed",
+          "legendFormat": "fail_closed",
+          "instant": true,
+          "refId": "D"
+        }
       ],
       "transformations": [
-        { "id": "labelsToFields", "options": { "mode": "columns" } }
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        }
       ]
     },
     {
       "id": 4,
       "title": "Failed Gates (list)",
       "type": "table",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_promotion_failed_gate", "instant": true, "refId": "A" }
+        {
+          "expr": "assurance_promotion_failed_gate",
+          "instant": true,
+          "refId": "A"
+        }
       ],
       "transformations": [
-        { "id": "labelsToFields", "options": { "mode": "columns" } }
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        }
       ]
     },
     {
       "id": 5,
       "title": "Exceptions Active / Expired / Violations",
       "type": "bargauge",
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 5 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_exceptions_active_total", "legendFormat": "active", "refId": "A" },
-        { "expr": "assurance_exceptions_expired_total", "legendFormat": "expired", "refId": "B" },
-        { "expr": "assurance_exceptions_violations_total", "legendFormat": "violations", "refId": "C" }
+        {
+          "expr": "assurance_exceptions_active_total",
+          "legendFormat": "active",
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_exceptions_expired_total",
+          "legendFormat": "expired",
+          "refId": "B"
+        },
+        {
+          "expr": "assurance_exceptions_violations_total",
+          "legendFormat": "violations",
+          "refId": "C"
+        }
       ]
     },
     {
       "id": 6,
       "title": "Flaky Violations / Count / Allowed",
       "type": "bargauge",
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 5 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_flaky_violations_total", "legendFormat": "policy_violations", "refId": "A" },
-        { "expr": "assurance_flaky_count", "legendFormat": "flaky_count", "refId": "B" },
-        { "expr": "assurance_flaky_allowed", "legendFormat": "allowed", "refId": "C" }
+        {
+          "expr": "assurance_flaky_violations_total",
+          "legendFormat": "policy_violations",
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_flaky_count",
+          "legendFormat": "flaky_count",
+          "refId": "B"
+        },
+        {
+          "expr": "assurance_flaky_allowed",
+          "legendFormat": "allowed",
+          "refId": "C"
+        }
       ]
     },
     {
       "id": 7,
       "title": "Tier-required Controls Pass/Fail Matrix",
       "type": "table",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_control_pass", "instant": true, "refId": "A" },
-        { "expr": "assurance_control_required", "instant": true, "refId": "B" }
+        {
+          "expr": "assurance_control_pass",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_control_required",
+          "instant": true,
+          "refId": "B"
+        }
       ],
       "transformations": [
-        { "id": "labelsToFields", "options": { "mode": "columns" } }
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        }
       ]
     },
     {
       "id": 8,
       "title": "PR Summary Severity Signals",
       "type": "bargauge",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_pr_summary_severity_total", "legendFormat": "{{severity}}", "refId": "A" }
+        {
+          "expr": "assurance_pr_summary_severity_total",
+          "legendFormat": "{{severity}}",
+          "refId": "A"
+        }
       ]
     },
     {
       "id": 9,
       "title": "Chaos Control State",
       "type": "bargauge",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_chaos_required", "legendFormat": "required", "refId": "A" },
-        { "expr": "assurance_chaos_passed", "legendFormat": "passed", "refId": "B" },
-        { "expr": "assurance_chaos_skipped", "legendFormat": "skipped", "refId": "C" }
+        {
+          "expr": "assurance_chaos_required",
+          "legendFormat": "required",
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_chaos_passed",
+          "legendFormat": "passed",
+          "refId": "B"
+        },
+        {
+          "expr": "assurance_chaos_skipped",
+          "legendFormat": "skipped",
+          "refId": "C"
+        }
       ]
     },
     {
       "id": 10,
       "title": "Chaos Executed Scenarios",
       "type": "stat",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
-        { "expr": "assurance_chaos_executed_total", "refId": "A" }
+        {
+          "expr": "assurance_chaos_executed_total",
+          "refId": "A"
+        }
       ]
+    },
+    {
+      "id": 11,
+      "title": "Onboarding Score",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 29
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "onboarding_score",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Onboarding Readiness",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 29
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "onboarding_ready",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NOT READY"
+                },
+                "1": {
+                  "text": "READY"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "Onboarding Current Stage",
+      "type": "table",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 29
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "onboarding_stage_current == 1",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Onboarding Plan Exists",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 29
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "onboarding_plan_exists",
+          "legendFormat": "{{service}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "MISSING"
+                },
+                "1": {
+                  "text": "EXISTS"
+                }
+              }
+            }
+          ]
+        }
+      }
     }
   ]
 }

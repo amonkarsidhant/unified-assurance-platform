@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real zap-smoke chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
@@ -77,6 +77,13 @@ chaos-sample:
 assurance-metrics-export:
 	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --results-v2 artifacts/latest/results.v2.json --exceptions-audit artifacts/latest/exceptions-audit.json --pr-comment artifacts/latest/pr-comment.md
 
+assurance-metrics-export-if-ready:
+	@if [ -f artifacts/latest/results.json ]; then \
+		$(MAKE) assurance-metrics-export; \
+	else \
+		echo "Skipping assurance-metrics-export (artifacts/latest/results.json missing)"; \
+	fi
+
 assurance-dashboard-check:
 	@echo "Checking Prometheus assurance metrics..."
 	@curl -fsS "http://localhost:9090/api/v1/query?query=assurance_pass_rate" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "assurance_pass_rate missing"; print("✅ Prometheus has assurance_pass_rate")'
@@ -85,7 +92,7 @@ assurance-dashboard-check:
 
 assurance-governance-check:
 	@echo "Checking Prometheus governance metrics..."
-	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped; do \
+	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
 		curl -fsS "http://localhost:9090/api/v1/query?query=$$q" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "missing metric"'; \
 		echo "✅ Prometheus has $$q"; \
 	done
@@ -163,6 +170,7 @@ onboard:
 		exit 1; \
 	fi
 	@./scripts/onboard-service.py --service "$(SERVICE)" --type "$(TYPE)" --tier "$(TIER)" --owners "$(OWNERS)"
+	@$(MAKE) assurance-metrics-export-if-ready
 
 onboarding-score:
 	@if [ -z "$(SERVICE)" ]; then \
@@ -170,6 +178,7 @@ onboarding-score:
 		exit 1; \
 	fi
 	@./scripts/onboarding-score.py --service "$(SERVICE)"
+	@$(MAKE) assurance-metrics-export-if-ready
 
 onboarding-plan:
 	@if [ -z "$(SERVICE)" ]; then \
@@ -179,6 +188,7 @@ onboarding-plan:
 	@mkdir -p artifacts/latest/onboarding
 	@./scripts/onboarding-plan.py --service "$(SERVICE)" | tee artifacts/latest/onboarding/$(SERVICE)-plan.md
 	@echo "Saved: artifacts/latest/onboarding/$(SERVICE)-plan.md"
+	@$(MAKE) assurance-metrics-export-if-ready
 
 explain-last-fail:
 	@./scripts/explain-failures.py

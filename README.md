@@ -182,10 +182,12 @@ In Grafana (`http://localhost:3000`):
   - flaky policy signals (violations/count/allowed)
   - tier-required controls pass/fail matrix approximation
   - PR-summary-style severity signals
+  - onboarding score/readiness/plan visibility per service
+  - current onboarding stage table (A/B/C one-hot)
 
 ### Grafana vs artifact files (exact split)
 
-- **Grafana shows** aggregated/operational signals exported in `artifacts/metrics/assurance.prom` (Prometheus-scraped).
+- **Grafana shows** aggregated/operational signals exported in `artifacts/metrics/assurance.prom` (Prometheus-scraped), including onboarding-mode signals (`onboarding_score`, `onboarding_ready`, `onboarding_stage_current`, `onboarding_plan_exists`).
 - **Artifacts remain source-of-truth details**:
   - `artifacts/latest/promotion-decision.json` → full promotion rationale, failed gates, evidence integrity, exceptions used.
   - `artifacts/latest/exceptions-audit.json` → exception governance details and violations.

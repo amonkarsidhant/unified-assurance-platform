@@ -5,7 +5,7 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap", "chaos_resilience"]
 RECOMMENDATIONS = ["GO", "CONDITIONAL", "NO-GO"]
@@ -113,6 +113,60 @@ def parse_pr_severity_counts(pr_comment_path: Path) -> Dict[str, int]:
     return counts
 
 
+def parse_onboarding_metrics(onboarding_dir: Path, services_dir: Path) -> List[Dict[str, Any]]:
+    payload: Dict[str, Dict[str, Any]] = {}
+
+    for score_path in sorted(onboarding_dir.glob("*-score.json")):
+        service = score_path.name.removesuffix("-score.json")
+        data = read_json(score_path)
+        if not service or not data:
+            continue
+        item = payload.setdefault(service, {"service": service})
+        item["score"] = float(data.get("score", 0) or 0)
+        readiness = str(data.get("readiness", "")).strip().lower()
+        item["ready"] = 1 if readiness == "ready" else 0
+
+    for plan_path in sorted(onboarding_dir.glob("*-plan.md")):
+        service = plan_path.name.removesuffix("-plan.md")
+        if not service:
+            continue
+        item = payload.setdefault(service, {"service": service})
+        item["plan_exists"] = 1
+
+    for plan_json_path in sorted(onboarding_dir.glob("*-plan.json")):
+        data = read_json(plan_json_path)
+        service = str(data.get("service") or plan_json_path.name.removesuffix("-plan.json"))
+        if not service:
+            continue
+        item = payload.setdefault(service, {"service": service})
+        if data.get("current_stage"):
+            item["stage"] = str(data.get("current_stage"))
+
+    known_services: Set[str] = set(payload.keys())
+    for profile_path in sorted(services_dir.glob("*.json")):
+        service = profile_path.stem
+        if not service or service not in known_services:
+            continue
+        profile = read_json(profile_path)
+        current_stage = ((profile.get("onboarding") or {}).get("current_stage")) if isinstance(profile, dict) else None
+        if current_stage:
+            payload[service]["stage"] = str(current_stage)
+
+    rows: List[Dict[str, Any]] = []
+    for service in sorted(payload.keys()):
+        item = payload[service]
+        rows.append(
+            {
+                "service": service,
+                "score": float(item.get("score", 0.0)),
+                "ready": int(item.get("ready", 0)),
+                "plan_exists": int(item.get("plan_exists", 0)),
+                "stage": str(item.get("stage", "")).upper() if item.get("stage") else "A",
+            }
+        )
+    return rows
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export assurance metrics to Prometheus textfile format")
     parser.add_argument("--input", default="artifacts/latest/results.json", help="Path to assurance results.json")
@@ -124,6 +178,8 @@ def main() -> None:
     parser.add_argument("--exceptions-audit", default="artifacts/latest/exceptions-audit.json", help="Path to exceptions audit JSON")
     parser.add_argument("--pr-comment", default="artifacts/latest/pr-comment.md", help="Path to rendered PR comment markdown")
     parser.add_argument("--preflight", default="artifacts/latest/preflight-summary.json", help="Path to preflight summary JSON")
+    parser.add_argument("--onboarding-dir", default="artifacts/latest/onboarding", help="Path to onboarding artifacts directory")
+    parser.add_argument("--services-dir", default="config/services", help="Path to service profile directory")
     args = parser.parse_args()
 
     results_path = Path(args.input)
@@ -296,6 +352,26 @@ def main() -> None:
     lines.append("# TYPE assurance_pr_summary_severity_total gauge")
     for sev, count in severity_counts.items():
         lines.append(f'assurance_pr_summary_severity_total{{severity="{sev}"}} {int(count)}')
+
+    onboarding_rows = parse_onboarding_metrics(Path(args.onboarding_dir), Path(args.services_dir))
+    if onboarding_rows:
+        lines.append("# HELP onboarding_score Onboarding score by service (0-100).")
+        lines.append("# TYPE onboarding_score gauge")
+        lines.append("# HELP onboarding_ready Onboarding readiness by service (1=ready,0=not-ready).")
+        lines.append("# TYPE onboarding_ready gauge")
+        lines.append("# HELP onboarding_stage_current Current onboarding stage one-hot per service and stage label.")
+        lines.append("# TYPE onboarding_stage_current gauge")
+        lines.append("# HELP onboarding_plan_exists Onboarding plan markdown exists for service (1=yes,0=no).")
+        lines.append("# TYPE onboarding_plan_exists gauge")
+        for row in onboarding_rows:
+            service = prom_escape(row["service"])
+            lines.append(f'onboarding_score{{service="{service}"}} {row["score"]}')
+            lines.append(f'onboarding_ready{{service="{service}"}} {row["ready"]}')
+            lines.append(f'onboarding_plan_exists{{service="{service}"}} {row["plan_exists"]}')
+            current_stage = str(row["stage"]).upper()
+            for stage in ["A", "B", "C"]:
+                val = 1 if current_stage == stage else 0
+                lines.append(f'onboarding_stage_current{{service="{service}",stage="{stage}"}} {val}')
 
     tmp = out_path.with_suffix(".prom.tmp")
     tmp.write_text("\n".join(lines) + "\n")

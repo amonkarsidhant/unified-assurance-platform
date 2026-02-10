@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -29,6 +30,19 @@ def main() -> int:
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     stages = json.loads(stages_path.read_text(encoding="utf-8")).get("stages", {})
 
+    current_stage = ((profile.get("onboarding") or {}).get("current_stage") if isinstance(profile, dict) else None) or "A"
+    plan_artifact = {
+        "service": args.service,
+        "tier": profile.get("tier", "unknown") if isinstance(profile, dict) else "unknown",
+        "current_stage": str(current_stage).upper(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "stages": stages,
+    }
+    out_dir = root / "artifacts" / "latest" / "onboarding"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plan_json_path = out_dir / f"{args.service}-plan.json"
+    plan_json_path.write_text(json.dumps(plan_artifact, indent=2) + "\n", encoding="utf-8")
+
     print(f"Onboarding plan for {args.service} (tier: {profile.get('tier', 'unknown')})")
     for stage in ["A", "B", "C"]:
         data = stages.get(stage, {})
@@ -44,6 +58,7 @@ def main() -> int:
         for item in data.get("exit_criteria", []):
             print(f"  - {item}")
 
+    print(f"\nGenerated: {plan_json_path}")
     return 0
 
 

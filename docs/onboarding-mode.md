@@ -42,6 +42,22 @@ make onboarding-score SERVICE=payments-api
 make onboarding-plan SERVICE=payments-api
 ```
 
+6) Verify Grafana governance visibility:
+
+```bash
+make assurance-governance-check
+curl -fsS "http://localhost:9090/api/v1/query?query=onboarding_score"
+curl -fsS "http://localhost:9090/api/v1/query?query=onboarding_ready"
+curl -fsS "http://localhost:9090/api/v1/query?query=onboarding_stage_current"
+curl -fsS "http://localhost:9090/api/v1/query?query=onboarding_plan_exists"
+```
+
+Expected Grafana dashboard panels in **UAP Assurance Governance Dashboard**:
+- Onboarding score (stat)
+- Onboarding readiness (stat)
+- Onboarding current stage (table)
+- Onboarding plan exists (stat)
+
 ## Staged adoption model
 
 Defined in `config/onboarding-stages.json`:
