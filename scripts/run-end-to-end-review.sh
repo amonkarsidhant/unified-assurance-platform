@@ -32,7 +32,7 @@ make report
 make promotion-check ENV="$REVIEW_ENV" || true
 
 log "6) Governance checks (if stack is running)"
-if curl -fsS "http://localhost:9090/-/healthy" >/dev/null 2>&1; then
+if curl -fsS --connect-timeout 2 --max-time 5 "http://localhost:9090/-/healthy" >/dev/null 2>&1; then
   make assurance-dashboard-check || true
   make assurance-governance-check || true
 else
@@ -86,8 +86,14 @@ from pathlib import Path
 res_p = Path('artifacts/latest/results.json')
 promo_p = Path('artifacts/latest/promotion-decision.json')
 summary_p = Path('artifacts/latest/end-to-end-review-summary.md')
-res = json.loads(res_p.read_text()) if res_p.exists() else {}
-promo = json.loads(promo_p.read_text()) if promo_p.exists() else {}
+try:
+    res = json.loads(res_p.read_text())
+except (FileNotFoundError, json.JSONDecodeError, ValueError):
+    res = {}
+try:
+    promo = json.loads(promo_p.read_text())
+except (FileNotFoundError, json.JSONDecodeError, ValueError):
+    promo = {}
 default_checks = ['lint','unit','integration','contract','security_scan','dependency_scan','dast_zap','performance_smoke','chaos_resilience','secret_scan','api_fuzz_contract','dockerfile_policy','iac_policy','newman_smoke','playwright_smoke']
 test_keys = list(res.get('tests', {}).keys())
 checks = (default_checks + [k for k in test_keys if k not in default_checks]) if test_keys else default_checks
