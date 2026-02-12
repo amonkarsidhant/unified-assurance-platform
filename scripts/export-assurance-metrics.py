@@ -180,6 +180,7 @@ def main() -> None:
     parser.add_argument("--preflight", default="artifacts/latest/preflight-summary.json", help="Path to preflight summary JSON")
     parser.add_argument("--onboarding-dir", default="artifacts/latest/onboarding", help="Path to onboarding artifacts directory")
     parser.add_argument("--services-dir", default="config/services", help="Path to service profile directory")
+    parser.add_argument("--resilience-intelligence", default="artifacts/latest/resilience-intelligence.json", help="Path to resilience intelligence JSON")
     args = parser.parse_args()
 
     results_path = Path(args.input)
@@ -322,7 +323,7 @@ def main() -> None:
     add_gauge(lines, "assurance_chaos_passed", "Chaos resilience gate passed.", chaos_passed)
     add_gauge(lines, "assurance_chaos_skipped", "Chaos resilience gate skipped.", chaos_skipped)
 
-    resilience_intelligence = read_json(Path("artifacts/latest/resilience-intelligence.json"))
+    resilience_intelligence = read_json(Path(args.resilience_intelligence))
     ri_status = tests.get("resilience_intelligence") or resilience_intelligence.get("status")
     ri_score = float(resilience_intelligence.get("score", 0) or 0)
     add_gauge(lines, "assurance_resilience_intelligence_status", "Resilience intelligence status (pass=1, fail=0, skipped=-1).", status_value(ri_status))

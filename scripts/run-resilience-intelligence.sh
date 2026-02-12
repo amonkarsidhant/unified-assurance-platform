@@ -16,69 +16,69 @@ log() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*" | tee -a "$LOG_FILE"
 }
 
+has_jq=0
+if command -v jq >/dev/null 2>&1; then
+  has_jq=1
+fi
+
+if [[ "$has_jq" -ne 1 ]]; then
+  log "jq not installed; resilience intelligence requires jq for config/summary parsing"
+  echo "skipped" >"$STATUS_FILE"
+  cat >"$SUMMARY_FILE" <<'JSON'
+{"status":"skipped","reason":"jq not installed"}
+JSON
+  exit 0
+fi
+
+cfg_get() {
+  local key="$1" fallback="$2"
+  if [[ "$has_jq" -eq 1 && -f "$CONFIG_FILE" ]]; then
+    jq -r "$key // \"$fallback\"" "$CONFIG_FILE" 2>/dev/null || echo "$fallback"
+  else
+    echo "$fallback"
+  fi
+}
+
 mode_from_env="${RESILIENCE_INTELLIGENCE_MODE:-}"
 if [[ -n "$mode_from_env" ]]; then
   MODE="$(echo "$mode_from_env" | tr '[:lower:]' '[:upper:]')"
 else
-  MODE="$(python3 - <<PY
-import json
-from pathlib import Path
-p = Path('$CONFIG_FILE')
-if p.exists():
-    print((json.loads(p.read_text()).get('mode') or 'ROBUSTNESS').upper())
-else:
-    print('ROBUSTNESS')
-PY
-)"
+  MODE="$(echo "$(cfg_get '.mode' 'ROBUSTNESS')" | tr '[:lower:]' '[:upper:]')"
 fi
 
 if [[ "$MODE" != "ROBUSTNESS" && "$MODE" != "CHAOS" ]]; then
   log "Invalid mode '$MODE'. Allowed: ROBUSTNESS, CHAOS"
   echo "fail" >"$STATUS_FILE"
-  python3 - <<PY
-import json
-from datetime import datetime, timezone
-from pathlib import Path
-Path('$SUMMARY_FILE').write_text(json.dumps({
-  'timestamp': datetime.now(timezone.utc).isoformat(),
-  'mode': '$MODE',
-  'status': 'fail',
-  'score': 0.0,
-  'reason': 'invalid mode'
-}, indent=2))
-PY
+  jq -n \
+    --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+    --arg mode "$MODE" \
+    '{timestamp:$ts,mode:$mode,status:"fail",score:0.0,reason:"invalid mode"}' >"$SUMMARY_FILE"
   exit 1
 fi
 
-cfg_values="$(python3 - <<PY
-import json
-from pathlib import Path
-p = Path('$CONFIG_FILE')
-cfg = json.loads(p.read_text()) if p.exists() else {}
-t = cfg.get('targets', {})
-print('|'.join([
-    str(cfg.get('seed', 1337)),
-    str(cfg.get('retries', 1)),
-    str(t.get('perf_target_url') or 'https://test.k6.io'),
-    str(t.get('module_type') or 'api'),
-]))
-PY
-)"
-IFS='|' read -r cfg_seed cfg_retries cfg_perf_target cfg_module_type <<EOF
-$cfg_values
-EOF
+cfg_seed="$(cfg_get '.seed' '1337')"
+cfg_attempts="$(cfg_get '.retries' '1')"
+cfg_perf_target="$(cfg_get '.targets.perf_target_url' 'https://test.k6.io')"
+cfg_module_type="$(cfg_get '.targets.module_type' 'api')"
+cfg_k6_timeout="$(cfg_get '.timeouts.k6_seconds' '45')"
+cfg_chaos_timeout="$(cfg_get '.timeouts.chaos_seconds' '60')"
+cfg_max_error_rate="$(cfg_get '.thresholds.max_error_rate' '0.05')"
+cfg_min_pass_rate="$(cfg_get '.thresholds.min_pass_rate' '0.90')"
 
 SEED="${RESILIENCE_INTELLIGENCE_SEED:-$cfg_seed}"
-RETRIES="${RESILIENCE_INTELLIGENCE_RETRIES:-$cfg_retries}"
+MAX_ATTEMPTS="${RESILIENCE_INTELLIGENCE_MAX_ATTEMPTS:-$cfg_attempts}"
 PERF_TARGET_URL="${PERF_TARGET_URL:-$cfg_perf_target}"
 MODULE_TYPE="${MODULE_TYPE:-$cfg_module_type}"
 RISK_TIER="${RISK_TIER:-high}"
+K6_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_K6_TIMEOUT_SECONDS:-$cfg_k6_timeout}"
+CHAOS_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_CHAOS_TIMEOUT_SECONDS:-$cfg_chaos_timeout}"
+MAX_ERROR_RATE="${RESILIENCE_INTELLIGENCE_MAX_ERROR_RATE:-$cfg_max_error_rate}"
+MIN_PASS_RATE="${RESILIENCE_INTELLIGENCE_MIN_PASS_RATE:-$cfg_min_pass_rate}"
 
-if ! [[ "$RETRIES" =~ ^[0-9]+$ ]]; then
-  RETRIES=1
+if ! [[ "$MAX_ATTEMPTS" =~ ^[0-9]+$ ]] || [[ "$MAX_ATTEMPTS" -lt 1 ]]; then
+  MAX_ATTEMPTS=1
 fi
 
-attempt=0
 k6_status="skipped"
 k6_reason="k6 not installed"
 chaos_status="skipped"
@@ -86,24 +86,18 @@ chaos_reason="chaos script not found"
 selected_vus=2
 selected_duration="5s"
 selected_fault_profile="latency-low"
+k6_error_rate=""
+k6_pass_rate=""
 
 if [[ "$MODE" == "CHAOS" ]]; then
-  rand_values="$(python3 - <<PY
-import random
-seed = int('$SEED')
-random.seed(seed)
-vus = random.randint(1, 6)
-duration = f"{random.randint(5, 25)}s"
-profile = random.choice(['latency-medium', 'dependency-timeout', 'packet-loss'])
-print(f"{vus}|{duration}|{profile}")
-PY
-)"
-  IFS='|' read -r selected_vus selected_duration selected_fault_profile <<EOF
-$rand_values
-EOF
+  RANDOM="$SEED"
+  selected_vus=$((1 + RANDOM % 6))
+  selected_duration="$((5 + RANDOM % 21))s"
+  fault_profiles=("latency-medium" "dependency-timeout" "packet-loss")
+  selected_fault_profile="${fault_profiles[$((RANDOM % ${#fault_profiles[@]}))]}"
 fi
 
-log "Resilience Intelligence start mode=$MODE seed=$SEED retries=$RETRIES"
+log "Resilience Intelligence start mode=$MODE seed=$SEED attempts=$MAX_ATTEMPTS"
 log "Selected profile: vus=$selected_vus duration=$selected_duration fault=$selected_fault_profile"
 
 run_with_timeout() {
@@ -115,18 +109,50 @@ run_with_timeout() {
   fi
 }
 
+evaluate_k6_thresholds() {
+  local summary_path="$1"
+  if [[ ! -f "$summary_path" || "$has_jq" -ne 1 ]]; then
+    return 0
+  fi
+
+  local observed_error observed_pass
+  observed_error="$(jq -r '.metrics.http_req_failed.values.rate // 0' "$summary_path" 2>/dev/null || echo 0)"
+  observed_pass="$(jq -r '.metrics.checks.values.rate // 1' "$summary_path" 2>/dev/null || echo 1)"
+
+  k6_error_rate="$observed_error"
+  k6_pass_rate="$observed_pass"
+
+  if ! awk -v e="$observed_error" -v max="$MAX_ERROR_RATE" 'BEGIN{exit !(e <= max)}'; then
+    k6_status="fail"
+    k6_reason="k6 threshold failed: error_rate=${observed_error} > max_error_rate=${MAX_ERROR_RATE}"
+    return 1
+  fi
+
+  if ! awk -v p="$observed_pass" -v min="$MIN_PASS_RATE" 'BEGIN{exit !(p >= min)}'; then
+    k6_status="fail"
+    k6_reason="k6 threshold failed: pass_rate=${observed_pass} < min_pass_rate=${MIN_PASS_RATE}"
+    return 1
+  fi
+
+  return 0
+}
+
 if command -v k6 >/dev/null 2>&1 && [[ -f "$ROOT_DIR/tests/perf/smoke.js" ]]; then
-  attempt=0
-  until [[ "$attempt" -gt "$RETRIES" ]]; do
-    attempt=$((attempt+1))
-    log "Load path attempt $attempt"
-    if run_with_timeout 45 env PERF_TARGET_URL="$PERF_TARGET_URL" K6_VUS="$selected_vus" K6_DURATION="$selected_duration" k6 run "$ROOT_DIR/tests/perf/smoke.js" --summary-export "$ART_DIR/k6-summary.json" >>"$LOG_FILE" 2>&1; then
+  attempt=1
+  while [[ "$attempt" -le "$MAX_ATTEMPTS" ]]; do
+    log "Load path attempt $attempt/$MAX_ATTEMPTS"
+    if run_with_timeout "$K6_TIMEOUT_SECONDS" env PERF_TARGET_URL="$PERF_TARGET_URL" K6_VUS="$selected_vus" K6_DURATION="$selected_duration" k6 run "$ROOT_DIR/tests/perf/smoke.js" --summary-export "$ART_DIR/k6-summary.json" >>"$LOG_FILE" 2>&1; then
       k6_status="pass"
       k6_reason="executed"
+      if ! evaluate_k6_thresholds "$ART_DIR/k6-summary.json"; then
+        break
+      fi
       break
     fi
-    k6_status="skipped"
-    k6_reason="k6 execution failed; downgraded to skipped"
+
+    k6_status="fail"
+    k6_reason="k6 execution failed on attempt $attempt/$MAX_ATTEMPTS"
+    attempt=$((attempt+1))
   done
 else
   if [[ ! -f "$ROOT_DIR/tests/perf/smoke.js" ]]; then
@@ -137,7 +163,7 @@ fi
 
 if [[ -x "$ROOT_DIR/scripts/run-chaos-checks.sh" ]]; then
   log "Chaos path via scripts/run-chaos-checks.sh"
-  if run_with_timeout 60 env ASSURANCE_MODE=real RISK_TIER="$RISK_TIER" MODULE_TYPE="$MODULE_TYPE" CHAOS_FAULT_PROFILE="$selected_fault_profile" "$ROOT_DIR/scripts/run-chaos-checks.sh" >>"$LOG_FILE" 2>&1; then
+  if run_with_timeout "$CHAOS_TIMEOUT_SECONDS" env ASSURANCE_MODE=real RISK_TIER="$RISK_TIER" MODULE_TYPE="$MODULE_TYPE" CHAOS_FAULT_PROFILE="$selected_fault_profile" "$ROOT_DIR/scripts/run-chaos-checks.sh" >>"$LOG_FILE" 2>&1; then
     if [[ -f "$ART_DIR/chaos_resilience.status" ]]; then
       chaos_status="$(cat "$ART_DIR/chaos_resilience.status")"
       chaos_reason="executed"
@@ -169,36 +195,42 @@ fi
 
 echo "$status" >"$STATUS_FILE"
 
-python3 - <<PY
-import json
-from datetime import datetime, timezone
-from pathlib import Path
-summary = {
-  'timestamp': datetime.now(timezone.utc).isoformat(),
-  'mode': '$MODE',
-  'status': '$status',
-  'score': float('$score'),
-  'seed': int('$SEED'),
-  'retries': int('$RETRIES'),
-  'selected': {
-    'vus': int('$selected_vus'),
-    'duration': '$selected_duration',
-    'fault_profile': '$selected_fault_profile'
-  },
-  'load': {
-    'status': '$k6_status',
-    'reason': '$k6_reason',
-    'summary_file': 'artifacts/latest/k6-summary.json'
-  },
-  'chaos': {
-    'status': '$chaos_status',
-    'reason': '$chaos_reason',
-    'artifact': 'artifacts/latest/chaos-results.json'
-  },
-  'log': 'artifacts/latest/resilience_intelligence.log'
-}
-Path('$SUMMARY_FILE').write_text(json.dumps(summary, indent=2))
-PY
+jq -n \
+  --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+  --arg mode "$MODE" \
+  --arg status "$status" \
+  --argjson score "$score" \
+  --argjson seed "$SEED" \
+  --argjson max_attempts "$MAX_ATTEMPTS" \
+  --argjson vus "$selected_vus" \
+  --arg duration "$selected_duration" \
+  --arg fault "$selected_fault_profile" \
+  --arg k6_status "$k6_status" \
+  --arg k6_reason "$k6_reason" \
+  --arg k6_error_rate "$k6_error_rate" \
+  --arg k6_pass_rate "$k6_pass_rate" \
+  --arg chaos_status "$chaos_status" \
+  --arg chaos_reason "$chaos_reason" \
+  --arg max_error_rate "$MAX_ERROR_RATE" \
+  --arg min_pass_rate "$MIN_PASS_RATE" \
+  --arg log_path "artifacts/latest/resilience_intelligence.log" \
+  '(
+    {
+      timestamp:$ts,
+      mode:$mode,
+      status:$status,
+      score:$score,
+      seed:$seed,
+      max_attempts:$max_attempts,
+      selected:{vus:$vus,duration:$duration,fault_profile:$fault},
+      thresholds:{max_error_rate:($max_error_rate|tonumber),min_pass_rate:($min_pass_rate|tonumber)},
+      load:{status:$k6_status,reason:$k6_reason,summary_file:"artifacts/latest/k6-summary.json"},
+      chaos:{status:$chaos_status,reason:$chaos_reason,artifact:"artifacts/latest/chaos-results.json"},
+      log:$log_path
+    }
+    | if ($k6_error_rate|length)>0 then .load.error_rate=($k6_error_rate|tonumber) else . end
+    | if ($k6_pass_rate|length)>0 then .load.pass_rate=($k6_pass_rate|tonumber) else . end
+  )' >"$SUMMARY_FILE"
 
 log "Resilience Intelligence complete status=$status score=$score"
 if [[ "$status" == "fail" ]]; then

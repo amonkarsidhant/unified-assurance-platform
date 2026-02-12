@@ -1,6 +1,21 @@
 SHELL := /bin/bash
 
-.PHONY: bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: all clean test bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+
+all: validate
+	@echo "Default target complete. Run 'make run-assurance' for a full assurance pass."
+
+clean:
+	@rm -rf artifacts/latest/* artifacts/metrics/* evidence/bundles/* test-results .playwright .demo-site.pid .demo-site.port
+	@mkdir -p artifacts/latest artifacts/metrics evidence/bundles
+	@echo "Workspace artifacts cleaned."
+
+test:
+	@if [ -f package.json ] && command -v npm >/dev/null 2>&1; then \
+		npm test; \
+	else \
+		echo "No npm test suite configured in this environment."; \
+	fi
 
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."

@@ -273,11 +273,7 @@ else
   fi
 
   if [ -x "$ROOT_DIR/scripts/run-resilience-intelligence.sh" ]; then
-    if run_cmd_step resilience_intelligence bash -lc "cd '$ROOT_DIR' && RESILIENCE_INTELLIGENCE_MODE='${RESILIENCE_INTELLIGENCE_MODE:-ROBUSTNESS}' RISK_TIER='$RISK_TIER' MODULE_TYPE='$MODULE_TYPE' ./scripts/run-resilience-intelligence.sh"; then
-      if [ -f "$ART_DIR/resilience_intelligence.status" ]; then
-        write_status resilience_intelligence "$(cat "$ART_DIR/resilience_intelligence.status")"
-      fi
-    else
+    if ! run_cmd_step resilience_intelligence bash -lc "cd '$ROOT_DIR' && RESILIENCE_INTELLIGENCE_MODE='${RESILIENCE_INTELLIGENCE_MODE:-ROBUSTNESS}' RISK_TIER='$RISK_TIER' MODULE_TYPE='$MODULE_TYPE' ./scripts/run-resilience-intelligence.sh"; then
       FAILURES=$((FAILURES+1))
     fi
   else
