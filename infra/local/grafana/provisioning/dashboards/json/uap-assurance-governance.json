@@ -10,7 +10,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "15s",
   "time": {
     "from": "now-24h",
@@ -549,6 +549,63 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "id": 16,
+      "title": "Resilience Correlation (status/score/adapters)",
+      "type": "table",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 35
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "assurance_resilience_correlation_status",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "correlation_status",
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_resilience_correlation_score",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "correlation_score",
+          "refId": "B"
+        },
+        {
+          "expr": "assurance_resilience_adapter_count",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "adapter_count",
+          "refId": "C"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "Value #A": "correlation_status",
+              "Value #B": "correlation_score",
+              "Value #C": "adapter_count"
+            }
+          }
+        }
+      ]
     }
   ]
 }

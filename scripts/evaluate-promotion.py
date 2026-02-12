@@ -179,7 +179,7 @@ def main():
             "exception_used": False,
             "exception": None,
             "waived": False,
-            "note": "phase1-observe-only"
+            "note": "phase2-observe-only"
         })
 
     if tier == "critical" and active_exceptions:

@@ -1,5 +1,6 @@
 {
   "mode": "ROBUSTNESS",
+  "scenario_template": "robustness-fixed",
   "targets": {
     "perf_target_url": "https://test.k6.io",
     "module_type": "api"

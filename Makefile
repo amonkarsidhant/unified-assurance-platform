@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: all clean test bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: all clean test bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check resilience-adapter-check resilience-report zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 all: validate
 	@echo "Default target complete. Run 'make run-assurance' for a full assurance pass."
@@ -53,6 +53,15 @@ validate:
 	@test -f config/resilience-intelligence.json
 	@test -f templates/scenarios/resilience/robustness-fixed.json
 	@test -f templates/scenarios/resilience/chaos-randomized.json
+	@test -f templates/scenarios/resilience/network-partition-api.json
+	@test -f templates/scenarios/resilience/db-failover-latency.json
+	@test -f templates/scenarios/resilience/queue-backpressure-worker.json
+	@test -x scripts/validate-resilience-adapter.py
+	@test -x scripts/generate-resilience-report.py
+	@test -x scripts/adapters/resilience/locust-adapter.sh
+	@test -x scripts/adapters/resilience/external-results-adapter.sh
+	@test -x scripts/mcp-resilience-intelligence-run.sh
+	@test -x scripts/mcp-resilience-intelligence-artifacts.sh
 	@test -x scripts/preflight.py
 	@test -x scripts/onboard-service.py
 	@test -x scripts/onboarding-score.py
@@ -69,6 +78,8 @@ validate:
 	@test -f templates/chaos/chaos-runbook-template.md
 	@test -f docs/golden-paths/chaos-integration.md
 	@test -f docs/resilience-intelligence-phase1.md
+	@test -f docs/resilience-intelligence-phase2.md
+	@test -f docs/mcp-resilience-intelligence-interface.md
 	@test -x scripts/run-gitleaks.sh
 	@test -x scripts/run-schemathesis.sh
 	@test -x scripts/run-hadolint.sh
@@ -98,7 +109,27 @@ resilience-intelligence:
 	@echo "Resilience intelligence: artifacts/latest/resilience-intelligence.json"
 
 resilience-intelligence-check:
-	@python3 -c 'import json, pathlib; p=pathlib.Path("artifacts/latest/resilience-intelligence.json"); assert p.exists(), "missing artifacts/latest/resilience-intelligence.json"; d=json.loads(p.read_text()); print("status={} score={} mode={}".format(d.get("status","unknown"), d.get("score","n/a"), d.get("mode","n/a")))'
+	@python3 -c 'import json, pathlib; p=pathlib.Path("artifacts/latest/resilience-intelligence.json"); assert p.exists(), "missing artifacts/latest/resilience-intelligence.json"; d=json.loads(p.read_text()); print("status={} score={} mode={} correlation={}".format(d.get("status","unknown"), d.get("score","n/a"), d.get("mode","n/a"), (d.get("correlation") or {}).get("score","n/a")))'
+
+resilience-adapter-check:
+	@for f in scripts/adapters/resilience/*.sh; do \
+		tmp_file=$$(mktemp /tmp/resilience-adapter.XXXXXX); \
+		cleanup() { rm -f "$$tmp_file"; }; \
+		trap cleanup EXIT; \
+		ART_DIR=artifacts/latest "$$f" > "$$tmp_file"; \
+		python3 scripts/validate-resilience-adapter.py --input "$$tmp_file"; \
+		trap - EXIT; \
+		cleanup; \
+	done
+	@echo "Adapter contract check passed."
+
+resilience-report:
+	@if [ -f artifacts/latest/resilience-intelligence.json ]; then \
+		./scripts/generate-resilience-report.py --input artifacts/latest/resilience-intelligence.json --output artifacts/latest/resilience-intelligence-report.md; \
+		echo "Resilience report: artifacts/latest/resilience-intelligence-report.md"; \
+	else \
+		echo "Skipping resilience report: input missing"; \
+	fi
 
 phase-a-checks:
 	@./scripts/run-gitleaks.sh
@@ -144,7 +175,7 @@ assurance-dashboard-check:
 
 assurance-governance-check:
 	@echo "Checking Prometheus governance metrics..."
-	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped assurance_resilience_intelligence_status assurance_resilience_intelligence_score onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
+	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped assurance_resilience_intelligence_status assurance_resilience_intelligence_score assurance_resilience_correlation_score assurance_resilience_correlation_status assurance_resilience_adapter_count onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
 		curl -fsS "http://localhost:9090/api/v1/query?query=$$q" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "missing metric"'; \
 		echo "✅ Prometheus has $$q"; \
 	done
@@ -159,8 +190,12 @@ OUT ?= artifacts/latest/release-report.md
 
 report:
 	@./scripts/generate-release-report.py --input $(RESULTS) --output $(OUT)
+	@$(MAKE) resilience-report
 	@$(MAKE) assurance-metrics-export
 	@echo "Report generated at $(OUT)"
+	@if [ -f artifacts/latest/resilience-intelligence-report.md ]; then \
+		echo "Resilience report linked at artifacts/latest/resilience-intelligence-report.md"; \
+	fi
 
 collect-evidence:
 	@./scripts/collect-evidence.sh

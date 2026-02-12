@@ -9,6 +9,8 @@ STATUS_FILE="$ART_DIR/resilience_intelligence.status"
 LOG_FILE="$ART_DIR/resilience_intelligence.log"
 SUMMARY_FILE="$ART_DIR/resilience-intelligence.json"
 CONFIG_FILE="${RESILIENCE_INTELLIGENCE_CONFIG:-$ROOT_DIR/config/resilience-intelligence.json}"
+ADAPTERS_DIR="$ROOT_DIR/scripts/adapters/resilience"
+ADAPTER_VALIDATOR="$ROOT_DIR/scripts/validate-resilience-adapter.py"
 
 : >"$LOG_FILE"
 
@@ -16,23 +18,18 @@ log() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*" | tee -a "$LOG_FILE"
 }
 
-has_jq=0
-if command -v jq >/dev/null 2>&1; then
-  has_jq=1
-fi
-
-if [[ "$has_jq" -ne 1 ]]; then
+if ! command -v jq >/dev/null 2>&1; then
   log "jq not installed; resilience intelligence requires jq for config/summary parsing"
   echo "skipped" >"$STATUS_FILE"
   cat >"$SUMMARY_FILE" <<'JSON'
-{"status":"skipped","reason":"jq not installed"}
+{"status":"skipped","reason":"jq not installed","correlation":{"status":"unknown","score":0,"explanation":"jq unavailable"}}
 JSON
   exit 0
 fi
 
 cfg_get() {
   local key="$1" fallback="$2"
-  if [[ "$has_jq" -eq 1 && -f "$CONFIG_FILE" ]]; then
+  if [[ -f "$CONFIG_FILE" ]]; then
     jq -r "$key // \"$fallback\"" "$CONFIG_FILE" 2>/dev/null || echo "$fallback"
   else
     echo "$fallback"
@@ -49,10 +46,7 @@ fi
 if [[ "$MODE" != "ROBUSTNESS" && "$MODE" != "CHAOS" ]]; then
   log "Invalid mode '$MODE'. Allowed: ROBUSTNESS, CHAOS"
   echo "fail" >"$STATUS_FILE"
-  jq -n \
-    --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
-    --arg mode "$MODE" \
-    '{timestamp:$ts,mode:$mode,status:"fail",score:0.0,reason:"invalid mode"}' >"$SUMMARY_FILE"
+  jq -n --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" --arg mode "$MODE" '{timestamp:$ts,mode:$mode,status:"fail",score:0.0,reason:"invalid mode",correlation:{status:"unknown",score:0,explanation:"invalid mode"}}' >"$SUMMARY_FILE"
   exit 1
 fi
 
@@ -64,6 +58,7 @@ cfg_k6_timeout="$(cfg_get '.timeouts.k6_seconds' '45')"
 cfg_chaos_timeout="$(cfg_get '.timeouts.chaos_seconds' '60')"
 cfg_max_error_rate="$(cfg_get '.thresholds.max_error_rate' '0.05')"
 cfg_min_pass_rate="$(cfg_get '.thresholds.min_pass_rate' '0.90')"
+cfg_scenario="$(cfg_get '.scenario_template' 'robustness-fixed')"
 
 SEED_RAW="${RESILIENCE_INTELLIGENCE_SEED:-$cfg_seed}"
 MAX_ATTEMPTS="${RESILIENCE_INTELLIGENCE_MAX_ATTEMPTS:-$cfg_attempts}"
@@ -74,6 +69,7 @@ K6_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_K6_TIMEOUT_SECONDS:-$cfg_k6_timeou
 CHAOS_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_CHAOS_TIMEOUT_SECONDS:-$cfg_chaos_timeout}"
 MAX_ERROR_RATE="${RESILIENCE_INTELLIGENCE_MAX_ERROR_RATE:-$cfg_max_error_rate}"
 MIN_PASS_RATE="${RESILIENCE_INTELLIGENCE_MIN_PASS_RATE:-$cfg_min_pass_rate}"
+SELECTED_SCENARIO="${RESILIENCE_INTELLIGENCE_SCENARIO:-$cfg_scenario}"
 
 SEED="$SEED_RAW"
 if ! [[ "$SEED" =~ ^[0-9]+$ ]]; then
@@ -107,7 +103,7 @@ if [[ "$MODE" == "CHAOS" ]]; then
   selected_fault_profile="${fault_profiles[$((RANDOM % ${#fault_profiles[@]}))]}"
 fi
 
-log "Resilience Intelligence start mode=$MODE seed=$SEED attempts=$MAX_ATTEMPTS"
+log "Resilience Intelligence start mode=$MODE seed=$SEED attempts=$MAX_ATTEMPTS scenario=$SELECTED_SCENARIO"
 log "Selected profile: vus=$selected_vus duration=$selected_duration fault=$selected_fault_profile"
 
 run_with_timeout() {
@@ -121,7 +117,7 @@ run_with_timeout() {
 
 evaluate_k6_thresholds() {
   local summary_path="$1"
-  if [[ ! -f "$summary_path" || "$has_jq" -ne 1 ]]; then
+  if [[ ! -f "$summary_path" ]]; then
     return 0
   fi
 
@@ -189,6 +185,74 @@ else
   log "Chaos path skipped: $chaos_reason"
 fi
 
+# Adapter framework (Phase 2)
+adapter_inputs=()
+if [[ -d "$ADAPTERS_DIR" && -r "$ADAPTERS_DIR" ]]; then
+  while IFS= read -r adapter_path; do
+    adapter_name="$(basename "$adapter_path")"
+    adapter_out="$ART_DIR/resilience-adapter-${adapter_name%.*}.json"
+    if run_with_timeout 20 env ART_DIR="$ART_DIR" "$adapter_path" >"$adapter_out" 2>>"$LOG_FILE"; then
+      if env ART_DIR="$ART_DIR" python3 "$ADAPTER_VALIDATOR" --input "$adapter_out" >>"$LOG_FILE" 2>&1; then
+        adapter_inputs+=("$adapter_out")
+        log "Adapter OK: $adapter_name"
+      else
+        log "Adapter validation failed: $adapter_name"
+        rm -f "$adapter_out"
+      fi
+    else
+      log "Adapter execution failed: $adapter_name"
+      rm -f "$adapter_out"
+    fi
+  done < <(find "$ADAPTERS_DIR" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.py" \) | sort)
+else
+  log "Adapter directory unavailable: $ADAPTERS_DIR (skipping adapters)"
+fi
+
+if [[ ${#adapter_inputs[@]} -gt 0 ]]; then
+  jq -s '.' "${adapter_inputs[@]}" >"$ART_DIR/resilience-adapters.json"
+else
+  echo '[]' >"$ART_DIR/resilience-adapters.json"
+fi
+
+load_degradation=""
+if [[ -n "$k6_error_rate" ]]; then
+  load_degradation="$k6_error_rate"
+fi
+
+adapter_degradation="$(jq -r '[.[] | .metrics.degradation? | select(.!=null)] | if length>0 then (add/length) else empty end' "$ART_DIR/resilience-adapters.json" 2>/dev/null || true)"
+if [[ -z "$load_degradation" && -n "$adapter_degradation" ]]; then
+  load_degradation="$adapter_degradation"
+fi
+if [[ -z "$load_degradation" ]]; then
+  load_degradation="0"
+fi
+
+chaos_impact=0
+[[ "$chaos_status" == "fail" ]] && chaos_impact=1
+
+resilience_recovered=1
+[[ "$k6_status" == "fail" || "$chaos_status" == "fail" ]] && resilience_recovered=0
+
+correlation_score="$(python3 - <<PY
+ld=float("$load_degradation")
+ci=float("$chaos_impact")
+rr=float("$resilience_recovered")
+score=max(0.0,min(1.0, (0.55*(1-ld)) + (0.25*(1-ci)) + (0.20*rr)))
+print(f"{score:.3f}")
+PY
+)"
+
+correlation_status="strong"
+correlation_explanation="load degradation and chaos outcomes align with resilience status"
+if [[ "$chaos_status" == "skipped" || "$k6_status" == "skipped" ]]; then
+  correlation_status="partial"
+  correlation_explanation="optional signals missing; computed from available inputs"
+fi
+if [[ "$resilience_recovered" -eq 0 ]]; then
+  correlation_status="degraded"
+  correlation_explanation="load and/or chaos failure indicates resilience degradation"
+fi
+
 status="pass"
 if [[ "$k6_status" == "fail" || "$chaos_status" == "fail" ]]; then
   status="fail"
@@ -208,6 +272,7 @@ echo "$status" >"$STATUS_FILE"
 jq -n \
   --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
   --arg mode "$MODE" \
+  --arg scenario "$SELECTED_SCENARIO" \
   --arg status "$status" \
   --argjson score "$score" \
   --argjson seed "$SEED" \
@@ -223,11 +288,17 @@ jq -n \
   --arg chaos_reason "$chaos_reason" \
   --arg max_error_rate "$MAX_ERROR_RATE" \
   --arg min_pass_rate "$MIN_PASS_RATE" \
+  --arg load_degradation "$load_degradation" \
+  --arg correlation_status "$correlation_status" \
+  --arg correlation_explanation "$correlation_explanation" \
+  --argjson correlation_score "$correlation_score" \
   --arg log_path "${ART_DIR}/resilience_intelligence.log" \
+  --slurpfile adapters "$ART_DIR/resilience-adapters.json" \
   '(
     {
       timestamp:$ts,
       mode:$mode,
+      scenario:$scenario,
       status:$status,
       score:$score,
       seed:$seed,
@@ -236,13 +307,22 @@ jq -n \
       thresholds:{max_error_rate:($max_error_rate|tonumber),min_pass_rate:($min_pass_rate|tonumber)},
       load:{status:$k6_status,reason:$k6_reason,summary_file:($log_path|gsub("resilience_intelligence.log";"k6-summary.json"))},
       chaos:{status:$chaos_status,reason:$chaos_reason,artifact:($log_path|gsub("resilience_intelligence.log";"chaos-results.json"))},
+      adapters:{count:($adapters[0]|length),items:$adapters[0]},
+      correlation:{
+        status:$correlation_status,
+        score:$correlation_score,
+        load_degradation:($load_degradation|tonumber),
+        chaos_status:$chaos_status,
+        resilience_status:$status,
+        explanation:$correlation_explanation
+      },
       log:$log_path
     }
     | if ($k6_error_rate|length)>0 then .load.error_rate=($k6_error_rate|tonumber) else . end
     | if ($k6_pass_rate|length)>0 then .load.pass_rate=($k6_pass_rate|tonumber) else . end
   )' >"$SUMMARY_FILE"
 
-log "Resilience Intelligence complete status=$status score=$score"
+log "Resilience Intelligence complete status=$status score=$score correlation=$correlation_score"
 if [[ "$status" == "fail" ]]; then
   exit 1
 fi

@@ -81,6 +81,8 @@ Resilience Intelligence quick run:
 ```bash
 make resilience-intelligence
 make resilience-intelligence-check
+make resilience-adapter-check
+make resilience-report
 ```
 
 ## ⚡ Developer quick path (Phase 3 DX)
@@ -102,6 +104,8 @@ If you are onboarding to UAP for the first time, start with:
 - Completed sample onboarding bundle: `examples/onboarded-service/`
 - Full review framework: `docs/end-to-end-review.md`
 - Resilience Intelligence MVP (Phase 1): `docs/resilience-intelligence-phase1.md`
+- Resilience Intelligence Phase 2 runbook: `docs/resilience-intelligence-phase2.md`
+- MCP-ready interface wrappers: `docs/mcp-resilience-intelligence-interface.md`
 
 One-command path to onboarding mode:
 

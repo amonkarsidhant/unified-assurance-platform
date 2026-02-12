@@ -2,6 +2,11 @@
   "name": "chaos-randomized",
   "mode": "CHAOS",
   "description": "Randomized fault injection envelope seeded for reproducibility.",
+  "category_tags": ["network", "app"],
+  "parameterization_guidance": {
+    "seed": "set fixed seed for reproducibility in CI",
+    "vus_range": "set upper bound based on service tier"
+  },
   "load": {
     "vus_range": [1, 6],
     "duration_range_seconds": [5, 25],
@@ -10,5 +15,6 @@
   "chaos": {
     "seed": 20260212,
     "fault_profiles": ["latency-medium", "dependency-timeout", "packet-loss"]
-  }
+  },
+  "expected_outcome": "System degrades gracefully under random faults and recovers without sustained failure state."
 }
