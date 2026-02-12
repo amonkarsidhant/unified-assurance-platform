@@ -1,0 +1,7 @@
+## command: make report
+Report written to artifacts/latest/release-report.md
+Resilience report written to artifacts/latest/resilience-intelligence-report.md
+Resilience report: artifacts/latest/resilience-intelligence-report.md
+Exported assurance metrics to artifacts/metrics/assurance.prom
+Report generated at artifacts/latest/release-report.md
+Resilience report linked at artifacts/latest/resilience-intelligence-report.md

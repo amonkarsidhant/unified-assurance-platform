@@ -1,0 +1,77 @@
+{
+  "generated_at": "2026-02-12T16:44:07Z",
+  "artifacts_scanned": 7,
+  "services": [
+    {
+      "service": "payments-api",
+      "runs_total": 2,
+      "latest": {
+        "timestamp": "2026-02-12T15:20:10Z",
+        "status": "pass",
+        "score": 1.0,
+        "correlation": 1.0,
+        "adapter_count": 2,
+        "environment": "stage",
+        "tier": "high",
+        "artifact": "artifacts/history/payments-api/stage/high/20260212T152010Z/resilience-intelligence.json"
+      },
+      "score_trend": [
+        1.0,
+        1.0
+      ],
+      "correlation_trend": [
+        1.0,
+        1.0
+      ],
+      "adapter_participation_avg": 2.0,
+      "status_counts": {
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0,
+        "other": 0
+      },
+      "environment_tier_counts": {
+        "stage::high": 2
+      }
+    },
+    {
+      "service": "sample-service",
+      "runs_total": 5,
+      "latest": {
+        "timestamp": "2026-02-12T16:44:06Z",
+        "status": "pass",
+        "score": 1.0,
+        "correlation": 1.0,
+        "adapter_count": 2,
+        "environment": "dev",
+        "tier": "high",
+        "artifact": "artifacts/history/sample-service/dev/high/20260212T164406Z/resilience-intelligence.json"
+      },
+      "score_trend": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "correlation_trend": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "adapter_participation_avg": 2.0,
+      "status_counts": {
+        "pass": 5,
+        "fail": 0,
+        "skipped": 0,
+        "other": 0
+      },
+      "environment_tier_counts": {
+        "dev::high": 4,
+        "dev::medium": 1
+      }
+    }
+  ]
+}

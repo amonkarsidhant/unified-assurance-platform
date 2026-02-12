@@ -1,0 +1,99 @@
+{
+  "service": "sample-service",
+  "timestamp": "2026-02-12T16:43:58Z",
+  "execution": {
+    "mode": "pragmatic",
+    "force_real_tools": false
+  },
+  "risk_context": {
+    "risk_score": 45,
+    "risk_tier": "medium",
+    "required_controls": ["sast","sca","secret_scan","contract"],
+    "control_status": {
+      "sast": "pass",
+      "sca": "pass",
+      "secret_scan": "fail",
+      "contract": "pass"
+    },
+    "policy_validation_passed": false,
+    "missing_required_controls": ["secret_scan"]
+  },
+  "chaos": {"timestamp": "2026-02-12T16:43:51.265314+00:00", "mode": "real", "risk_tier": "medium", "module_type": "api", "required": false, "required_scenarios": ["network_latency", "dependency_timeout", "queue_backlog"], "executed_scenarios": [], "skipped_scenarios": ["chaos_toolkit", "toxiproxy-cli", "pumba", "stress-ng"], "failed_scenarios": [], "reasons": ["chaos toolkit not installed", "toxiproxy-cli not installed", "pumba not installed", "stress-ng not installed"], "status": "pass", "logs": {"chaos_toolkit": "artifacts/latest/chaos-chaos_toolkit.log", "toxiproxy": "artifacts/latest/chaos-toxiproxy-cli.log", "pumba": "artifacts/latest/chaos-pumba.log", "stress_ng": "artifacts/latest/chaos-stress-ng.log"}},
+  "metrics": {
+    "test_pass_rate": 0.7857,
+    "critical_test_failures": 1
+  },
+  "tests": {
+    "lint": "pass",
+    "unit": "pass",
+    "integration": "pass",
+    "contract": "pass",
+    "dependency_scan": "pass",
+    "security_scan": "pass",
+    "dast_zap": "skipped",
+    "performance_smoke": "pass",
+    "resilience": "pass",
+    "chaos_resilience": "pass",
+    "secret_scan": "fail",
+    "api_fuzz_contract": "skipped",
+    "dockerfile_policy": "pass",
+    "iac_policy": "pass",
+    "resilience_intelligence": "pass",
+    "newman_smoke": "skipped",
+    "playwright_smoke": "pass"
+  },
+  "test_reasons": {
+    "resilience_intelligence": "executed; executed"
+  },
+  "evidence": {
+    "tools": {
+      "dast_zap": {
+        "status": "skipped",
+        "target_url": "http://127.0.0.1:5678",
+        "timeout_min": 2,
+        "fail_level": "medium",
+        "log": "artifacts/latest/dast_zap.log"
+      },
+      "chaos_resilience": {
+        "status": "pass",
+        "result": "artifacts/latest/chaos-results.json",
+        "log": "artifacts/latest/chaos_resilience.log"
+      },
+      "resilience_intelligence": {
+        "status": "pass",
+        "result": "artifacts/latest/resilience-intelligence.json",
+        "log": "artifacts/latest/resilience_intelligence.log"
+      }
+    },
+    "tool_logs": {
+      "lint": "artifacts/latest/lint.log",
+      "unit": "artifacts/latest/unit.log",
+      "integration": "artifacts/latest/integration.log",
+      "contract": "artifacts/latest/contract.log",
+      "security_scan": "artifacts/latest/security_scan.log",
+      "dast_zap": "artifacts/latest/dast_zap.log",
+      "dependency_scan": "artifacts/latest/dependency_scan.log",
+      "performance_smoke": "artifacts/latest/performance_smoke.log",
+      "resilience": "artifacts/latest/resilience.log",
+      "chaos_resilience": "artifacts/latest/chaos_resilience.log",
+      "resilience_intelligence": "artifacts/latest/resilience_intelligence.log",
+      "newman_smoke": "artifacts/latest/newman_smoke.log",
+      "playwright_smoke": "artifacts/latest/playwright_smoke.log",
+      "secret_scan": "artifacts/latest/secret_scan.log",
+      "api_fuzz_contract": "artifacts/latest/api_fuzz_contract.log",
+      "dockerfile_policy": "artifacts/latest/dockerfile_policy.log",
+      "iac_policy": "artifacts/latest/iac_policy.log"
+    },
+    "tool_outputs": {
+      "semgrep_json": "artifacts/latest/semgrep.json",
+      "trivy_json": "artifacts/latest/trivy.json",
+      "k6_summary_json": "artifacts/latest/k6-summary.json",
+      "newman_json": "artifacts/latest/newman.json",
+      "chaos_results_json": "artifacts/latest/chaos-results.json",
+      "resilience_intelligence_json": "artifacts/latest/resilience-intelligence.json",
+      "gitleaks_json": "artifacts/latest/gitleaks.json",
+      "hadolint_json": "artifacts/latest/hadolint.json",
+      "checkov_json": "artifacts/latest/checkov.json"
+    }
+  }
+}

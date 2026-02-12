@@ -1,0 +1,92 @@
+{
+  "environment": "stage",
+  "service": "sample-service",
+  "risk_tier": "medium",
+  "required_controls": [
+    "sast",
+    "sca",
+    "secret_scan",
+    "contract"
+  ],
+  "control_matrix": [
+    {
+      "control": "sast",
+      "test_key": "security_scan",
+      "status": "pass",
+      "required": true,
+      "passed": true,
+      "exception_used": false,
+      "exception": null,
+      "waived": false
+    },
+    {
+      "control": "sca",
+      "test_key": "dependency_scan",
+      "status": "pass",
+      "required": true,
+      "passed": true,
+      "exception_used": false,
+      "exception": null,
+      "waived": false
+    },
+    {
+      "control": "secret_scan",
+      "test_key": "secret_scan",
+      "status": "fail",
+      "required": true,
+      "passed": false,
+      "exception_used": false,
+      "exception": null,
+      "waived": false
+    },
+    {
+      "control": "contract",
+      "test_key": "contract",
+      "status": "pass",
+      "required": true,
+      "passed": true,
+      "exception_used": false,
+      "exception": null,
+      "waived": false
+    }
+  ],
+  "exceptions_used": [],
+  "flaky_policy": {
+    "evaluated": true,
+    "policy": {
+      "window_runs": 10,
+      "min_observations": 3,
+      "flaky_rate_threshold": 0.2,
+      "max_flaky_tests": 3,
+      "fail_closed_if_missing_history": false,
+      "history_file": "artifacts/history/test-history.json"
+    },
+    "history_path": "artifacts/history/test-history.json",
+    "sampled_runs": 1,
+    "flaky_tests": [],
+    "flaky_count": 0,
+    "max_flaky_tests": 3,
+    "missing_history": false,
+    "allowed": true,
+    "reasons": []
+  },
+  "evidence_integrity": {
+    "tier": "medium",
+    "signature_required": false,
+    "signature_fail_closed": true,
+    "bundle_dir": "evidence/bundles",
+    "has_signature": false,
+    "has_attestation": false,
+    "has_skip_reason": true
+  },
+  "audit_reasons": [],
+  "failures": [
+    "critical_test_failures=1 (must be 0)",
+    "mandatory control failed: secret_scan -> secret_scan=fail",
+    "risk_context.policy_validation_passed is not true",
+    "secret_scan=fail not in allowed ['pass', 'skipped']"
+  ],
+  "passed": false,
+  "generated_at": "2026-02-12T16:43:59.974939+00:00",
+  "compliance_trace": "docs/compliance/control-traceability.md"
+}
