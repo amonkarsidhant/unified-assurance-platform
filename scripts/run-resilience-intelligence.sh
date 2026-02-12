@@ -41,9 +41,9 @@ cfg_get() {
 
 mode_from_env="${RESILIENCE_INTELLIGENCE_MODE:-}"
 if [[ -n "$mode_from_env" ]]; then
-  MODE="$(echo "$mode_from_env" | tr '[:lower:]' '[:upper:]')"
+  MODE="${mode_from_env^^}"
 else
-  MODE="$(echo "$(cfg_get '.mode' 'ROBUSTNESS')" | tr '[:lower:]' '[:upper:]')"
+  MODE="$(tr '[:lower:]' '[:upper:]' <<< "$(cfg_get '.mode' 'ROBUSTNESS')")"
 fi
 
 if [[ "$MODE" != "ROBUSTNESS" && "$MODE" != "CHAOS" ]]; then
@@ -65,7 +65,7 @@ cfg_chaos_timeout="$(cfg_get '.timeouts.chaos_seconds' '60')"
 cfg_max_error_rate="$(cfg_get '.thresholds.max_error_rate' '0.05')"
 cfg_min_pass_rate="$(cfg_get '.thresholds.min_pass_rate' '0.90')"
 
-SEED="${RESILIENCE_INTELLIGENCE_SEED:-$cfg_seed}"
+SEED_RAW="${RESILIENCE_INTELLIGENCE_SEED:-$cfg_seed}"
 MAX_ATTEMPTS="${RESILIENCE_INTELLIGENCE_MAX_ATTEMPTS:-$cfg_attempts}"
 PERF_TARGET_URL="${PERF_TARGET_URL:-$cfg_perf_target}"
 MODULE_TYPE="${MODULE_TYPE:-$cfg_module_type}"
@@ -74,6 +74,16 @@ K6_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_K6_TIMEOUT_SECONDS:-$cfg_k6_timeou
 CHAOS_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_CHAOS_TIMEOUT_SECONDS:-$cfg_chaos_timeout}"
 MAX_ERROR_RATE="${RESILIENCE_INTELLIGENCE_MAX_ERROR_RATE:-$cfg_max_error_rate}"
 MIN_PASS_RATE="${RESILIENCE_INTELLIGENCE_MIN_PASS_RATE:-$cfg_min_pass_rate}"
+
+SEED="$SEED_RAW"
+if ! [[ "$SEED" =~ ^[0-9]+$ ]]; then
+  fallback_seed="$cfg_seed"
+  if ! [[ "$fallback_seed" =~ ^[0-9]+$ ]]; then
+    fallback_seed=0
+  fi
+  log "Invalid seed '$SEED_RAW'; defaulting to $fallback_seed"
+  SEED="$fallback_seed"
+fi
 
 if ! [[ "$MAX_ATTEMPTS" =~ ^[0-9]+$ ]] || [[ "$MAX_ATTEMPTS" -lt 1 ]]; then
   MAX_ATTEMPTS=1
@@ -213,7 +223,7 @@ jq -n \
   --arg chaos_reason "$chaos_reason" \
   --arg max_error_rate "$MAX_ERROR_RATE" \
   --arg min_pass_rate "$MIN_PASS_RATE" \
-  --arg log_path "artifacts/latest/resilience_intelligence.log" \
+  --arg log_path "${ART_DIR}/resilience_intelligence.log" \
   '(
     {
       timestamp:$ts,
