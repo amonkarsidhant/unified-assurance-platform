@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def read_json(path: Path) -> dict[str, Any]:
     try:
         return json.loads(path.read_text())
-    except Exception as e:
+    except (json.JSONDecodeError, OSError) as e:
         logger.warning("Failed to parse JSON from %s: %s", path, e, exc_info=True)
         return {}
 
@@ -24,7 +24,7 @@ def parse_ts(value: str) -> datetime:
         if dt.tzinfo is None:
             return dt.replace(tzinfo=timezone.utc)
         return dt
-    except Exception:
+    except (ValueError, TypeError):
         return datetime.min.replace(tzinfo=timezone.utc)
 
 
@@ -71,7 +71,9 @@ def run_identity(data: dict[str, Any]) -> str:
 
 
 def source_rank(path: Path) -> int:
-    p = str(path)
+    p = path.as_posix()
+    if not p.startswith("/"):
+        p = "/" + p
     if "/artifacts/history/" in p:
         return 0
     if "/artifacts/latest/incident-runs/" in p:
