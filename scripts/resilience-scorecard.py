@@ -21,6 +21,45 @@ def parse_ts(value: str) -> datetime:
         return datetime.min
 
 
+def run_identity(data: Dict[str, Any]) -> str:
+    context = data.get("run_context") or {}
+    trigger = data.get("trigger") or {}
+    selected = data.get("selected") or {}
+
+    # Prefer a stable logical identity over file path so copied snapshots
+    # (latest + history + incident-runs) are counted once.
+    identity = {
+        "timestamp": data.get("timestamp"),
+        "service": context.get("service") or data.get("service") or "unknown-service",
+        "environment": context.get("environment") or "unknown",
+        "tier": context.get("tier") or "unknown",
+        "mode": data.get("mode") or "unknown",
+        "scenario": data.get("scenario") or "unknown",
+        "seed": data.get("seed"),
+        "selected": {
+            "vus": selected.get("vus"),
+            "duration": selected.get("duration"),
+            "fault_profile": selected.get("fault_profile"),
+        },
+        "trigger": {
+            "source": trigger.get("source"),
+            "decision_artifact": trigger.get("decision_artifact"),
+        },
+    }
+    return json.dumps(identity, sort_keys=True, separators=(",", ":"))
+
+
+def source_rank(path: Path) -> int:
+    p = str(path)
+    if "/artifacts/history/" in p:
+        return 0
+    if "/artifacts/latest/incident-runs/" in p:
+        return 1
+    if "/artifacts/latest/" in p:
+        return 2
+    return 3
+
+
 def collect_artifacts(paths: List[Path]) -> List[Tuple[Path, Dict[str, Any]]]:
     found: List[Tuple[Path, Dict[str, Any]]] = []
     for p in paths:
@@ -34,9 +73,17 @@ def collect_artifacts(paths: List[Path]) -> List[Tuple[Path, Dict[str, Any]]]:
                 d = read_json(f)
                 if d:
                     found.append((f, d))
+
     dedup: Dict[str, Tuple[Path, Dict[str, Any]]] = {}
     for fp, data in found:
-        dedup[str(fp.resolve())] = (fp, data)
+        key = run_identity(data)
+        current = dedup.get(key)
+        if current is None:
+            dedup[key] = (fp, data)
+            continue
+        # Prefer canonical archived copies when duplicates exist.
+        if source_rank(fp) < source_rank(current[0]):
+            dedup[key] = (fp, data)
     return list(dedup.values())
 
 
