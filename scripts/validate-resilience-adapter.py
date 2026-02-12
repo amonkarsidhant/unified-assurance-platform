@@ -19,13 +19,14 @@ def main() -> None:
     args = parser.parse_args()
 
     path = Path(args.input)
-    if not path.exists():
-        fail(f"adapter payload not found: {path}")
+    if not path.is_file():
+        fail(f"adapter payload not found or not a regular file: {path}")
 
     try:
-        data = json.loads(path.read_text())
-    except json.JSONDecodeError as exc:
-        fail(f"invalid JSON in {path}: {exc}")
+        raw = path.read_text()
+        data = json.loads(raw)
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"unable to read/parse adapter payload {path}: {exc}")
 
     if not isinstance(data, dict):
         fail("adapter payload must be a JSON object")

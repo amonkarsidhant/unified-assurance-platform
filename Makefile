@@ -193,7 +193,9 @@ report:
 	@$(MAKE) resilience-report
 	@$(MAKE) assurance-metrics-export
 	@echo "Report generated at $(OUT)"
-	@echo "Resilience report linked at artifacts/latest/resilience-intelligence-report.md"
+	@if [ -f artifacts/latest/resilience-intelligence-report.md ]; then \
+		echo "Resilience report linked at artifacts/latest/resilience-intelligence-report.md"; \
+	fi
 
 collect-evidence:
 	@./scripts/collect-evidence.sh

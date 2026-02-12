@@ -191,8 +191,8 @@ if [[ -d "$ADAPTERS_DIR" && -r "$ADAPTERS_DIR" ]]; then
   while IFS= read -r adapter_path; do
     adapter_name="$(basename "$adapter_path")"
     adapter_out="$ART_DIR/resilience-adapter-${adapter_name%.*}.json"
-    if run_with_timeout 20 "$adapter_path" >"$adapter_out" 2>>"$LOG_FILE"; then
-      if python3 "$ADAPTER_VALIDATOR" --input "$adapter_out" >>"$LOG_FILE" 2>&1; then
+    if run_with_timeout 20 env ART_DIR="$ART_DIR" "$adapter_path" >"$adapter_out" 2>>"$LOG_FILE"; then
+      if env ART_DIR="$ART_DIR" python3 "$ADAPTER_VALIDATOR" --input "$adapter_out" >>"$LOG_FILE" 2>&1; then
         adapter_inputs+=("$adapter_out")
         log "Adapter OK: $adapter_name"
       else

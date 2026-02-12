@@ -32,15 +32,15 @@ try:
     reason = "locust summary parsed"
     metadata = {"source_file": str(path)}
 except json.JSONDecodeError as exc:
-    fail_ratio = 0.0
-    rps = 0.0
-    status = "pass"
+    fail_ratio = None
+    rps = None
+    status = "skipped"
     reason = f"locust summary parse error: {exc}"
     metadata = {"source_file": str(path), "exception": str(exc)}
 except Exception as exc:
-    fail_ratio = 0.0
-    rps = 0.0
-    status = "pass"
+    fail_ratio = None
+    rps = None
+    status = "skipped"
     reason = f"locust adapter error: {exc}"
     metadata = {"source_file": str(path), "exception": str(exc)}
 
