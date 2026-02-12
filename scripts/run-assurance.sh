@@ -434,10 +434,11 @@ import json
 from pathlib import Path
 p = Path('$ART_DIR/resilience-intelligence.json')
 if not p.exists():
-    print('resilience intelligence summary missing')
+    combined = 'resilience intelligence summary missing'
 else:
     d = json.loads(p.read_text())
-    print((d.get('load', {}).get('reason') or 'n/a') + '; ' + (d.get('chaos', {}).get('reason') or 'n/a'))
+    combined = (d.get('load', {}).get('reason') or 'n/a') + '; ' + (d.get('chaos', {}).get('reason') or 'n/a')
+print(json.dumps(combined)[1:-1])
 PY
 )"
   },
