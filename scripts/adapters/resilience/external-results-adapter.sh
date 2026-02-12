@@ -22,7 +22,22 @@ import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-data = json.loads(path.read_text())
+
+try:
+    data = json.loads(path.read_text())
+except Exception:
+    print(json.dumps({
+        "adapter": "external-results",
+        "signal": "external",
+        "status": "skipped",
+        "reason": "invalid or unreadable JSON",
+        "metrics": {},
+        "metadata": {
+            "source_file": str(path),
+            "provider": "unknown"
+        }
+    }, indent=2))
+    raise SystemExit(0)
 
 status = str(data.get("status", "pass")).lower()
 if status not in {"pass", "fail", "skipped"}:

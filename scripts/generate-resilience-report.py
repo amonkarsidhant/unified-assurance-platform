@@ -12,9 +12,12 @@ def main() -> None:
 
     src = Path(args.input)
     if not src.exists():
-        raise SystemExit(f"missing input: {src}")
+        parser.error(f"missing input: {src}")
 
-    data = json.loads(src.read_text())
+    try:
+        data = json.loads(src.read_text())
+    except (json.JSONDecodeError, ValueError) as e:
+        parser.error(f"invalid JSON in {src}: {e}")
     corr = data.get("correlation", {})
     adapters = data.get("adapters", {})
 

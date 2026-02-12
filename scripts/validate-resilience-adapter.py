@@ -56,7 +56,7 @@ def main() -> None:
         if key in data["metrics"] and data["metrics"][key] is not None:
             try:
                 float(data["metrics"][key])
-            except Exception:
+            except (TypeError, ValueError):
                 fail(f"metrics.{key} must be numeric when provided")
 
     if not isinstance(data["metadata"], dict):

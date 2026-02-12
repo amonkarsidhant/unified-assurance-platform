@@ -38,7 +38,7 @@ cfg_get() {
 
 mode_from_env="${RESILIENCE_INTELLIGENCE_MODE:-}"
 if [[ -n "$mode_from_env" ]]; then
-  MODE="$(printf '%s' "$mode_from_env" | tr '[:lower:]' '[:upper:]')"
+  MODE="${mode_from_env^^}"
 else
   MODE="$(tr '[:lower:]' '[:upper:]' <<< "$(cfg_get '.mode' 'ROBUSTNESS')")"
 fi
@@ -46,7 +46,7 @@ fi
 if [[ "$MODE" != "ROBUSTNESS" && "$MODE" != "CHAOS" ]]; then
   log "Invalid mode '$MODE'. Allowed: ROBUSTNESS, CHAOS"
   echo "fail" >"$STATUS_FILE"
-  jq -n --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" --arg mode "$MODE" '{timestamp:$ts,mode:$mode,status:"fail",score:0.0,reason:"invalid mode",correlation:{status:"failed",score:0,explanation:"invalid mode"}}' >"$SUMMARY_FILE"
+  jq -n --arg ts "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" --arg mode "$MODE" '{timestamp:$ts,mode:$mode,status:"fail",score:0.0,reason:"invalid mode",correlation:{status:"unknown",score:0,explanation:"invalid mode"}}' >"$SUMMARY_FILE"
   exit 1
 fi
 
@@ -187,22 +187,26 @@ fi
 
 # Adapter framework (Phase 2)
 adapter_inputs=()
-while IFS= read -r adapter_path; do
-  adapter_name="$(basename "$adapter_path")"
-  adapter_out="$ART_DIR/resilience-adapter-${adapter_name%.*}.json"
-  if run_with_timeout 20 "$adapter_path" >"$adapter_out" 2>>"$LOG_FILE"; then
-    if python3 "$ADAPTER_VALIDATOR" --input "$adapter_out" >>"$LOG_FILE" 2>&1; then
-      adapter_inputs+=("$adapter_out")
-      log "Adapter OK: $adapter_name"
+if [[ -d "$ADAPTERS_DIR" && -r "$ADAPTERS_DIR" ]]; then
+  while IFS= read -r adapter_path; do
+    adapter_name="$(basename "$adapter_path")"
+    adapter_out="$ART_DIR/resilience-adapter-${adapter_name%.*}.json"
+    if run_with_timeout 20 "$adapter_path" >"$adapter_out" 2>>"$LOG_FILE"; then
+      if python3 "$ADAPTER_VALIDATOR" --input "$adapter_out" >>"$LOG_FILE" 2>&1; then
+        adapter_inputs+=("$adapter_out")
+        log "Adapter OK: $adapter_name"
+      else
+        log "Adapter validation failed: $adapter_name"
+        rm -f "$adapter_out"
+      fi
     else
-      log "Adapter validation failed: $adapter_name"
+      log "Adapter execution failed: $adapter_name"
       rm -f "$adapter_out"
     fi
-  else
-    log "Adapter execution failed: $adapter_name"
-    rm -f "$adapter_out"
-  fi
-done < <(find "$ADAPTERS_DIR" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.py" \) | sort)
+  done < <(find "$ADAPTERS_DIR" -maxdepth 1 -type f \( -name "*.sh" -o -name "*.py" \) | sort)
+else
+  log "Adapter directory unavailable: $ADAPTERS_DIR (skipping adapters)"
+fi
 
 if [[ ${#adapter_inputs[@]} -gt 0 ]]; then
   jq -s '.' "${adapter_inputs[@]}" >"$ART_DIR/resilience-adapters.json"

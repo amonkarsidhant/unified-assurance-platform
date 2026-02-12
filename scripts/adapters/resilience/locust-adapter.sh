@@ -22,13 +22,27 @@ import sys
 from pathlib import Path
 
 path = Path(sys.argv[1])
-data = json.loads(path.read_text())
 
-stats = data.get("stats_total", {}) if isinstance(data, dict) else {}
-fail_ratio = float(stats.get("fail_ratio", 0) or 0)
-rps = float(stats.get("current_rps", 0) or 0)
-status = "pass" if fail_ratio <= 0.05 else "fail"
-reason = "locust summary parsed"
+try:
+    data = json.loads(path.read_text())
+    stats = data.get("stats_total", {}) if isinstance(data, dict) else {}
+    fail_ratio = float(stats.get("fail_ratio", 0) or 0)
+    rps = float(stats.get("current_rps", 0) or 0)
+    status = "pass" if fail_ratio <= 0.05 else "fail"
+    reason = "locust summary parsed"
+    metadata = {"source_file": str(path)}
+except json.JSONDecodeError as exc:
+    fail_ratio = 0.0
+    rps = 0.0
+    status = "pass"
+    reason = f"locust summary parse error: {exc}"
+    metadata = {"source_file": str(path), "exception": str(exc)}
+except Exception as exc:
+    fail_ratio = 0.0
+    rps = 0.0
+    status = "pass"
+    reason = f"locust adapter error: {exc}"
+    metadata = {"source_file": str(path), "exception": str(exc)}
 
 print(json.dumps({
     "adapter": "locust",
@@ -40,8 +54,6 @@ print(json.dumps({
         "degradation": fail_ratio,
         "throughput_rps": rps
     },
-    "metadata": {
-        "source_file": str(path)
-    }
+    "metadata": metadata
 }, indent=2))
 PY

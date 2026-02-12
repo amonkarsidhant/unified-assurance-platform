@@ -113,14 +113,23 @@ resilience-intelligence-check:
 
 resilience-adapter-check:
 	@for f in scripts/adapters/resilience/*.sh; do \
-		ART_DIR=artifacts/latest $$f > /tmp/$$(basename $$f .sh)-adapter.json; \
-		python3 scripts/validate-resilience-adapter.py --input /tmp/$$(basename $$f .sh)-adapter.json; \
+		tmp_file=$$(mktemp /tmp/resilience-adapter.XXXXXX); \
+		cleanup() { rm -f "$$tmp_file"; }; \
+		trap cleanup EXIT; \
+		ART_DIR=artifacts/latest "$$f" > "$$tmp_file"; \
+		python3 scripts/validate-resilience-adapter.py --input "$$tmp_file"; \
+		trap - EXIT; \
+		cleanup; \
 	done
 	@echo "Adapter contract check passed."
 
 resilience-report:
-	@./scripts/generate-resilience-report.py --input artifacts/latest/resilience-intelligence.json --output artifacts/latest/resilience-intelligence-report.md
-	@echo "Resilience report: artifacts/latest/resilience-intelligence-report.md"
+	@if [ -f artifacts/latest/resilience-intelligence.json ]; then \
+		./scripts/generate-resilience-report.py --input artifacts/latest/resilience-intelligence.json --output artifacts/latest/resilience-intelligence-report.md; \
+		echo "Resilience report: artifacts/latest/resilience-intelligence-report.md"; \
+	else \
+		echo "Skipping resilience report: input missing"; \
+	fi
 
 phase-a-checks:
 	@./scripts/run-gitleaks.sh
@@ -166,7 +175,7 @@ assurance-dashboard-check:
 
 assurance-governance-check:
 	@echo "Checking Prometheus governance metrics..."
-	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped assurance_resilience_intelligence_status assurance_resilience_intelligence_score assurance_resilience_correlation_score assurance_resilience_correlation_status onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
+	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped assurance_resilience_intelligence_status assurance_resilience_intelligence_score assurance_resilience_correlation_score assurance_resilience_correlation_status assurance_resilience_adapter_count onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
 		curl -fsS "http://localhost:9090/api/v1/query?query=$$q" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "missing metric"'; \
 		echo "✅ Prometheus has $$q"; \
 	done

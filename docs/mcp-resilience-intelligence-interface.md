@@ -28,10 +28,10 @@ scripts/mcp-resilience-intelligence-artifacts.sh
 ```
 
 Returns JSON with key artifact paths:
-- resilience intelligence summary
-- resilience markdown report
-- adapter aggregate payload
-- status file
+- `resilience_intelligence`
+- `resilience_report`
+- `adapter_inputs`
+- `status_file`
 
 ## Minimal MCP client flow
 
