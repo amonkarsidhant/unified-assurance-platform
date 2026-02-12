@@ -416,3 +416,31 @@ dev-stack-down:
 
 dev-stack-status:
 	@docker compose -f infra/local/docker-compose.yml ps
+
+.PHONY: control-plane-up control-plane-api control-plane-ui control-plane-demo
+
+control-plane-api:
+	@node apps/control-plane/api/server.mjs
+
+control-plane-ui:
+	@python3 -m http.server $${CONTROL_PLANE_UI_PORT:-4173} --directory apps/control-plane/ui
+
+control-plane-up:
+	@apps/control-plane/up.sh
+
+control-plane-demo:
+	@set -euo pipefail; \
+	trap '[[ -n "$${API_PID:-}" ]] && kill "$${API_PID}" 2>/dev/null || true' EXIT; \
+	node apps/control-plane/api/server.mjs > /tmp/control-plane-api.log 2>&1 & API_PID=$$!; \
+	sleep 1; \
+	echo "Triggering assurance run..."; \
+	RESP=$$(curl -fsS -X POST http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/assurance -H 'Content-Type: application/json' -d '{}'); \
+	echo "$$RESP"; \
+	RUN_ID=$$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["run"]["id"])' "$$RESP"); \
+	echo "Run ID: $$RUN_ID"; \
+	sleep 1; \
+	echo "Fetching runs list..."; \
+	curl -fsS http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs | python3 -m json.tool; \
+	echo "Fetching run detail..."; \
+	curl -fsS http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/$$RUN_ID | python3 -m json.tool; \
+	echo "Control plane demo complete."
