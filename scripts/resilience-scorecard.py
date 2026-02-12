@@ -16,9 +16,12 @@ def read_json(path: Path) -> Dict[str, Any]:
 
 def parse_ts(value: str) -> datetime:
     try:
-        return datetime.fromisoformat((value or "").replace("Z", "+00:00"))
+        dt = datetime.fromisoformat((value or "").replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
     except Exception:
-        return datetime.min
+        return datetime.min.replace(tzinfo=timezone.utc)
 
 
 def run_identity(data: Dict[str, Any]) -> str:
