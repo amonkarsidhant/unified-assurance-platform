@@ -5,6 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ART_DIR="${ART_DIR:-$ROOT_DIR/artifacts/latest}"
 mkdir -p "$ART_DIR"
 
+SERVICE_NAME="${SERVICE_NAME:-sample-service}"
+TARGET_ENV="${TARGET_ENV:-dev}"
+RISK_TIER="${RISK_TIER:-high}"
+TRIGGER_SOURCE="${TRIGGER_SOURCE:-scheduled}"
+TRIGGER_DECISION_PATH="${TRIGGER_DECISION_PATH:-}"
+
 STATUS_FILE="$ART_DIR/resilience_intelligence.status"
 LOG_FILE="$ART_DIR/resilience_intelligence.log"
 SUMMARY_FILE="$ART_DIR/resilience-intelligence.json"
@@ -38,7 +44,7 @@ cfg_get() {
 
 mode_from_env="${RESILIENCE_INTELLIGENCE_MODE:-}"
 if [[ -n "$mode_from_env" ]]; then
-  MODE="${mode_from_env^^}"
+  MODE="$(tr '[:lower:]' '[:upper:]' <<< "$mode_from_env")"
 else
   MODE="$(tr '[:lower:]' '[:upper:]' <<< "$(cfg_get '.mode' 'ROBUSTNESS')")"
 fi
@@ -64,7 +70,6 @@ SEED_RAW="${RESILIENCE_INTELLIGENCE_SEED:-$cfg_seed}"
 MAX_ATTEMPTS="${RESILIENCE_INTELLIGENCE_MAX_ATTEMPTS:-$cfg_attempts}"
 PERF_TARGET_URL="${PERF_TARGET_URL:-$cfg_perf_target}"
 MODULE_TYPE="${MODULE_TYPE:-$cfg_module_type}"
-RISK_TIER="${RISK_TIER:-high}"
 K6_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_K6_TIMEOUT_SECONDS:-$cfg_k6_timeout}"
 CHAOS_TIMEOUT_SECONDS="${RESILIENCE_INTELLIGENCE_CHAOS_TIMEOUT_SECONDS:-$cfg_chaos_timeout}"
 MAX_ERROR_RATE="${RESILIENCE_INTELLIGENCE_MAX_ERROR_RATE:-$cfg_max_error_rate}"
@@ -292,6 +297,11 @@ jq -n \
   --arg correlation_status "$correlation_status" \
   --arg correlation_explanation "$correlation_explanation" \
   --argjson correlation_score "$correlation_score" \
+  --arg service_name "$SERVICE_NAME" \
+  --arg target_env "$TARGET_ENV" \
+  --arg risk_tier "$RISK_TIER" \
+  --arg trigger_source "$TRIGGER_SOURCE" \
+  --arg trigger_decision_path "$TRIGGER_DECISION_PATH" \
   --arg log_path "${ART_DIR}/resilience_intelligence.log" \
   --slurpfile adapters "$ART_DIR/resilience-adapters.json" \
   '(
@@ -301,6 +311,8 @@ jq -n \
       scenario:$scenario,
       status:$status,
       score:$score,
+      run_context:{service:$service_name,environment:$target_env,tier:$risk_tier},
+      trigger:{source:$trigger_source,decision_artifact: (if ($trigger_decision_path|length)>0 then $trigger_decision_path else null end)},
       seed:$seed,
       max_attempts:$max_attempts,
       selected:{vus:$vus,duration:$duration,fault_profile:$fault},
@@ -321,6 +333,13 @@ jq -n \
     | if ($k6_error_rate|length)>0 then .load.error_rate=($k6_error_rate|tonumber) else . end
     | if ($k6_pass_rate|length)>0 then .load.pass_rate=($k6_pass_rate|tonumber) else . end
   )' >"$SUMMARY_FILE"
+
+if [[ "${RESILIENCE_INTELLIGENCE_ARCHIVE:-1}" == "1" ]]; then
+  archive_base="${RESILIENCE_INTELLIGENCE_ARCHIVE_DIR:-$ROOT_DIR/artifacts/history/$SERVICE_NAME/$TARGET_ENV/$RISK_TIER}"
+  archive_dir="$archive_base/$(date -u +'%Y%m%dT%H%M%SZ')"
+  mkdir -p "$archive_dir"
+  cp "$SUMMARY_FILE" "$archive_dir/resilience-intelligence.json"
+fi
 
 log "Resilience Intelligence complete status=$status score=$score correlation=$correlation_score"
 if [[ "$status" == "fail" ]]; then

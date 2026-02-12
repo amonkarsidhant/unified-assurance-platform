@@ -3,14 +3,15 @@
   "uid": "uap-assurance-governance",
   "title": "UAP Assurance Governance Dashboard",
   "tags": [
-    "uap",
     "assurance",
     "governance",
-    "phase2.5"
+    "phase2.5",
+    "phase3",
+    "uap"
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "15s",
   "time": {
     "from": "now-24h",
@@ -603,6 +604,68 @@
               "Value #B": "correlation_score",
               "Value #C": "adapter_count"
             }
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Phase 3 Service Score Trend (latest)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 41
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "assurance_resilience_service_score",
+          "legendFormat": "{{service}} {{environment}}/{{tier}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Phase 3 Service Resilience Summary",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 41
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "assurance_resilience_service_runs_total",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_resilience_service_adapter_participation",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "assurance_resilience_service_status_total",
+          "instant": true,
+          "refId": "C"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
           }
         }
       ]

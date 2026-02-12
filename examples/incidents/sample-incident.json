@@ -1,0 +1,8 @@
+{
+  "incident_id": "INC-2026-02-12-001",
+  "service": "payments-api",
+  "environment": "stage",
+  "symptom_category": "network",
+  "severity": "high",
+  "summary": "Elevated timeout rate between API and downstream dependency"
+}
