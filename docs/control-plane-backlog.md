@@ -12,6 +12,7 @@
 ## P0 Stories (Must-have)
 
 ### CP-001: API skeleton with health + run endpoints
+
 **Story**: As an operator, I can call minimal control-plane endpoints to create and list runs.
 
 **Acceptance criteria**
@@ -27,6 +28,7 @@
 ---
 
 ### CP-002: Strict allowlisted command execution
+
 **Story**: As a platform owner, I need command execution to be safe and non-arbitrary.
 
 **Acceptance criteria**
@@ -38,6 +40,7 @@
 ---
 
 ### CP-003: Run metadata persistence
+
 **Story**: As an operator, I can see run history even after restarting API.
 
 **Acceptance criteria**
@@ -48,6 +51,7 @@
 ---
 
 ### CP-004: Frontend skeleton (Dashboard, Runs, Run Detail)
+
 **Story**: As an operator, I can use a simple browser UI to trigger and inspect runs.
 
 **Acceptance criteria**
@@ -61,6 +65,7 @@
 ---
 
 ### CP-005: Makefile developer workflow targets
+
 **Story**: As a developer/demo owner, I can start API/UI and run a smoke demo via make.
 
 **Acceptance criteria**
@@ -74,6 +79,7 @@
 ---
 
 ### CP-006: Logging and error quality
+
 **Story**: As an operator, I get clear feedback when runs fail or input is invalid.
 
 **Acceptance criteria**
@@ -86,6 +92,7 @@
 ## P1 Stories (Should-have)
 
 ### CP-101: Polling UX improvements
+
 **Story**: As an operator, run status updates automatically.
 
 **Acceptance criteria**
@@ -95,6 +102,7 @@
 ---
 
 ### CP-102: Basic filter/sort for runs
+
 **Story**: As a quality lead, I can quickly isolate failed runs.
 
 **Acceptance criteria**
@@ -104,6 +112,7 @@
 ---
 
 ### CP-103: Enriched artifact index
+
 **Story**: As an incident commander, I can quickly navigate generated outputs.
 
 **Acceptance criteria**
@@ -113,6 +122,7 @@
 ---
 
 ### CP-104: Minimal contract tests for control-plane API
+
 **Story**: As an engineer, I can validate endpoint behavior regressions.
 
 **Acceptance criteria**
@@ -122,6 +132,7 @@
 ---
 
 ### CP-105: Configurable ports/envs
+
 **Story**: As a developer, I can run control plane on non-default ports.
 
 **Acceptance criteria**
@@ -131,6 +142,7 @@
 ---
 
 ## Definition of done (MVP)
+
 - All P0 accepted
 - `make validate` still passes
 - Control-plane demo command executes successfully

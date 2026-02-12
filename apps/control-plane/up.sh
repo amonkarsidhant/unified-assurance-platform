@@ -32,6 +32,22 @@ if ! kill -0 "${WORKER_PID}" 2>/dev/null; then
   exit 1
 fi
 
+API_HEALTH_URL="http://127.0.0.1:${API_PORT}/health"
+max_attempts=30
+attempt=1
+while (( attempt <= max_attempts )); do
+  if curl -fsS "${API_HEALTH_URL}" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.2
+  attempt=$((attempt + 1))
+done
+
+if (( attempt > max_attempts )); then
+  echo "Control-plane API failed readiness check: ${API_HEALTH_URL}"
+  exit 1
+fi
+
 echo "Control Plane API:    http://localhost:${API_PORT}"
 echo "Control Plane Worker: running (pid ${WORKER_PID})"
 echo "Control Plane UI:     http://localhost:${UI_PORT}"

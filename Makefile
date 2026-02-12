@@ -446,7 +446,7 @@ control-plane-demo:
 	echo "Fetching runs list..."; \
 	curl -fsS http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs | python3 -m json.tool; \
 	echo "Fetching run detail..."; \
-	curl -fsS http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/$$RUN_ID | python3 -m json.tool; \
+	curl -fsS "http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/$$RUN_ID" | python3 -m json.tool; \
 	echo "Control plane demo complete."
 
 control-plane-test:

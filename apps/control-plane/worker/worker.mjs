@@ -45,20 +45,35 @@ async function executeRun(run) {
     stdio: ['ignore', 'pipe', 'pipe']
   });
 
-  child.stdout.pipe(fs.createWriteStream(stdoutFile, { flags: 'a' }));
-  child.stderr.pipe(fs.createWriteStream(stderrFile, { flags: 'a' }));
+  const stdoutStream = fs.createWriteStream(stdoutFile, { flags: 'a' });
+  const stderrStream = fs.createWriteStream(stderrFile, { flags: 'a' });
+  child.stdout.pipe(stdoutStream);
+  child.stderr.pipe(stderrStream);
+
+  const closeStreams = () => {
+    stdoutStream.end();
+    stderrStream.end();
+  };
 
   const heartbeatTimer = setInterval(() => {
     heartbeatRun(run.id);
   }, workerHeartbeatMs);
 
   await new Promise((resolve) => {
+    let finished = false;
+    const done = () => {
+      if (finished) return;
+      finished = true;
+      closeStreams();
+      resolve();
+    };
+
     child.on('error', (err) => {
       clearInterval(heartbeatTimer);
       completeRun({ id: run.id, exitCode: -1, status: 'failed', error: `spawn_error: ${err.message}` });
       appendEvent({ runId: run.id, eventType: 'run.error', message: 'Spawn failure', payload: { error: err.message } });
       finalizeSafely(run.id);
-      resolve();
+      done();
     });
 
     child.on('close', (code, signal) => {
@@ -71,7 +86,7 @@ async function executeRun(run) {
         error: success ? null : `script exited with code ${code}${signal ? ` signal=${signal}` : ''}`
       });
       finalizeSafely(run.id);
-      resolve();
+      done();
     });
   });
 }

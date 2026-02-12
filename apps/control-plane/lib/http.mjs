@@ -39,9 +39,8 @@ export function readBody(req, maxBytes = MAX_BODY_BYTES) {
       const error = new Error('request body too large');
       error.code = 'PAYLOAD_TOO_LARGE';
       error.statusCode = 413;
-      req.pause();
       finalize(error);
-      req.resume();
+      req.destroy(error);
     };
 
     const contentLength = Number(req.headers['content-length']);
