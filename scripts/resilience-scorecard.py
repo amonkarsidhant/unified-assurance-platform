@@ -28,6 +28,20 @@ def parse_ts(value: str) -> datetime:
         return datetime.min.replace(tzinfo=timezone.utc)
 
 
+def safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def run_identity(data: dict[str, Any]) -> str:
     context = data.get("run_context") or {}
     trigger = data.get("trigger") or {}
@@ -111,9 +125,9 @@ def main() -> None:
         environment = str(context.get("environment") or "unknown")
         tier = str(context.get("tier") or "unknown")
         status = str(item.get("status", "unknown"))
-        score = float(item.get("score", 0) or 0)
-        corr = float((item.get("correlation") or {}).get("score", 0) or 0)
-        adapter_count = int(((item.get("adapters") or {}).get("count", 0)) or 0)
+        score = safe_float(item.get("score", 0), 0.0)
+        corr = safe_float((item.get("correlation") or {}).get("score", 0), 0.0)
+        adapter_count = safe_int((item.get("adapters") or {}).get("count", 0), 0)
         ts = str(item.get("timestamp") or "")
         by_service[service].append(
             {
