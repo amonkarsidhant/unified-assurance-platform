@@ -156,6 +156,7 @@ control_to_status() {
     contract) cat "$ART_DIR/contract.status" ;;
     resilience) cat "$ART_DIR/resilience.status" ;;
     chaos_resilience) cat "$ART_DIR/chaos_resilience.status" ;;
+    resilience_intelligence) cat "$ART_DIR/resilience_intelligence.status" ;;
     secret_scan) cat "$ART_DIR/secret_scan.status" ;;
     api_fuzz_contract) cat "$ART_DIR/api_fuzz_contract.status" ;;
     dockerfile_policy) cat "$ART_DIR/dockerfile_policy.status" ;;
