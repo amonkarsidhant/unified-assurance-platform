@@ -76,6 +76,13 @@ make run-assurance
 make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
 ```
 
+Resilience Intelligence quick run:
+
+```bash
+make resilience-intelligence
+make resilience-intelligence-check
+```
+
 ## ⚡ Developer quick path (Phase 3 DX)
 
 ```bash
@@ -94,6 +101,7 @@ If you are onboarding to UAP for the first time, start with:
 - Common failure fixes: `docs/troubleshooting.md`
 - Completed sample onboarding bundle: `examples/onboarded-service/`
 - Full review framework: `docs/end-to-end-review.md`
+- Resilience Intelligence MVP (Phase 1): `docs/resilience-intelligence-phase1.md`
 
 One-command path to onboarding mode:
 

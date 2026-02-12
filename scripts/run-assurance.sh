@@ -190,6 +190,7 @@ if [ "$ONLY_ZAP_SMOKE" = "1" ]; then
   record_skipped api_fuzz_contract "zap-smoke mode: not executed"
   record_skipped dockerfile_policy "zap-smoke mode: not executed"
   record_skipped iac_policy "zap-smoke mode: not executed"
+  record_skipped resilience_intelligence "zap-smoke mode: not executed"
   echo '{"status":"skipped","reason":"zap-smoke mode: not executed"}' >"$ART_DIR/chaos-results.json"
   record_skipped newman_smoke "zap-smoke mode: not executed"
   record_skipped playwright_smoke "zap-smoke mode: not executed"
@@ -268,6 +269,18 @@ else
   else
     record_skipped chaos_resilience "chaos script not found"
     echo '{"status":"skipped","reason":"chaos script not found"}' >"$ART_DIR/chaos-results.json"
+  fi
+
+  if [ -x "$ROOT_DIR/scripts/run-resilience-intelligence.sh" ]; then
+    if run_cmd_step resilience_intelligence bash -lc "cd '$ROOT_DIR' && RESILIENCE_INTELLIGENCE_MODE='${RESILIENCE_INTELLIGENCE_MODE:-ROBUSTNESS}' RISK_TIER='$RISK_TIER' MODULE_TYPE='$MODULE_TYPE' ./scripts/run-resilience-intelligence.sh"; then
+      if [ -f "$ART_DIR/resilience_intelligence.status" ]; then
+        write_status resilience_intelligence "$(cat "$ART_DIR/resilience_intelligence.status")"
+      fi
+    else
+      FAILURES=$((FAILURES+1))
+    fi
+  else
+    record_skipped resilience_intelligence "resilience intelligence script not found"
   fi
 
   NEWMAN_COLLECTION=""
@@ -414,8 +427,22 @@ PY
     "api_fuzz_contract": "$(cat "$ART_DIR/api_fuzz_contract.status")",
     "dockerfile_policy": "$(cat "$ART_DIR/dockerfile_policy.status")",
     "iac_policy": "$(cat "$ART_DIR/iac_policy.status")",
+    "resilience_intelligence": "$(cat "$ART_DIR/resilience_intelligence.status")",
     "newman_smoke": "$(cat "$ART_DIR/newman_smoke.status")",
     "playwright_smoke": "$(cat "$ART_DIR/playwright_smoke.status")"
+  },
+  "test_reasons": {
+    "resilience_intelligence": "$(python3 - <<PY
+import json
+from pathlib import Path
+p = Path('$ART_DIR/resilience-intelligence.json')
+if not p.exists():
+    print('resilience intelligence summary missing')
+else:
+    d = json.loads(p.read_text())
+    print((d.get('load', {}).get('reason') or 'n/a') + '; ' + (d.get('chaos', {}).get('reason') or 'n/a'))
+PY
+)"
   },
   "evidence": {
     "tools": {
@@ -430,6 +457,11 @@ PY
         "status": "$(cat "$ART_DIR/chaos_resilience.status")",
         "result": "artifacts/latest/chaos-results.json",
         "log": "artifacts/latest/chaos_resilience.log"
+      },
+      "resilience_intelligence": {
+        "status": "$(cat "$ART_DIR/resilience_intelligence.status")",
+        "result": "artifacts/latest/resilience-intelligence.json",
+        "log": "artifacts/latest/resilience_intelligence.log"
       }
     },
     "tool_logs": {
@@ -443,6 +475,7 @@ PY
       "performance_smoke": "artifacts/latest/performance_smoke.log",
       "resilience": "artifacts/latest/resilience.log",
       "chaos_resilience": "artifacts/latest/chaos_resilience.log",
+      "resilience_intelligence": "artifacts/latest/resilience_intelligence.log",
       "newman_smoke": "artifacts/latest/newman_smoke.log",
       "playwright_smoke": "artifacts/latest/playwright_smoke.log",
       "secret_scan": "artifacts/latest/secret_scan.log",
@@ -456,6 +489,7 @@ PY
       "k6_summary_json": "artifacts/latest/k6-summary.json",
       "newman_json": "artifacts/latest/newman.json",
       "chaos_results_json": "artifacts/latest/chaos-results.json",
+      "resilience_intelligence_json": "artifacts/latest/resilience-intelligence.json",
       "gitleaks_json": "artifacts/latest/gitleaks.json",
       "hadolint_json": "artifacts/latest/hadolint.json",
       "checkov_json": "artifacts/latest/checkov.json"

@@ -18,6 +18,7 @@ CONTROL_TO_TEST = {
     "api_fuzz_contract": "api_fuzz_contract",
     "dockerfile_policy": "dockerfile_policy",
     "iac_policy": "iac_policy",
+    "resilience_intelligence": "resilience_intelligence",
 }
 
 
@@ -164,6 +165,21 @@ def main():
             "exception_used": bool(exception),
             "exception": exception,
             "waived": waived,
+        })
+
+    if tier in {"high", "critical"}:
+        ri_status = tests.get("resilience_intelligence", "missing")
+        audit_reasons.append(f"resilience intelligence observed: status={ri_status}")
+        control_matrix.append({
+            "control": "resilience_intelligence",
+            "test_key": "resilience_intelligence",
+            "status": ri_status,
+            "required": False,
+            "passed": ri_status in {"pass", "skipped"},
+            "exception_used": False,
+            "exception": None,
+            "waived": False,
+            "note": "phase1-observe-only"
         })
 
     if tier == "critical" and active_exceptions:
