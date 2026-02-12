@@ -1,0 +1,9 @@
+## command: make resilience-intelligence
+[2026-02-12T17:44:00+0100] Resilience Intelligence start mode=ROBUSTNESS seed=1337 attempts=1 scenario=robustness-fixed
+[2026-02-12T17:44:00+0100] Selected profile: vus=2 duration=5s fault=latency-low
+[2026-02-12T17:44:00+0100] Load path attempt 1/1
+[2026-02-12T17:44:06+0100] Chaos path via scripts/run-chaos-checks.sh
+[2026-02-12T17:44:06+0100] Adapter OK: external-results-adapter.sh
+[2026-02-12T17:44:06+0100] Adapter OK: locust-adapter.sh
+[2026-02-12T17:44:06+0100] Resilience Intelligence complete status=pass score=1.0 correlation=1.000
+Resilience intelligence: artifacts/latest/resilience-intelligence.json

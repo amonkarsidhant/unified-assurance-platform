@@ -1,0 +1,73 @@
+{
+  "timestamp": "2026-02-12T16:44:06Z",
+  "mode": "ROBUSTNESS",
+  "scenario": "robustness-fixed",
+  "status": "pass",
+  "score": 1.0,
+  "run_context": {
+    "service": "sample-service",
+    "environment": "dev",
+    "tier": "high"
+  },
+  "trigger": {
+    "source": "scheduled",
+    "decision_artifact": null
+  },
+  "seed": 1337,
+  "max_attempts": 1,
+  "selected": {
+    "vus": 2,
+    "duration": "5s",
+    "fault_profile": "latency-low"
+  },
+  "thresholds": {
+    "max_error_rate": 0.05,
+    "min_pass_rate": 0.9
+  },
+  "load": {
+    "status": "pass",
+    "reason": "executed",
+    "summary_file": "/Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/k6-summary.json",
+    "error_rate": 0,
+    "pass_rate": 1
+  },
+  "chaos": {
+    "status": "skipped",
+    "reason": "executed",
+    "artifact": "/Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/chaos-results.json"
+  },
+  "adapters": {
+    "count": 2,
+    "items": [
+      {
+        "adapter": "external-results",
+        "signal": "external",
+        "status": "skipped",
+        "reason": "external results file not found",
+        "metrics": {},
+        "metadata": {
+          "source_file": "/Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/external-resilience-results.json"
+        }
+      },
+      {
+        "adapter": "locust",
+        "signal": "load",
+        "status": "skipped",
+        "reason": "locust summary not found",
+        "metrics": {},
+        "metadata": {
+          "source_file": "/Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/locust-summary.json"
+        }
+      }
+    ]
+  },
+  "correlation": {
+    "status": "partial",
+    "score": 1.000,
+    "load_degradation": 0,
+    "chaos_status": "skipped",
+    "resilience_status": "pass",
+    "explanation": "optional signals missing; computed from available inputs"
+  },
+  "log": "/Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/resilience_intelligence.log"
+}

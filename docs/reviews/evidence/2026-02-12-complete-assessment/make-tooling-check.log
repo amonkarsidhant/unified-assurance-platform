@@ -1,0 +1,17 @@
+Tooling check for /Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform
+✅ bash: GNU bash, version 3.2.57(1)-release (arm64-apple-darwin25)
+✅ python3: Python 3.9.6
+✅ make: GNU Make 3.81
+✅ npm: 10.9.3
+✅ npx: 10.9.3
+✅ k6: k6 v1.5.0 (commit/devel, go1.25.5, darwin/arm64)
+✅ semgrep: 1.151.0
+✅ trivy: Version: 0.69.1
+✅ newman: 6.2.2
+✅ gitleaks: 8.30.0
+⚠️  schemathesis: not installed
+✅ hadolint: Haskell Dockerfile Linter 2.14.0
+✅ checkov: 3.2.500
+✅ tests/perf/smoke.js present
+✅ tests/security/semgrep-rules.yml present
+Done.

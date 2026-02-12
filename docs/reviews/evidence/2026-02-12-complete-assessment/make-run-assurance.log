@@ -1,0 +1,39 @@
+## command: make run-assurance
+[2026-02-12T17:43:18+0100] Running: lint
+[2026-02-12T17:43:18+0100] PASS: lint
+[2026-02-12T17:43:18+0100] Running: unit
+[2026-02-12T17:43:19+0100] PASS: unit
+[2026-02-12T17:43:19+0100] Running: integration
+[2026-02-12T17:43:19+0100] PASS: integration
+[2026-02-12T17:43:19+0100] Running: contract
+[2026-02-12T17:43:19+0100] PASS: contract
+[2026-02-12T17:43:19+0100] Running wrapper: secret_scan
+[2026-02-12T17:43:20+0100] FAIL: gitleaks
+[2026-02-12T17:43:20+0100] FAIL: secret_scan (see /Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/secret_scan.log)
+[2026-02-12T17:43:20+0100] Running wrapper: api_fuzz_contract
+[2026-02-12T17:43:21+0100] SKIPPED: SCHEMATHESIS_BASE_URL not set and --dry-run is unavailable for this Schemathesis version
+[2026-02-12T17:43:21+0100] SKIPPED: api_fuzz_contract
+[2026-02-12T17:43:21+0100] Running wrapper: dockerfile_policy
+[2026-02-12T17:43:22+0100] PASS: hadolint
+[2026-02-12T17:43:22+0100] PASS: dockerfile_policy
+[2026-02-12T17:43:22+0100] Running wrapper: iac_policy
+[2026-02-12T17:43:29+0100] PASS: checkov
+[2026-02-12T17:43:29+0100] PASS: iac_policy
+[2026-02-12T17:43:29+0100] Running: security_scan
+[2026-02-12T17:43:34+0100] PASS: security_scan
+[2026-02-12T17:43:34+0100] Running: dependency_scan
+[2026-02-12T17:43:37+0100] PASS: dependency_scan
+[2026-02-12T17:43:37+0100] Running: performance_smoke
+[2026-02-12T17:43:44+0100] PASS: performance_smoke
+[2026-02-12T17:43:44+0100] Running: resilience
+[2026-02-12T17:43:44+0100] PASS: resilience
+[2026-02-12T17:43:44+0100] Running: chaos_resilience
+[2026-02-12T17:43:44+0100] PASS: chaos_resilience
+[2026-02-12T17:43:44+0100] Running: resilience_intelligence
+[2026-02-12T17:43:51+0100] PASS: resilience_intelligence
+[2026-02-12T17:43:51+0100] Running: playwright_smoke
+[2026-02-12T17:43:58+0100] PASS: playwright_smoke
+[2026-02-12T17:43:58+0100] Assurance run complete. Results at /Users/sidhantamonkar/.openclaw/workspace/unified-assurance-platform/artifacts/latest/results.json
+Exported assurance metrics to artifacts/metrics/assurance.prom
+Wrote flaky policy result: artifacts/latest/flaky-policy.json
+Wrote normalized results.v2: artifacts/latest/results.v2.json

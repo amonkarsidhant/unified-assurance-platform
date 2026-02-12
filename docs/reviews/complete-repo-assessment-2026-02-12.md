@@ -4,6 +4,8 @@
 **AMBER (leaning RED for production governance claims)**  
 **Confidence: 0.82**
 
+> Evidence snapshot is immutable for this assessment and stored under `docs/reviews/evidence/2026-02-12-complete-assessment/` (not `artifacts/latest/`).
+
 Why: The platform is structurally strong and unusually complete for a local-first assurance framework, but it currently has **false-green and false-red pathways** that can undermine trust in promotion decisions unless tightened.
 
 ---
@@ -21,9 +23,9 @@ Why: The platform is structurally strong and unusually complete for a local-firs
 **Status: Mixed / brittle in edge conditions.**
 
 Evidence:
-- `make validate` passed (`artifacts/latest/review-evidence/make-validate.log`).
-- `make run-assurance` passed command-level, but with control failure inside results (`artifacts/latest/review-evidence/make-run-assurance.log`, `artifacts/latest/results.json`).
-- `make promotion-check ENV=stage` failed as expected due to control failure (`artifacts/latest/review-evidence/make-promotion-check-stage.log`).
+- `make validate` passed (`docs/reviews/evidence/2026-02-12-complete-assessment/make-validate.log`).
+- `make run-assurance` passed command-level, but with control failure inside results (`docs/reviews/evidence/2026-02-12-complete-assessment/make-run-assurance.log`, `docs/reviews/evidence/2026-02-12-complete-assessment/results.json`).
+- `make promotion-check ENV=stage` failed as expected due to control failure (`docs/reviews/evidence/2026-02-12-complete-assessment/make-promotion-check-stage.log`).
 
 Reliability concerns:
 - `run_wrapper_step` swallows wrapper exit codes via `|| true` and relies only on status files (`scripts/run-assurance.sh`). Missing/malformed status can become skipped instead of hard fail.
@@ -34,8 +36,8 @@ Reliability concerns:
 **Status: Better than average, but noisy and easy to misread.**
 
 Evidence:
-- `secret_scan` failed in run (`artifacts/latest/secret_scan.log`).
-- `gitleaks.json` findings are from generated artifact files under ignored paths (`artifacts/latest/*.json`, `artifacts/metrics/assurance.prom`) rather than source secrets (`artifacts/latest/gitleaks.json`).
+- `secret_scan` failed in run (`docs/reviews/evidence/2026-02-12-complete-assessment/secret_scan.log`).
+- `gitleaks.json` findings are from generated artifact files under ignored paths (`docs/reviews/evidence/2026-02-12-complete-assessment/*.json`, `artifacts/metrics/assurance.prom`) rather than source secrets (`docs/reviews/evidence/2026-02-12-complete-assessment/gitleaks.json`).
 
 Implications:
 - Current secret scanning can produce **false-red** from generated report content.
@@ -48,13 +50,13 @@ Implications:
 Evidence:
 - Test inventory is small: one unit, one integration, one contract schema test, one UI smoke, one perf smoke (`tests/`).
 - No evidence of coverage thresholds or mutation/property quality gates.
-- Flaky policy currently has only one sampled run (`artifacts/latest/flaky-policy.json`), so governance confidence is low despite "allowed=true".
+- Flaky policy currently has only one sampled run (`docs/reviews/evidence/2026-02-12-complete-assessment/flaky-policy.json`), so governance confidence is low despite "allowed=true".
 
 ### 5) Observability / metrics quality
 **Status: Strong local signal export, semantic caveats.**
 
 Evidence:
-- Governance metrics check passed (`artifacts/latest/review-evidence/make-assurance-governance-check.log`).
+- Governance metrics check passed (`docs/reviews/evidence/2026-02-12-complete-assessment/make-assurance-governance-check.log`).
 - Exporter includes broad governance dimensions (`scripts/export-assurance-metrics.py`).
 
 Caveats:
@@ -81,15 +83,15 @@ Caveats:
 
 | Command | Result | Evidence |
 |---|---|---|
-| `make validate` | **PASS** | `artifacts/latest/review-evidence/make-validate.log` |
-| `make run-assurance` | **PASS (command), NO-GO posture inside results** | `artifacts/latest/review-evidence/make-run-assurance.log`, `artifacts/latest/results.json` |
-| `make report` | **PASS** | `artifacts/latest/review-evidence/make-report.log`, `artifacts/latest/release-report.md` |
-| `make promotion-check ENV=stage` | **FAIL** | `artifacts/latest/review-evidence/make-promotion-check-stage.log`, `artifacts/latest/promotion-decision.json` |
-| `make resilience-intelligence` | **PASS** | `artifacts/latest/review-evidence/make-resilience-intelligence.log`, `artifacts/latest/resilience-intelligence.json` |
-| `make resilience-scorecard` | **PASS** | `artifacts/latest/review-evidence/make-resilience-scorecard.log`, `artifacts/latest/resilience-scorecard.json` |
-| `make assurance-governance-check` | **PASS** (local stack reachable) | `artifacts/latest/review-evidence/make-assurance-governance-check.log` |
+| `make validate` | **PASS** | `docs/reviews/evidence/2026-02-12-complete-assessment/make-validate.log` |
+| `make run-assurance` | **PASS (command), NO-GO posture inside results** | `docs/reviews/evidence/2026-02-12-complete-assessment/make-run-assurance.log`, `docs/reviews/evidence/2026-02-12-complete-assessment/results.json` |
+| `make report` | **PASS** | `docs/reviews/evidence/2026-02-12-complete-assessment/make-report.log`, `docs/reviews/evidence/2026-02-12-complete-assessment/release-report.md` |
+| `make promotion-check ENV=stage` | **FAIL** | `docs/reviews/evidence/2026-02-12-complete-assessment/make-promotion-check-stage.log`, `docs/reviews/evidence/2026-02-12-complete-assessment/promotion-decision.json` |
+| `make resilience-intelligence` | **PASS** | `docs/reviews/evidence/2026-02-12-complete-assessment/make-resilience-intelligence.log`, `docs/reviews/evidence/2026-02-12-complete-assessment/resilience-intelligence.json` |
+| `make resilience-scorecard` | **PASS** | `docs/reviews/evidence/2026-02-12-complete-assessment/make-resilience-scorecard.log`, `docs/reviews/evidence/2026-02-12-complete-assessment/resilience-scorecard.json` |
+| `make assurance-governance-check` | **PASS** (local stack reachable) | `docs/reviews/evidence/2026-02-12-complete-assessment/make-assurance-governance-check.log` |
 
-**Primary blocker captured:** promotion failure due to mandatory control `secret_scan=fail` and policy validation false. See `artifacts/latest/promotion-decision.json`.
+**Primary blocker captured:** promotion failure due to mandatory control `secret_scan=fail` and policy validation false. See `docs/reviews/evidence/2026-02-12-complete-assessment/promotion-decision.json`.
 
 ---
 
@@ -218,11 +220,11 @@ Caveats:
 
 ## Raw verification pointers
 
-- Run logs: `artifacts/latest/review-evidence/*.log`
-- Exit codes: `artifacts/latest/review-evidence/*.exit`
+- Run logs: `docs/reviews/evidence/2026-02-12-complete-assessment/*.log`
+- Exit codes: `docs/reviews/evidence/2026-02-12-complete-assessment/*.exit`
 - Primary decision artifacts:  
-  - `artifacts/latest/results.json`  
-  - `artifacts/latest/promotion-decision.json`  
-  - `artifacts/latest/flaky-policy.json`  
-  - `artifacts/latest/resilience-intelligence.json`  
-  - `artifacts/latest/resilience-scorecard.json`
+  - `docs/reviews/evidence/2026-02-12-complete-assessment/results.json`  
+  - `docs/reviews/evidence/2026-02-12-complete-assessment/promotion-decision.json`  
+  - `docs/reviews/evidence/2026-02-12-complete-assessment/flaky-policy.json`  
+  - `docs/reviews/evidence/2026-02-12-complete-assessment/resilience-intelligence.json`  
+  - `docs/reviews/evidence/2026-02-12-complete-assessment/resilience-scorecard.json`

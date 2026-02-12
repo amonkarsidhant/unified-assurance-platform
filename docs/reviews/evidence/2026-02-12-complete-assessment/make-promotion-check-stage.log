@@ -1,0 +1,7 @@
+## command: make promotion-check ENV=stage
+❌ Promotion gate failed for stage
+ - critical_test_failures=1 (must be 0)
+ - mandatory control failed: secret_scan -> secret_scan=fail
+ - risk_context.policy_validation_passed is not true
+ - secret_scan=fail not in allowed ['pass', 'skipped']
+make: *** [promotion-check] Error 1
