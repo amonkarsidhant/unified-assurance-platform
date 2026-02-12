@@ -122,6 +122,41 @@ test('incident payload validation rejects traversal paths', async () => {
   }
 });
 
+test('oversized request body is rejected with 413', async () => {
+  const tmp = uniqueTmpDir();
+  const port = 43174;
+  const env = {
+    ...process.env,
+    CONTROL_PLANE_DB_PATH: path.join(tmp, 'control-plane.db'),
+    CONTROL_PLANE_PORT: String(port),
+    CONTROL_PLANE_HOST: '127.0.0.1',
+    CONTROL_PLANE_DISABLE_MIGRATION: '1'
+  };
+
+  const api = spawn(process.execPath, ['apps/control-plane/api/server.mjs'], {
+    cwd: path.resolve('.'),
+    env,
+    stdio: 'ignore'
+  });
+
+  try {
+    await waitForHealth(port);
+
+    const oversizedPayload = 'a'.repeat(1_100_000);
+    const res = await fetch(`http://127.0.0.1:${port}/runs/incident`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: oversizedPayload
+    });
+
+    assert.equal(res.status, 413);
+    const data = await res.json();
+    assert.equal(data.error, 'payload_too_large');
+  } finally {
+    api.kill('SIGTERM');
+  }
+});
+
 async function waitForHealth(port) {
   for (let i = 0; i < 40; i += 1) {
     try {

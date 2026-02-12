@@ -15,14 +15,52 @@ export function jsonError(res, status, error, message, details = undefined) {
   return json(res, status, payload);
 }
 
-export function readBody(req) {
+const MAX_BODY_BYTES = 1_000_000;
+
+export function readBody(req, maxBytes = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', (chunk) => {
+    let settled = false;
+    let onData = () => {};
+    let onEnd = () => {};
+    let onError = () => {};
+
+    const finalize = (err, value = '') => {
+      if (settled) return;
+      settled = true;
+      req.off('data', onData);
+      req.off('end', onEnd);
+      req.off('error', onError);
+      if (err) return reject(err);
+      return resolve(value);
+    };
+
+    const failTooLarge = () => {
+      const error = new Error('request body too large');
+      error.code = 'PAYLOAD_TOO_LARGE';
+      error.statusCode = 413;
+      req.pause();
+      finalize(error);
+      req.resume();
+    };
+
+    const contentLength = Number(req.headers['content-length']);
+    if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+      return failTooLarge();
+    }
+
+    onData = (chunk) => {
       body += chunk;
-      if (body.length > 1_000_000) reject(new Error('request body too large'));
-    });
-    req.on('end', () => resolve(body));
-    req.on('error', reject);
+      if (body.length > maxBytes) {
+        failTooLarge();
+      }
+    };
+
+    onEnd = () => finalize(null, body);
+    onError = (error) => finalize(error);
+
+    req.on('data', onData);
+    req.on('end', onEnd);
+    req.on('error', onError);
   });
 }

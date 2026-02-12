@@ -61,6 +61,9 @@ const server = http.createServer(async (req, res) => {
 
     return jsonError(res, 404, 'not_found', 'Endpoint not found');
   } catch (error) {
+    if (error?.code === 'PAYLOAD_TOO_LARGE' || error?.statusCode === 413) {
+      return jsonError(res, 413, 'payload_too_large', 'Request body exceeds 1 MB limit');
+    }
     console.error('[control-plane] request failure', error);
     return jsonError(res, 500, 'internal_error', 'Unexpected server error');
   }
