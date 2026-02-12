@@ -181,6 +181,7 @@ def main() -> None:
     parser.add_argument("--onboarding-dir", default="artifacts/latest/onboarding", help="Path to onboarding artifacts directory")
     parser.add_argument("--services-dir", default="config/services", help="Path to service profile directory")
     parser.add_argument("--resilience-intelligence", default="artifacts/latest/resilience-intelligence.json", help="Path to resilience intelligence JSON")
+    parser.add_argument("--resilience-scorecard", default="artifacts/latest/resilience-scorecard.json", help="Path to resilience scorecard JSON")
     args = parser.parse_args()
 
     results_path = Path(args.input)
@@ -334,6 +335,32 @@ def main() -> None:
     add_gauge(lines, "assurance_resilience_correlation_score", "Resilience cross-signal correlation score (0-1).", corr_score)
     add_gauge(lines, "assurance_resilience_correlation_status", "Resilience correlation status (strong=1, partial=0.5, degraded=0, unknown=-1).", {"strong": 1, "partial": 0.5, "degraded": 0}.get(corr_status, -1))
     add_gauge(lines, "assurance_resilience_adapter_count", "Validated resilience adapter inputs count.", int((resilience_intelligence.get("adapters") or {}).get("count", 0) or 0))
+
+    resilience_scorecard = read_json(Path(args.resilience_scorecard))
+    services = resilience_scorecard.get("services") or []
+    if services:
+        lines.append("# HELP assurance_resilience_service_score Latest resilience score by service/environment/tier.")
+        lines.append("# TYPE assurance_resilience_service_score gauge")
+        lines.append("# HELP assurance_resilience_service_correlation Latest resilience correlation by service/environment/tier.")
+        lines.append("# TYPE assurance_resilience_service_correlation gauge")
+        lines.append("# HELP assurance_resilience_service_runs_total Historical run count by service.")
+        lines.append("# TYPE assurance_resilience_service_runs_total gauge")
+        lines.append("# HELP assurance_resilience_service_adapter_participation Average adapter participation by service.")
+        lines.append("# TYPE assurance_resilience_service_adapter_participation gauge")
+        lines.append("# HELP assurance_resilience_service_status_total Pass/fail/skipped counts by service.")
+        lines.append("# TYPE assurance_resilience_service_status_total gauge")
+        for svc in services:
+            service = prom_escape(str(svc.get("service", "unknown")))
+            latest = svc.get("latest") or {}
+            env = prom_escape(str(latest.get("environment", "unknown")))
+            tier = prom_escape(str(latest.get("tier", "unknown")))
+            lines.append(f'assurance_resilience_service_score{{service="{service}",environment="{env}",tier="{tier}"}} {float(latest.get("score", 0) or 0)}')
+            lines.append(f'assurance_resilience_service_correlation{{service="{service}",environment="{env}",tier="{tier}"}} {float(latest.get("correlation", 0) or 0)}')
+            lines.append(f'assurance_resilience_service_runs_total{{service="{service}"}} {int(svc.get("runs_total", 0) or 0)}')
+            lines.append(f'assurance_resilience_service_adapter_participation{{service="{service}"}} {float(svc.get("adapter_participation_avg", 0) or 0)}')
+            status_counts = svc.get("status_counts") or {}
+            for status_label in ["pass", "fail", "skipped"]:
+                lines.append(f'assurance_resilience_service_status_total{{service="{service}",status="{status_label}"}} {int(status_counts.get(status_label, 0) or 0)}')
 
     # Control matrix approximation for dashboard table
     control_matrix = promotion.get("control_matrix")

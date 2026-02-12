@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: all clean test bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check resilience-adapter-check resilience-report zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: all clean test bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check resilience-adapter-check resilience-report resilience-incident-trigger resilience-scorecard resilience-trend-export resilience-schedule-help zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
 
 all: validate
 	@echo "Default target complete. Run 'make run-assurance' for a full assurance pass."
@@ -58,6 +58,10 @@ validate:
 	@test -f templates/scenarios/resilience/queue-backpressure-worker.json
 	@test -x scripts/validate-resilience-adapter.py
 	@test -x scripts/generate-resilience-report.py
+	@test -x scripts/resilience-incident-trigger.py
+	@test -x scripts/resilience-scorecard.py
+	@test -x scripts/resilience-trend-export.py
+	@test -x scripts/resilience-schedule-help.sh
 	@test -x scripts/adapters/resilience/locust-adapter.sh
 	@test -x scripts/adapters/resilience/external-results-adapter.sh
 	@test -x scripts/mcp-resilience-intelligence-run.sh
@@ -79,6 +83,7 @@ validate:
 	@test -f docs/golden-paths/chaos-integration.md
 	@test -f docs/resilience-intelligence-phase1.md
 	@test -f docs/resilience-intelligence-phase2.md
+	@test -f docs/resilience-intelligence-phase3.md
 	@test -f docs/mcp-resilience-intelligence-interface.md
 	@test -x scripts/run-gitleaks.sh
 	@test -x scripts/run-schemathesis.sh
@@ -131,6 +136,20 @@ resilience-report:
 		echo "Skipping resilience report: input missing"; \
 	fi
 
+INCIDENT_PAYLOAD ?= examples/incidents/sample-incident.json
+resilience-incident-trigger:
+	@./scripts/resilience-incident-trigger.py --payload "$(INCIDENT_PAYLOAD)"
+
+resilience-scorecard:
+	@./scripts/resilience-scorecard.py
+	@echo "Resilience scorecard: artifacts/latest/resilience-scorecard.json"
+
+resilience-trend-export:
+	@./scripts/resilience-trend-export.py
+
+resilience-schedule-help:
+	@./scripts/resilience-schedule-help.sh
+
 phase-a-checks:
 	@./scripts/run-gitleaks.sh
 	@./scripts/run-schemathesis.sh
@@ -158,7 +177,7 @@ chaos-sample:
 	@cat artifacts/latest/chaos-results.json
 
 assurance-metrics-export:
-	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --results-v2 artifacts/latest/results.v2.json --exceptions-audit artifacts/latest/exceptions-audit.json --pr-comment artifacts/latest/pr-comment.md
+	@./scripts/export-assurance-metrics.py --input artifacts/latest/results.json --output artifacts/metrics/assurance.prom --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --results-v2 artifacts/latest/results.v2.json --exceptions-audit artifacts/latest/exceptions-audit.json --pr-comment artifacts/latest/pr-comment.md --resilience-scorecard artifacts/latest/resilience-scorecard.json
 
 assurance-metrics-export-if-ready:
 	@if [ -f artifacts/latest/results.json ]; then \
@@ -175,7 +194,7 @@ assurance-dashboard-check:
 
 assurance-governance-check:
 	@echo "Checking Prometheus governance metrics..."
-	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped assurance_resilience_intelligence_status assurance_resilience_intelligence_score assurance_resilience_correlation_score assurance_resilience_correlation_status assurance_resilience_adapter_count onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
+	@for q in assurance_promotion_allowed assurance_promotion_failed_gates_total assurance_evidence_signature_required assurance_exceptions_active_total assurance_flaky_violations_total assurance_control_pass assurance_pr_summary_severity_total assurance_chaos_required assurance_chaos_executed_total assurance_chaos_passed assurance_chaos_skipped assurance_resilience_intelligence_status assurance_resilience_intelligence_score assurance_resilience_correlation_score assurance_resilience_correlation_status assurance_resilience_adapter_count assurance_resilience_service_score assurance_resilience_service_correlation assurance_resilience_service_runs_total assurance_resilience_service_adapter_participation assurance_resilience_service_status_total onboarding_score onboarding_ready onboarding_stage_current onboarding_plan_exists; do \
 		curl -fsS "http://localhost:9090/api/v1/query?query=$$q" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status")=="success" and d["data"]["result"], "missing metric"'; \
 		echo "✅ Prometheus has $$q"; \
 	done

@@ -85,6 +85,15 @@ make resilience-adapter-check
 make resilience-report
 ```
 
+Resilience Intelligence Phase 3 (incident + trends):
+
+```bash
+make resilience-incident-trigger INCIDENT_PAYLOAD=examples/incidents/sample-incident.json
+make resilience-scorecard
+make resilience-trend-export
+make resilience-schedule-help
+```
+
 ## ⚡ Developer quick path (Phase 3 DX)
 
 ```bash
@@ -105,6 +114,7 @@ If you are onboarding to UAP for the first time, start with:
 - Full review framework: `docs/end-to-end-review.md`
 - Resilience Intelligence MVP (Phase 1): `docs/resilience-intelligence-phase1.md`
 - Resilience Intelligence Phase 2 runbook: `docs/resilience-intelligence-phase2.md`
+- Resilience Intelligence Phase 3 automation + scorecards: `docs/resilience-intelligence-phase3.md`
 - MCP-ready interface wrappers: `docs/mcp-resilience-intelligence-interface.md`
 
 One-command path to onboarding mode:
