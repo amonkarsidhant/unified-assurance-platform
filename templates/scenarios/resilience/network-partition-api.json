@@ -1,0 +1,21 @@
+{
+  "name": "network-partition-api",
+  "mode": "CHAOS",
+  "description": "Inject partial network loss between API and dependency while sustaining moderate load.",
+  "category_tags": ["network", "app"],
+  "parameterization_guidance": {
+    "loss_percent": "start at 5 then increase to 20",
+    "duration_seconds": "10-60 based on blast radius",
+    "vus": "3-10 for API services"
+  },
+  "load": {
+    "vus_range": [3, 10],
+    "duration_range_seconds": [10, 60],
+    "target_url": "https://test.k6.io"
+  },
+  "chaos": {
+    "seed": 20260213,
+    "fault_profiles": ["packet-loss", "latency-medium"]
+  },
+  "expected_outcome": "Transient errors may increase, but service should remain available with graceful degradation and recovery under 120s."
+}

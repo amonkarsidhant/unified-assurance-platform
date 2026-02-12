@@ -33,7 +33,7 @@ def evaluate(metrics, risk_context):
     return decision, mandatory_failed, soft_failed
 
 
-def render(data, promotion, flaky=None):
+def render(data, promotion, flaky=None, resilience=None):
     metrics = data.get("metrics", {})
     risk_context = data.get("risk_context", {})
     decision, mandatory_failed, soft_failed = evaluate(metrics, risk_context)
@@ -71,6 +71,18 @@ def render(data, promotion, flaky=None):
         lines.append("- Reasons:")
         for reason in chaos.get("reasons", []):
             lines.append(f"  - {reason}")
+
+    lines += ["", "## Resilience Intelligence", ""]
+    if resilience:
+        corr = resilience.get("correlation", {})
+        lines.append(f"- Status: **{resilience.get('status', 'n/a')}**")
+        lines.append(f"- Score: **{resilience.get('score', 'n/a')}**")
+        lines.append(f"- Correlation status: **{corr.get('status', 'n/a')}**")
+        lines.append(f"- Correlation score: **{corr.get('score', 'n/a')}**")
+        lines.append(f"- Correlation notes: {corr.get('explanation', 'n/a')}")
+        lines.append("- Detailed artifact: `artifacts/latest/resilience-intelligence-report.md`")
+    else:
+        lines.append("- Resilience intelligence artifact not provided.")
 
     lines += ["", "## Gate Evaluation", "", "### Mandatory Gates"]
     for k in MANDATORY:
@@ -131,19 +143,24 @@ def main():
     parser.add_argument("--output", required=True, help="Path to output markdown report")
     parser.add_argument("--promotion", default="artifacts/latest/promotion-decision.json", help="Optional promotion decision JSON")
     parser.add_argument("--flaky", default="artifacts/latest/flaky-policy.json", help="Optional flaky policy JSON")
+    parser.add_argument("--resilience", default="artifacts/latest/resilience-intelligence.json", help="Optional resilience intelligence JSON")
     args = parser.parse_args()
 
     data = json.loads(Path(args.input).read_text())
     promotion = None
     flaky = None
+    resilience = None
     p = Path(args.promotion)
     if p.exists():
         promotion = json.loads(p.read_text())
     f = Path(args.flaky)
     if f.exists():
         flaky = json.loads(f.read_text())
+    r = Path(args.resilience)
+    if r.exists():
+        resilience = json.loads(r.read_text())
 
-    report = render(data, promotion, flaky)
+    report = render(data, promotion, flaky, resilience)
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(report)

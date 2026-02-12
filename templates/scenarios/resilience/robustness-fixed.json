@@ -2,6 +2,11 @@
   "name": "robustness-fixed",
   "mode": "ROBUSTNESS",
   "description": "Deterministic resilience baseline with fixed load and chaos parameters.",
+  "category_tags": ["app"],
+  "parameterization_guidance": {
+    "vus": "keep low (2-5) for deterministic baseline",
+    "duration": "short windows (5-30s) for quick feedback"
+  },
   "load": {
     "vus": 2,
     "duration": "5s",
@@ -10,5 +15,6 @@
   "chaos": {
     "seed": 1337,
     "fault_profile": "latency-low"
-  }
+  },
+  "expected_outcome": "No major degradation; baseline stability remains within default error/pass thresholds."
 }

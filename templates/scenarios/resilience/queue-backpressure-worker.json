@@ -1,0 +1,21 @@
+{
+  "name": "queue-backpressure-worker",
+  "mode": "CHAOS",
+  "description": "Model queue backlog growth and consumer slowdown to test worker resilience.",
+  "category_tags": ["queue", "app"],
+  "parameterization_guidance": {
+    "queue_depth": "begin at normal p95 then increase 2x",
+    "consumer_concurrency": "reduce by 25-50% during fault window",
+    "duration_seconds": "20-120"
+  },
+  "load": {
+    "vus_range": [2, 8],
+    "duration_range_seconds": [20, 120],
+    "target_url": "https://test.k6.io"
+  },
+  "chaos": {
+    "seed": 20260215,
+    "fault_profiles": ["dependency-timeout", "latency-medium"]
+  },
+  "expected_outcome": "Backlog drains after recovery window without dead-letter spike or sustained timeout rate."
+}

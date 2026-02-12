@@ -1,0 +1,21 @@
+{
+  "name": "db-failover-latency",
+  "mode": "ROBUSTNESS",
+  "description": "Exercise DB failover path and validate retry behavior under elevated latency.",
+  "category_tags": ["db", "app"],
+  "parameterization_guidance": {
+    "latency_ms": "100-500 for primary DB path",
+    "retries": "1-3 with bounded backoff",
+    "duration_seconds": "15-90"
+  },
+  "load": {
+    "vus": 4,
+    "duration": "30s",
+    "target_url": "https://test.k6.io"
+  },
+  "chaos": {
+    "seed": 20260214,
+    "fault_profile": "dependency-timeout"
+  },
+  "expected_outcome": "Writes may slow, but read availability remains high and error budget impact stays below threshold."
+}

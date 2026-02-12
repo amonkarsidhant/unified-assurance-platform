@@ -328,6 +328,12 @@ def main() -> None:
     ri_score = float(resilience_intelligence.get("score", 0) or 0)
     add_gauge(lines, "assurance_resilience_intelligence_status", "Resilience intelligence status (pass=1, fail=0, skipped=-1).", status_value(ri_status))
     add_gauge(lines, "assurance_resilience_intelligence_score", "Resilience intelligence score (0-1).", ri_score)
+    corr = resilience_intelligence.get("correlation") or {}
+    corr_status = str(corr.get("status", "unknown"))
+    corr_score = float(corr.get("score", 0) or 0)
+    add_gauge(lines, "assurance_resilience_correlation_score", "Resilience cross-signal correlation score (0-1).", corr_score)
+    add_gauge(lines, "assurance_resilience_correlation_status", "Resilience correlation status (strong=1, partial=0.5, degraded=0, unknown=-1).", {"strong": 1, "partial": 0.5, "degraded": 0}.get(corr_status, -1))
+    add_gauge(lines, "assurance_resilience_adapter_count", "Validated resilience adapter inputs count.", int((resilience_intelligence.get("adapters") or {}).get("count", 0) or 0))
 
     # Control matrix approximation for dashboard table
     control_matrix = promotion.get("control_matrix")
