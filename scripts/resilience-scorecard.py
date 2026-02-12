@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import logging
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
-def read_json(path: Path) -> Dict[str, Any]:
+def read_json(path: Path) -> dict[str, Any]:
     try:
         return json.loads(path.read_text())
-    except Exception:
+    except Exception as e:
+        logger.warning("Failed to parse JSON from %s: %s", path, e, exc_info=True)
         return {}
 
 
@@ -24,7 +28,7 @@ def parse_ts(value: str) -> datetime:
         return datetime.min.replace(tzinfo=timezone.utc)
 
 
-def run_identity(data: Dict[str, Any]) -> str:
+def run_identity(data: dict[str, Any]) -> str:
     context = data.get("run_context") or {}
     trigger = data.get("trigger") or {}
     selected = data.get("selected") or {}
@@ -63,8 +67,8 @@ def source_rank(path: Path) -> int:
     return 3
 
 
-def collect_artifacts(paths: List[Path]) -> List[Tuple[Path, Dict[str, Any]]]:
-    found: List[Tuple[Path, Dict[str, Any]]] = []
+def collect_artifacts(paths: list[Path]) -> list[tuple[Path, dict[str, Any]]]:
+    found: list[tuple[Path, dict[str, Any]]] = []
     for p in paths:
         if p.is_file() and p.name == "resilience-intelligence.json":
             d = read_json(p)
@@ -77,7 +81,7 @@ def collect_artifacts(paths: List[Path]) -> List[Tuple[Path, Dict[str, Any]]]:
                 if d:
                     found.append((f, d))
 
-    dedup: Dict[str, Tuple[Path, Dict[str, Any]]] = {}
+    dedup: dict[str, tuple[Path, dict[str, Any]]] = {}
     for fp, data in found:
         key = run_identity(data)
         current = dedup.get(key)
@@ -92,13 +96,14 @@ def collect_artifacts(paths: List[Path]) -> List[Tuple[Path, Dict[str, Any]]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build multi-service resilience scorecards and trends from artifacts")
-    parser.add_argument("--input", action="append", default=["artifacts/latest", "artifacts/history", "artifacts/latest/incident-runs"], help="File/dir inputs to scan")
+    parser.add_argument("--input", action="append", default=None, help="File/dir inputs to scan")
     parser.add_argument("--output-json", default="artifacts/latest/resilience-scorecard.json")
     parser.add_argument("--output-md", default="artifacts/latest/resilience-scorecard.md")
     args = parser.parse_args()
 
-    artifacts = collect_artifacts([Path(p) for p in args.input])
-    by_service: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    input_paths = args.input if args.input is not None else ["artifacts/latest", "artifacts/history", "artifacts/latest/incident-runs"]
+    artifacts = collect_artifacts([Path(p) for p in input_paths])
+    by_service: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
     for file_path, item in artifacts:
         context = item.get("run_context") or {}
@@ -123,11 +128,11 @@ def main() -> None:
             }
         )
 
-    services_summary: List[Dict[str, Any]] = []
+    services_summary: list[dict[str, Any]] = []
     for service, runs in sorted(by_service.items()):
         runs_sorted = sorted(runs, key=lambda r: parse_ts(r["timestamp"]))
         status_counts = {"pass": 0, "fail": 0, "skipped": 0, "other": 0}
-        env_tier_counts: Dict[str, int] = defaultdict(int)
+        env_tier_counts: dict[str, int] = defaultdict(int)
         for r in runs_sorted:
             if r["status"] in status_counts:
                 status_counts[r["status"]] += 1
