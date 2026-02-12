@@ -224,8 +224,6 @@ jq -n \
   --arg max_error_rate "$MAX_ERROR_RATE" \
   --arg min_pass_rate "$MIN_PASS_RATE" \
   --arg log_path "${ART_DIR}/resilience_intelligence.log" \
-  --arg k6_summary_path "${ART_DIR}/k6-summary.json" \
-  --arg chaos_results_path "${ART_DIR}/chaos-results.json" \
   '(
     {
       timestamp:$ts,
@@ -236,8 +234,8 @@ jq -n \
       max_attempts:$max_attempts,
       selected:{vus:$vus,duration:$duration,fault_profile:$fault},
       thresholds:{max_error_rate:($max_error_rate|tonumber),min_pass_rate:($min_pass_rate|tonumber)},
-      load:{status:$k6_status,reason:$k6_reason,summary_file:$k6_summary_path},
-      chaos:{status:$chaos_status,reason:$chaos_reason,artifact:$chaos_results_path},
+      load:{status:$k6_status,reason:$k6_reason,summary_file:($log_path|gsub("resilience_intelligence.log";"k6-summary.json"))},
+      chaos:{status:$chaos_status,reason:$chaos_reason,artifact:($log_path|gsub("resilience_intelligence.log";"chaos-results.json"))},
       log:$log_path
     }
     | if ($k6_error_rate|length)>0 then .load.error_rate=($k6_error_rate|tonumber) else . end
