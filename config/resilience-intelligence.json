@@ -1,0 +1,17 @@
+{
+  "mode": "ROBUSTNESS",
+  "targets": {
+    "perf_target_url": "https://test.k6.io",
+    "module_type": "api"
+  },
+  "thresholds": {
+    "max_error_rate": 0.05,
+    "min_pass_rate": 0.9
+  },
+  "seed": 1337,
+  "retries": 1,
+  "timeouts": {
+    "k6_seconds": 45,
+    "chaos_seconds": 60
+  }
+}

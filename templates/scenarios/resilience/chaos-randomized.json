@@ -1,0 +1,14 @@
+{
+  "name": "chaos-randomized",
+  "mode": "CHAOS",
+  "description": "Randomized fault injection envelope seeded for reproducibility.",
+  "load": {
+    "vus_range": [1, 6],
+    "duration_range_seconds": [5, 25],
+    "target_url": "https://test.k6.io"
+  },
+  "chaos": {
+    "seed": 20260212,
+    "fault_profiles": ["latency-medium", "dependency-timeout", "packet-loss"]
+  }
+}

@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap", "chaos_resilience", "secret_scan", "api_fuzz_contract", "dockerfile_policy", "iac_policy"]
+TESTS = ["lint", "unit", "integration", "contract", "security", "performance", "dast_zap", "chaos_resilience", "resilience_intelligence", "secret_scan", "api_fuzz_contract", "dockerfile_policy", "iac_policy"]
 RECOMMENDATIONS = ["GO", "CONDITIONAL", "NO-GO"]
 
 
@@ -180,6 +180,7 @@ def main() -> None:
     parser.add_argument("--preflight", default="artifacts/latest/preflight-summary.json", help="Path to preflight summary JSON")
     parser.add_argument("--onboarding-dir", default="artifacts/latest/onboarding", help="Path to onboarding artifacts directory")
     parser.add_argument("--services-dir", default="config/services", help="Path to service profile directory")
+    parser.add_argument("--resilience-intelligence", default="artifacts/latest/resilience-intelligence.json", help="Path to resilience intelligence JSON")
     args = parser.parse_args()
 
     results_path = Path(args.input)
@@ -221,6 +222,7 @@ def main() -> None:
         "performance": tests.get("performance_smoke", tests.get("performance")),
         "dast_zap": tests.get("dast_zap"),
         "chaos_resilience": tests.get("chaos_resilience"),
+        "resilience_intelligence": tests.get("resilience_intelligence"),
         "secret_scan": tests.get("secret_scan"),
         "api_fuzz_contract": tests.get("api_fuzz_contract"),
         "dockerfile_policy": tests.get("dockerfile_policy"),
@@ -320,6 +322,12 @@ def main() -> None:
     add_gauge(lines, "assurance_chaos_executed_total", "Executed chaos scenarios count.", chaos_executed)
     add_gauge(lines, "assurance_chaos_passed", "Chaos resilience gate passed.", chaos_passed)
     add_gauge(lines, "assurance_chaos_skipped", "Chaos resilience gate skipped.", chaos_skipped)
+
+    resilience_intelligence = read_json(Path(args.resilience_intelligence))
+    ri_status = tests.get("resilience_intelligence") or resilience_intelligence.get("status")
+    ri_score = float(resilience_intelligence.get("score", 0) or 0)
+    add_gauge(lines, "assurance_resilience_intelligence_status", "Resilience intelligence status (pass=1, fail=0, skipped=-1).", status_value(ri_status))
+    add_gauge(lines, "assurance_resilience_intelligence_score", "Resilience intelligence score (0-1).", ri_score)
 
     # Control matrix approximation for dashboard table
     control_matrix = promotion.get("control_matrix")

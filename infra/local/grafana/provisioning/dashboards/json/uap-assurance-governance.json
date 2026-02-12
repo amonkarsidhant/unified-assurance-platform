@@ -458,6 +458,97 @@
           ]
         }
       }
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      },
+      "id": 15,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "expr": "assurance_resilience_intelligence_status",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "status",
+          "refId": "A"
+        },
+        {
+          "expr": "assurance_resilience_intelligence_score",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "score",
+          "refId": "B"
+        }
+      ],
+      "title": "Resilience Intelligence (status/score)",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value #A": 0,
+              "Value #B": 1
+            },
+            "renameByName": {
+              "Value #A": "status",
+              "Value #B": "score"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ]
 }
