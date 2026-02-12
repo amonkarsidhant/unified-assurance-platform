@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UAP Control Plane - Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>UAP Control Plane</h1>
+      <p>Dashboard (MVP)</p>
+
+      <section>
+        <h2>Trigger Runs</h2>
+        <div class="row">
+          <button id="assuranceBtn">Trigger Assurance</button>
+          <button id="resilienceBtn">Trigger Resilience</button>
+        </div>
+        <div class="row">
+          <input id="incidentPath" value="examples/incidents/sample-incident.json" />
+          <button id="incidentBtn">Trigger Incident</button>
+        </div>
+        <pre id="result"></pre>
+      </section>
+
+      <nav>
+        <a href="./runs.html">View Runs</a>
+      </nav>
+    </main>
+
+    <script src="./main.js"></script>
+  </body>
+</html>

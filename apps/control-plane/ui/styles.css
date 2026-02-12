@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+a { color: #7dd3fc; }
+button { padding: 0.5rem 0.8rem; margin-right: 0.5rem; cursor: pointer; }
+input { min-width: 28rem; padding: 0.4rem; }
+pre { background: #1e293b; padding: 1rem; border-radius: 8px; overflow: auto; }
+.row { margin-bottom: 0.75rem; }
