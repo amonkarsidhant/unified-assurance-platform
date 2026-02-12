@@ -1,6 +1,7 @@
 # Complete Repo Assessment — 2026-02-12
 
 ## Executive verdict
+
 **AMBER (leaning RED for production governance claims)**  
 **Confidence: 0.82**
 
@@ -13,6 +14,7 @@ Why: The platform is structurally strong and unusually complete for a local-firs
 ## Current health snapshot
 
 ### 1) Architecture coherence
+
 **Status: Good (with coherence debt).**
 
 - Clear layered structure exists and is implemented: policy (`policies/`), execution (`scripts/run-assurance.sh`), promotion (`scripts/evaluate-promotion.py`), evidence/reporting (`scripts/generate-release-report.py`, `scripts/normalize-results-v2.py`), observability (`scripts/export-assurance-metrics.py`, `infra/local/docker-compose.yml`).
@@ -20,6 +22,7 @@ Why: The platform is structurally strong and unusually complete for a local-firs
 - Coherence debt: logic is spread across shell + python + Make targets, with repeated status semantics (`pass/fail/skipped`) and duplicated wrapper patterns.
 
 ### 2) Pipeline reliability
+
 **Status: Mixed / brittle in edge conditions.**
 
 Evidence:
@@ -30,9 +33,10 @@ Evidence:
 Reliability concerns:
 - `run_wrapper_step` swallows wrapper exit codes via `|| true` and relies only on status files (`scripts/run-assurance.sh`). Missing/malformed status can become skipped instead of hard fail.
 - Many checks degrade to `skipped` in pragmatic mode; this is explicit but still creates risk of over-trusting green-ish outputs.
-- CI PR comment publishing is `continue-on-error: true` (`.github/workflows/pr.yml`), so feedback can silently disappear.
+- GitHub PR comment publishing is `continue-on-error: true` (`.github/workflows/pr.yml`), so feedback can silently disappear.
 
 ### 3) Security posture
+
 **Status: Better than average, but noisy and easy to misread.**
 
 Evidence:
@@ -45,6 +49,7 @@ Implications:
 - Promotion logic does block on failed mandatory controls in stage (good), but security signal quality is noisy.
 
 ### 4) Test quality and coverage posture
+
 **Status: Moderate baseline, low confidence for real systems.**
 
 Evidence:
@@ -53,6 +58,7 @@ Evidence:
 - Flaky policy currently has only one sampled run (`docs/reviews/evidence/2026-02-12-complete-assessment/flaky-policy.json`), so governance confidence is low despite "allowed=true".
 
 ### 5) Observability / metrics quality
+
 **Status: Strong local signal export, semantic caveats.**
 
 Evidence:
@@ -64,6 +70,7 @@ Caveats:
 - `skipped` encoded as `-1` in several gauges is fine technically, but dashboard consumers can misinterpret unless clearly documented.
 
 ### 6) Documentation truthfulness vs implementation
+
 **Status: Mostly truthful, but optimistic by default.**
 
 - README claims broadly match repository capabilities.
@@ -71,6 +78,7 @@ Caveats:
 - Some docs explicitly recommend `|| true` for promotion-check in examples, which encourages bypass behavior for teams that cargo-cult commands.
 
 ### 7) Onboarding / adoption realism
+
 **Status: Good scaffolding, moderate operational friction.**
 
 - Onboarding generators are useful (`scripts/onboard-service.py`, onboarding docs/artifacts).
@@ -138,6 +146,7 @@ Caveats:
 ## 30-60-90 day action plan (explicit outcomes)
 
 ### Day 0–30 (stabilize trust)
+
 - **Outcome 1:** Eliminate false-red secret-scan noise.
   - Add gitleaks allowlist/path exclusions for generated artifacts and verify with regression test.
 - **Outcome 2:** Remove silent wrapper error swallowing.
@@ -146,6 +155,7 @@ Caveats:
   - Label observe-only controls in reports/dashboards with explicit non-blocking tag.
 
 ### Day 31–60 (tighten governance)
+
 - **Outcome 4:** Introduce minimum “real-run confidence” signal.
   - Add metric + gate: fail promotion (or conditional) when mandatory controls are skipped above threshold.
 - **Outcome 5:** Raise test confidence floor.
@@ -154,6 +164,7 @@ Caveats:
   - Move common wrapper behavior into one helper library/script.
 
 ### Day 61–90 (production hardening)
+
 - **Outcome 7:** Enforce environment-aware policy profiles.
   - Stage/prod promotion must require signed evidence for medium+ or justify policy exception.
 - **Outcome 8:** Improve resilience signal quality.
@@ -191,11 +202,11 @@ Caveats:
 
 ## What I would stop doing now
 
-1. Stop treating `pragmatic` green runs as release-quality evidence.
-2. Stop scanning generated artifacts as if they were source secrets.
-3. Stop relying on shell `|| true` in control orchestration paths.
-4. Stop presenting observe-only checks in the same visual weight as enforced controls.
-5. Stop using examples with `promotion-check ... || true` in production-facing docs.
+1. Avoid treating `pragmatic` green runs as release-quality evidence.
+2. Do not scan generated artifacts as if they were source secrets.
+3. Eliminate reliance on shell `|| true` in control orchestration paths.
+4. Differentiate observe-only checks from enforced controls in visual weighting.
+5. Remove examples with `promotion-check ... || true` from production-facing docs.
 
 ---
 
