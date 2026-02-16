@@ -11,9 +11,17 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function normalizeStatus(status) {
+  const raw = String(status || 'unknown').toLowerCase();
+  const known = new Set(['queued', 'running', 'passed', 'failed', 'canceled', 'succeeded', 'unknown']);
+  if (!known.has(raw)) return 'unknown';
+  if (raw === 'succeeded') return 'passed';
+  return raw;
+}
+
 function statusChip(status) {
-  const normalized = String(status || 'unknown').toLowerCase();
-  return `<span class="status-chip status-${escapeHtml(normalized)}">${escapeHtml(normalized)}</span>`;
+  const allowed = normalizeStatus(status);
+  return `<span class="status-chip status-${allowed}">${escapeHtml(allowed)}</span>`;
 }
 
 async function parseResponseBody(res) {

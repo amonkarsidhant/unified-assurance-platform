@@ -52,11 +52,19 @@ function formatDuration(ms) {
   return `${minutes}m ${remSec}s`;
 }
 
+function normalizeStatus(status) {
+  const raw = String(status || 'unknown').toLowerCase();
+  const known = new Set(['queued', 'running', 'passed', 'failed', 'canceled', 'succeeded', 'unknown']);
+  if (!known.has(raw)) return 'unknown';
+  if (raw === 'succeeded') return 'passed';
+  return raw;
+}
+
 function renderStatusChip(status) {
   if (!runStatusChipEl) return;
-  const normalized = String(status || 'unknown').toLowerCase();
-  runStatusChipEl.className = `status-chip status-${normalized}`;
-  runStatusChipEl.textContent = normalized;
+  const allowed = normalizeStatus(status);
+  runStatusChipEl.className = `status-chip status-${allowed}`;
+  runStatusChipEl.textContent = allowed;
 }
 
 function renderTimeline(run) {

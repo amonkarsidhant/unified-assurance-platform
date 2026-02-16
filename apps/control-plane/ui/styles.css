@@ -226,6 +226,14 @@ pre {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .skeleton-line.short {
+    animation: none;
+    background-position: 0 0;
+  }
+}
+
 .timeline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
