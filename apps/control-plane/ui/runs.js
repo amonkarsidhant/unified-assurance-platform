@@ -16,10 +16,18 @@ function statusChip(status) {
   return `<span class="status-chip status-${escapeHtml(normalized)}">${escapeHtml(normalized)}</span>`;
 }
 
+async function parseResponseBody(res) {
+  try {
+    return await res.json();
+  } catch {
+    return await res.text();
+  }
+}
+
 function setState(kind, message) {
   if (!stateEl) return;
   stateEl.className = `state ${kind}`;
-  stateEl.innerHTML = message;
+  stateEl.textContent = String(message);
 }
 
 function renderLoadingSkeleton() {
@@ -59,10 +67,11 @@ async function loadRuns() {
   renderLoadingSkeleton();
   try {
     const res = await fetch(`${API}/runs`);
-    const payload = await res.json();
+    const payload = await parseResponseBody(res);
 
     if (!res.ok) {
-      throw new Error(payload?.message || `HTTP ${res.status}`);
+      const message = (typeof payload === 'object' && payload?.message) || String(payload) || `HTTP ${res.status}`;
+      throw new Error(message);
     }
 
     const runs = payload.runs || [];

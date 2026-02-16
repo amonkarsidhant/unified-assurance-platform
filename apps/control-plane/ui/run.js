@@ -73,16 +73,40 @@ function renderTimeline(run) {
     .join('');
 }
 
+function isSafeUrl(path) {
+  const value = String(path || '').trim();
+  if (!value) return false;
+
+  const lower = value.toLowerCase();
+  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('vbscript:')) {
+    return false;
+  }
+
+  if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('mailto:')) {
+    return true;
+  }
+
+  if (value.startsWith('/') || value.startsWith('./') || value.startsWith('../')) {
+    return true;
+  }
+
+  return /^[a-zA-Z0-9._/-]+$/.test(value);
+}
+
 function linkCard(label, path, description = '') {
   if (!path) return '';
   const safeLabel = escapeHtml(label);
   const safePath = escapeHtml(path);
   const safeDescription = description ? `<p class="muted">${escapeHtml(description)}</p>` : '';
+  const safeHref = isSafeUrl(path) ? safePath : '';
+  const linkHtml = safeHref
+    ? `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${safePath}</a>`
+    : `<span class="muted">${safePath} (unsafe link blocked)</span>`;
   return `
     <article class="artifact-card">
       <h3>${safeLabel}</h3>
       ${safeDescription}
-      <a href="${safePath}" target="_blank" rel="noopener noreferrer">${safePath}</a>
+      ${linkHtml}
     </article>
   `;
 }
@@ -120,9 +144,13 @@ function renderGuidance(run) {
   checks.push('Fix the root cause, then trigger a new run from Dashboard.');
 
   const quickLinks = [
-    run.stdoutPath ? `<li><a href="${escapeHtml(run.stdoutPath)}" target="_blank" rel="noopener noreferrer">Open stdout log</a></li>` : '',
-    run.stderrPath ? `<li><a href="${escapeHtml(run.stderrPath)}" target="_blank" rel="noopener noreferrer">Open stderr log</a></li>` : '',
-    run.runArtifactDir
+    run.stdoutPath && isSafeUrl(run.stdoutPath)
+      ? `<li><a href="${escapeHtml(run.stdoutPath)}" target="_blank" rel="noopener noreferrer">Open stdout log</a></li>`
+      : '',
+    run.stderrPath && isSafeUrl(run.stderrPath)
+      ? `<li><a href="${escapeHtml(run.stderrPath)}" target="_blank" rel="noopener noreferrer">Open stderr log</a></li>`
+      : '',
+    run.runArtifactDir && isSafeUrl(run.runArtifactDir)
       ? `<li><a href="${escapeHtml(run.runArtifactDir)}" target="_blank" rel="noopener noreferrer">Open run artifact directory</a></li>`
       : ''
   ]
@@ -145,7 +173,11 @@ function renderGuidance(run) {
 
 function renderRun(payload) {
   const run = payload?.run;
-  if (!run) return;
+  if (!run) {
+    if (contentEl) contentEl.classList.add('hidden');
+    setState('error', 'No run data returned by API. Please retry or verify run id.');
+    return;
+  }
 
   if (contentEl) contentEl.classList.remove('hidden');
   setState('ok', 'Run loaded.');

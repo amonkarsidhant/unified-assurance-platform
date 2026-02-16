@@ -71,6 +71,11 @@ if (incidentBtn) {
       setBanner('error', 'Incident trigger failed: provide a payload path ending in .json.');
       return;
     }
+    if (!payloadPath.endsWith('.json')) {
+      if (result) result.textContent = 'Incident payload path must end with .json';
+      setBanner('error', 'Incident trigger failed: provide a payload path ending in .json.');
+      return;
+    }
     trigger('/runs/incident', { payloadPath }, 'Incident');
   };
 }
