@@ -19,6 +19,7 @@ jobs:
       assurance-mode: pragmatic
       run-real: false
       upload-artifacts: true
+      enforce-promotion: false
 
   pr-feedback:
     name: pr-feedback

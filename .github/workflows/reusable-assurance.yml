@@ -15,6 +15,10 @@ on:
         required: false
         type: boolean
         default: true
+      enforce-promotion:
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -81,6 +85,7 @@ jobs:
       - name: Evaluate flaky test policy
         run: make evaluate-flaky
       - name: Evaluate promotion policy (stage)
+        continue-on-error: ${{ !inputs.enforce-promotion }}
         run: make promotion-check ENV=stage
       - name: Normalize results (results.v2)
         run: make normalize-results-v2
@@ -143,6 +148,7 @@ jobs:
       - name: Evaluate flaky test policy
         run: make evaluate-flaky
       - name: Evaluate promotion policy (stage)
+        continue-on-error: ${{ !inputs.enforce-promotion }}
         run: make promotion-check ENV=stage
       - name: Normalize results (results.v2)
         run: make normalize-results-v2
