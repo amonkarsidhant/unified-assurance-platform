@@ -19,10 +19,10 @@ Show that UAP gives a clear release recommendation from evidence, even for non-Q
    - Mandatory gate failures are explicit
 
 ## Screenshot placeholders
-- `[Screenshot 1: Terminal running make demo-happy]`
-- `[Screenshot 2: demo-happy-report.md plain-language summary]`
-- `[Screenshot 3: Terminal running make demo-broken]`
-- `[Screenshot 4: demo-broken-report.md mandatory failures]`
+- TODO (#17): Add screenshot asset for terminal running `make demo-happy` and replace this line with markdown image syntax.
+- TODO (#17): Add screenshot asset for `demo-happy-report.md` plain-language summary and replace this line with markdown image syntax.
+- TODO (#17): Add screenshot asset for terminal running `make demo-broken` and replace this line with markdown image syntax.
+- TODO (#17): Add screenshot asset for `demo-broken-report.md` mandatory failures and replace this line with markdown image syntax.
 
 ## Expected outputs
 - Happy path recommendation: `GO`

@@ -60,6 +60,8 @@ Open:
 - Grafana: `http://localhost:3000` (admin/admin)
 - Prometheus: `http://localhost:9090`
 
+> `admin/admin` is for local quickstarts only. For any shared or production deployment, rotate the Grafana admin password immediately and follow the hardening path in [`docs/architecture/control-plane-hardening.md`](../architecture/control-plane-hardening.md).
+
 Stop stack when done:
 
 ```bash

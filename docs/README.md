@@ -5,6 +5,7 @@ Use this page as the entry point for all platform documentation.
 ## Start by role
 
 ### Platform engineer
+
 - [Dev experience setup](getting-started/dev-experience-setup.md)
 - [Required tooling](getting-started/required-tooling.md)
 - [Platform architecture](architecture/platform-architecture.md)
@@ -12,6 +13,7 @@ Use this page as the entry point for all platform documentation.
 - [Troubleshooting](getting-started/troubleshooting.md)
 
 ### Application developer
+
 - [Consumer quickstart (10-minute path)](getting-started/consumer-quickstart.md)
 - [Onboarding mode](getting-started/onboarding-mode.md)
 - [Local demo walkthrough](getting-started/local-demo-walkthrough.md)
@@ -19,6 +21,7 @@ Use this page as the entry point for all platform documentation.
 - [Phase 3 DX pack](guides/phase3-dx-pack.md)
 
 ### Security and governance
+
 - [Control traceability](compliance/control-traceability.md)
 - [Enterprise assurance controls](guides/phase2-enterprise-assurance-controls.md)
 - [Branch protection guidance](guides/branch-protection-guidance.md)
@@ -26,6 +29,7 @@ Use this page as the entry point for all platform documentation.
 - [Enterprise hardening backlog](reference/enterprise-hardening-backlog.md)
 
 ### Release manager
+
 - [Enterprise CI/CD model (Phase 1)](guides/phase1-enterprise-cicd.md)
 - [Phase 2.5 promotion refinements](guides/phase2-5-p0.md)
 - [End-to-end review checklist](reference/end-to-end-review.md)

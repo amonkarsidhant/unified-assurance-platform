@@ -3,6 +3,7 @@
 This map shows how quality decisions move from idea to production operations.
 
 ## 1) Shift-left planning
+
 Quality starts during discovery/design:
 - Define critical user flows and failure impact
 - Identify technical and business risks early
@@ -11,6 +12,7 @@ Quality starts during discovery/design:
 **Output:** risk notes + quality requirements for the change.
 
 ## 2) Risk-based strategy
+
 Not all changes need the same depth of testing.
 
 Use higher rigor when:
@@ -23,6 +25,7 @@ Use lighter rigor when:
 **Output:** right-sized test scope and release gate expectations.
 
 ## 3) Quality gates
+
 Quality gates convert policy into objective release criteria.
 
 Typical mandatory gates:
@@ -38,6 +41,7 @@ Typical soft gates:
 **Output:** GO / CONDITIONAL / NO-GO recommendation with evidence.
 
 ## 4) CI/CD integration
+
 Automate enforcement in delivery pipelines:
 - Run fast checks on PR
 - Run broader assurance on main/nightly
@@ -46,6 +50,7 @@ Automate enforcement in delivery pipelines:
 **Output:** auditable, repeatable release readiness signal.
 
 ## 5) Observability feedback loop
+
 After release, production data should improve future quality strategy:
 - Incidents and near-misses become new tests or stronger gates
 - SLO/SLI trends tune thresholds
@@ -56,6 +61,7 @@ After release, production data should improve future quality strategy:
 ---
 
 ## End-to-end flow (at a glance)
+
 1. Plan change + identify risk
 2. Select right-sized test strategy
 3. Execute automated checks in CI/CD

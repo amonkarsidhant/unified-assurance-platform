@@ -11,10 +11,10 @@ This phase adds four practical checks to the assurance flow:
 
 All wrappers are laptop-safe and non-destructive:
 
-- If tool binary is missing → `skipped` with explicit reason in log.
-- If sample asset is missing → `skipped` with explicit reason in log.
-- If tool runs and passes → `pass`.
-- If tool runs and finds violations/errors → `fail`.
+- Missing tool binary → `skipped` with explicit reason in log.
+- When a sample asset is missing → `skipped` with explicit reason in log.
+- When the tool runs and passes → `pass`.
+- Tool execution that finds violations/errors → `fail`.
 
 Artifacts:
 - Status files: `artifacts/latest/*.status`

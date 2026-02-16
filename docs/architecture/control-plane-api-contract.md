@@ -10,6 +10,7 @@ If `CONTROL_PLANE_API_TOKEN` is set, all endpoints except `/health` require eith
 ## Data model
 
 ### Run
+
 ```json
 {
   "id": "run_1739399700123_ab12cd",
@@ -34,6 +35,7 @@ If `CONTROL_PLANE_API_TOKEN` is set, all endpoints except `/health` require eith
 ```
 
 ### Status enum
+
 - `queued`
 - `running`
 - `passed`
@@ -41,6 +43,7 @@ If `CONTROL_PLANE_API_TOKEN` is set, all endpoints except `/health` require eith
 - `canceled`
 
 ### Type enum
+
 - `assurance`
 - `resilience`
 - `incident`
@@ -50,15 +53,19 @@ If `CONTROL_PLANE_API_TOKEN` is set, all endpoints except `/health` require eith
 ## Endpoints
 
 ### `GET /health`
+
 Returns health status without auth requirement.
 
 ### `POST /runs/assurance`
+
 Trigger assurance run (queued for worker execution).
 
 ### `POST /runs/resilience`
+
 Trigger resilience run (queued for worker execution).
 
 ### `POST /runs/incident`
+
 Trigger incident flow.
 
 **Request body**
@@ -76,14 +83,17 @@ Trigger incident flow.
 - file must exist and be a regular file
 
 ### `GET /runs`
+
 List runs (newest first).
 
 ### `GET /runs/{id}`
+
 Get run detail plus related events.
 
 ---
 
 ## Error envelope
+
 ```json
 {
   "error": "<error_code>",
@@ -93,6 +103,7 @@ Get run detail plus related events.
 ```
 
 ## Security constraints
+
 - Strict allowlist maps run type -> executable + fixed args template.
 - No shell interpolation (`spawn` arg array, `shell: false`).
 - Audit trigger events are recorded in `run_events` as `audit.trigger`.

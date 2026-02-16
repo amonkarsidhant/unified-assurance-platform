@@ -19,12 +19,13 @@
 **Acceptance criteria**
 - API starts with `node apps/control-plane/api/server.mjs`
 - Supports:
+  - `GET /health`
   - `POST /runs/assurance`
   - `POST /runs/resilience`
   - `POST /runs/incident`
   - `GET /runs`
   - `GET /runs/{id}`
-- Returns JSON with proper HTTP status codes
+- Returns JSON with proper HTTP status codes (including `GET /health` => `200 {"status":"ok"}`)
 
 ---
 
