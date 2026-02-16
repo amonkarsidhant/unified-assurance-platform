@@ -437,16 +437,18 @@ control-plane-demo:
 	node apps/control-plane/api/server.mjs > /tmp/control-plane-api.log 2>&1 & API_PID=$$!; \
 	node apps/control-plane/worker/worker.mjs > /tmp/control-plane-worker.log 2>&1 & WORKER_PID=$$!; \
 	sleep 1; \
+	AUTH_ARGS=(); \
+	if [[ -n "$${CONTROL_PLANE_API_TOKEN:-}" ]]; then AUTH_ARGS=(-H "Authorization: Bearer $${CONTROL_PLANE_API_TOKEN}"); fi; \
 	echo "Triggering assurance run..."; \
-	RESP=$$(curl -fsS -X POST http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/assurance -H 'Content-Type: application/json' -d '{}'); \
+	RESP=$$(curl -fsS "$${AUTH_ARGS[@]}" -X POST http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/assurance -H 'Content-Type: application/json' -d '{}'); \
 	echo "$$RESP"; \
 	RUN_ID=$$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["run"]["id"])' "$$RESP"); \
 	echo "Run ID: $$RUN_ID"; \
 	sleep 3; \
 	echo "Fetching runs list..."; \
-	curl -fsS http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs | python3 -m json.tool; \
+	curl -fsS "$${AUTH_ARGS[@]}" http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs | python3 -m json.tool; \
 	echo "Fetching run detail..."; \
-	curl -fsS "http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/$$RUN_ID" | python3 -m json.tool; \
+	curl -fsS "$${AUTH_ARGS[@]}" "http://localhost:$${CONTROL_PLANE_PORT:-4172}/runs/$$RUN_ID" | python3 -m json.tool; \
 	echo "Control plane demo complete."
 
 control-plane-test:

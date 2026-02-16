@@ -1,6 +1,7 @@
 # UAP Control Plane MVP Backlog
 
 ## Sprint framing (2 weeks)
+
 - Sprint length: 10 working days
 - Objective: ship a runnable MVP control plane for triggering and tracking UAP runs
 - Prioritization:

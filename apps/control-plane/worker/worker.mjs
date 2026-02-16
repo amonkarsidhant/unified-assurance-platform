@@ -56,7 +56,11 @@ async function executeRun(run) {
   };
 
   const heartbeatTimer = setInterval(() => {
-    heartbeatRun(run.id);
+    try {
+      heartbeatRun(run.id);
+    } catch (error) {
+      console.error('[control-plane-worker] loop error', error);
+    }
   }, workerHeartbeatMs);
 
   await new Promise((resolve) => {
