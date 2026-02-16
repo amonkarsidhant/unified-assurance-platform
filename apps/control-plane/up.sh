@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+API_PORT="${CONTROL_PLANE_PORT:-4172}"
+UI_PORT="${CONTROL_PLANE_UI_PORT:-4173}"
+
+cleanup() {
+  if [[ -n "${API_PID:-}" ]] && kill -0 "${API_PID}" 2>/dev/null; then
+    kill "${API_PID}" || true
+  fi
+  if [[ -n "${WORKER_PID:-}" ]] && kill -0 "${WORKER_PID}" 2>/dev/null; then
+    kill "${WORKER_PID}" || true
+  fi
+}
+trap cleanup EXIT INT TERM
+
+cd "${ROOT_DIR}"
+
+node apps/control-plane/api/server.mjs &
+API_PID=$!
+node apps/control-plane/worker/worker.mjs &
+WORKER_PID=$!
+
+sleep 1
+if ! kill -0 "${API_PID}" 2>/dev/null; then
+  echo "Failed to start control-plane API"
+  exit 1
+fi
+if ! kill -0 "${WORKER_PID}" 2>/dev/null; then
+  echo "Failed to start control-plane worker"
+  exit 1
+fi
+
+API_HEALTH_URL="http://127.0.0.1:${API_PORT}/health"
+max_attempts=30
+attempt=1
+while (( attempt <= max_attempts )); do
+  if curl -fsS "${API_HEALTH_URL}" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.2
+  attempt=$((attempt + 1))
+done
+
+if (( attempt > max_attempts )); then
+  echo "Control-plane API failed readiness check: ${API_HEALTH_URL}"
+  exit 1
+fi
+
+echo "Control Plane API:    http://localhost:${API_PORT}"
+echo "Control Plane Worker: running (pid ${WORKER_PID})"
+echo "Control Plane UI:     http://localhost:${UI_PORT}"
+echo "Press Ctrl+C to stop all"
+
+python3 -m http.server "${UI_PORT}" --directory apps/control-plane/ui

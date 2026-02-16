@@ -1,0 +1,83 @@
+# UAP Control Plane (Hardened MVP)
+
+Production-leaning hardening of the Control Plane MVP with explicit lifecycle state handling, durable queue/storage, and API/worker process separation.
+
+## Architecture
+
+- `api/server.mjs`: HTTP API for trigger/list/detail and request validation.
+- `worker/worker.mjs`: queue worker that claims queued runs and executes allowlisted commands.
+- `lib/db.mjs`: SQLite schema + best-effort migration from legacy `runs.json`.
+- `lib/repository.mjs`: atomic lifecycle transitions + event/audit writes.
+- `lib/artifacts.mjs`: immutable run-scoped artifact directory + pointer maps.
+- `ui/`: static pages (optional local UI).
+
+## Lifecycle State Machine
+
+Runs move through:
+
+`queued -> running -> passed | failed | canceled`
+
+Current implementation supports terminal transitions to `passed/failed` by worker execution, and keeps `canceled` reserved for a follow-up cancel endpoint.
+
+Startup stale-run reconciliation marks orphaned `running` rows as `failed` when heartbeat timeout is exceeded.
+
+## Storage
+
+- Primary: `artifacts/control-plane/control-plane.db` (SQLite, WAL mode)
+- Legacy migration (best effort): `artifacts/control-plane/runs.json` to SQLite on first boot
+- Immutable per-run artifacts: `artifacts/control-plane/runs/<run-id>/`
+- Stream logs: `artifacts/control-plane/logs/<run-id>.stdout.log|stderr.log`
+
+## Security controls
+
+- Strict command allowlist by run type.
+- Incident payload request validation + path sanitization (must remain inside repo and be `.json`).
+- Optional token auth via env (`CONTROL_PLANE_API_TOKEN`) using `Authorization: Bearer ...` or `X-Control-Plane-Token`.
+- Audit event logging for trigger actions (`audit.trigger`).
+
+## Run locally
+
+### 1) API
+```bash
+make control-plane-api
+```
+
+### 2) Worker
+```bash
+make control-plane-worker
+```
+
+### 3) UI (optional)
+```bash
+make control-plane-ui
+```
+
+### 4) All together
+```bash
+make control-plane-up
+```
+
+## Demo
+
+```bash
+make control-plane-demo
+```
+
+## Key env vars
+
+- `CONTROL_PLANE_HOST` (default `0.0.0.0`)
+- `CONTROL_PLANE_PORT` (default `4172`)
+- `CONTROL_PLANE_DB_PATH` (default `artifacts/control-plane/control-plane.db`)
+- `CONTROL_PLANE_API_TOKEN` (optional token auth)
+- `CONTROL_PLANE_WORKER_POLL_MS` (default `800`)
+- `CONTROL_PLANE_WORKER_HEARTBEAT_MS` (default `1000`)
+- `CONTROL_PLANE_STALE_RUN_TIMEOUT_MS` (default `300000`)
+
+## API endpoints
+
+- `GET /health`
+- `GET /runs`
+- `GET /runs/{id}`
+- `POST /runs/assurance`
+- `POST /runs/resilience`
+- `POST /runs/incident`
