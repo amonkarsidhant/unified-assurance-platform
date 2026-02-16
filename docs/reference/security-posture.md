@@ -72,7 +72,7 @@ Status key:
 | Resilience and chaos | Partial | `artifacts/latest/resilience.status`, `artifacts/latest/chaos-results.json`, `artifacts/latest/resilience-intelligence.json` |
 | Exceptions governance | Implemented | `artifacts/latest/exceptions-audit.json`, `config/exceptions/*.yaml` |
 | Promotion policy decision audit | Implemented | `artifacts/latest/promotion-decision.json`, `artifacts/latest/release-report.md` |
-| Evidence integrity (immutability + signing) | Partial | `evidence/bundles/`, `docs/reviews/evidence/<snapshot>/`, `artifacts/control-plane/runs/<run-id>/` |
+| Evidence integrity (immutability + signing) | Partial | `evidence/bundles/`, `docs/reviews/evidence/<snapshot>/` (control-plane run-scoped immutable path is planned for broader governance usage) |
 | Control-plane authentication/authorization | Partial | Token auth (`CONTROL_PLANE_API_TOKEN`), audit trigger events |
 | Tamper-evident audit chain | Planned | Roadmap item; no cryptographic event chaining yet |
 
@@ -135,3 +135,9 @@ For stakeholder review packs and governance checkpoints:
 2. Validate control evidence against [control traceability](../compliance/control-traceability.md).
 3. Confirm immutable snapshot location (`evidence/bundles/` and/or `docs/reviews/evidence/<snapshot-id>/`).
 4. Record unresolved limitations as explicit risk acceptance, with owner and due date.
+
+Procedural note for bundle-backed reviews:
+- Extract the selected bundle from `evidence/bundles/` to a temporary directory (for example via `tar -xzf <bundle>.tar.gz -C <temp-dir>`).
+- Verify the extracted payload contains expected governance files (`promotion-decision.json`, release report, and required control evidence files/logs).
+- Validate each evidence file against [control traceability](../compliance/control-traceability.md) and confirm manifest/hash entries match before accepting the evidence set.
+- Cross-check the immutable promotion decision in `docs/reviews/evidence/<snapshot-id>/promotion-decision.json` when present; use run-scoped fallback only after immutable checks are exhausted.
