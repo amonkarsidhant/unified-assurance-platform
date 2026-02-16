@@ -5,7 +5,7 @@ Who reads what, and what action they should take.
 ## Product Manager (PM)
 
 **Read:**
-- `docs/qe-primer.md`
+- `docs/guides/qe-primer.md`
 - Release report (`artifacts/latest/release-report.md`)
 
 **Do:**
@@ -62,7 +62,7 @@ Who reads what, and what action they should take.
 ## Executive / Stakeholder
 
 **Read:**
-- `docs/stakeholder-one-pager.md`
+- `docs/architecture/stakeholder-one-pager.md`
 - Plain-language summary in release report
 
 **Do:**

@@ -13,10 +13,10 @@ Date: 2026-02-10
 ### ✅ Implemented from prior recommendations
 
 1. **Real JavaScript quality gates implemented**
-   - `npm run lint` now executes `scripts/lint-js.mjs` (syntax checks + TODO/FIXME/trailing-whitespace checks).
-   - `npm test` now runs real unit tests under `tests/unit/`.
-   - `npm run test:integration` now runs integration tests under `tests/integration/`.
-   - `npm run test:contract` now runs contract tests under `tests/contract/`.
+   - `npm run lint` — executes `scripts/lint-js.mjs` (syntax checks + TODO/FIXME/trailing-whitespace checks).
+   - `npm test` — runs real unit tests under `tests/unit/`.
+   - `npm run test:integration` — runs integration tests under `tests/integration/`.
+   - `npm run test:contract` — runs contract tests under `tests/contract/`.
 
 2. **Playwright browser bootstrap added**
    - `npm run test:ui:smoke` now calls `scripts/ensure-playwright.mjs` before running Playwright tests.
