@@ -131,7 +131,7 @@ Minimum expectations for governance-grade auditability:
 ## Operating guidance for stakeholders
 
 For stakeholder review packs and governance checkpoints:
-1. Read the promotion decision (`artifacts/latest/promotion-decision.json` or run-scoped equivalent).
+1. Read the promotion decision from an immutable snapshot first (`docs/reviews/evidence/<snapshot-id>/promotion-decision.json` and/or `evidence/bundles/` extracted evidence); only fall back to run-scoped equivalents when immutable snapshot references are unavailable.
 2. Validate control evidence against [control traceability](../compliance/control-traceability.md).
 3. Confirm immutable snapshot location (`evidence/bundles/` and/or `docs/reviews/evidence/<snapshot-id>/`).
 4. Record unresolved limitations as explicit risk acceptance, with owner and due date.
