@@ -124,7 +124,7 @@ Minimum expectations for governance-grade auditability:
 | Shared token model for control-plane API (no RBAC / per-user identity) | Weak accountability and coarse access control | Introduce identity-aware authN/authZ (service and human principals), with scoped permissions and audit subject attribution |
 | No cryptographic tamper-evident chain for run events | Harder to prove event-log integrity post-incident | Add signed event digest chain anchored to immutable snapshot metadata |
 | Evidence integrity is tier-dependent in some paths | Inconsistent assurance expectations across environments | Move to stricter default evidence integrity for stage/prod, with explicit documented exceptions only |
-| `artifacts/latest/` is easy to misuse as authoritative evidence | Reviewer confusion and accidental trust in mutable output | Update runbooks and templates to require immutable snapshot references in release/change reviews |
+| `artifacts/latest/` is easy to misuse as authoritative evidence | Reviewer confusion and accidental trust in mutable output | Update release process runbooks and review templates (outside this `security-posture.md`) to require immutable snapshot references in release/change reviews |
 | External tool availability influences control confidence | False sense of security during scanner/tool outages | Expand fail-closed behavior for required controls in strict gate mode and improve degraded-mode signaling |
 | At-rest encryption for local control-plane DB/artifacts not built-in | Increased exposure on compromised host/storage | Document encryption-at-rest patterns and provide optional hardened storage profile |
 
