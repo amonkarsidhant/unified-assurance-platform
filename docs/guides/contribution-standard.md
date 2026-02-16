@@ -22,3 +22,7 @@ Applies to:
 ## Review expectations
 - Prefer small, reviewable increments.
 - Avoid ambiguous language; be specific on ownership and acceptance criteria.
+
+## Related repository standards
+- [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- [SECURITY.md](../../SECURITY.md)
