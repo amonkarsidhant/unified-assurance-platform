@@ -1,3 +1,4 @@
+---
 name: ci-release-gate
 
 on:
@@ -30,7 +31,7 @@ jobs:
       upload-artifacts: true
       enforce-promotion: true
       promotion-environment: ${{ inputs.target-environment || 'stage' }}
-      artifact-suffix: release-stage
+      artifact-suffix: ${{ format('release-{0}', inputs.target-environment || 'stage') }}
 
   promotion-gate:
     name: promotion-gate
@@ -41,7 +42,7 @@ jobs:
       - name: Download release artifacts
         uses: actions/download-artifact@v4
         with:
-          name: assurance-release-stage
+          name: assurance-${{ format('release-{0}', inputs.target-environment || 'stage') }}
           path: artifacts/latest
       - name: Validate exceptions + evaluate promotion gate
         run: |
@@ -66,7 +67,7 @@ jobs:
             echo "## Release gate checks"
             echo
             echo "- Strictness: blocking (promotion enforced)"
-            echo "- Artifact: assurance-release-stage"
+            echo "- Artifact: assurance-${{ format('release-{0}', inputs.target-environment || 'stage') }}"
             echo "- Promotion environment: ${{ inputs.target-environment || 'stage' }}"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -82,7 +83,7 @@ jobs:
       - name: Download release artifacts
         uses: actions/download-artifact@v4
         with:
-          name: assurance-release-stage
+          name: assurance-${{ format('release-{0}', inputs.target-environment || 'stage') }}
           path: artifacts/latest
       - name: Create immutable evidence bundle
         run: |
@@ -94,7 +95,7 @@ jobs:
       - name: Upload evidence bundle artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: evidence-release-stage
+          name: evidence-${{ format('release-{0}', inputs.target-environment || 'stage') }}
           path: |
             evidence/bundles/*.tar.gz
             evidence/bundles/*.sha256
@@ -107,6 +108,6 @@ jobs:
           {
             echo "## Evidence bundle"
             echo
-            echo "- Artifact: evidence-release-stage"
-            echo "- Source artifact: assurance-release-stage"
+            echo "- Artifact: evidence-${{ format('release-{0}', inputs.target-environment || 'stage') }}"
+            echo "- Source artifact: assurance-${{ format('release-{0}', inputs.target-environment || 'stage') }}"
           } >> "$GITHUB_STEP_SUMMARY"
