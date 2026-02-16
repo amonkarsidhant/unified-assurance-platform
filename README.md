@@ -1,449 +1,101 @@
-# 🛡️ Unified Assurance Platform (UAP)
+# Unified Assurance Platform (UAP)
 
-![Platform](https://img.shields.io/badge/platform-unified%20assurance-1f6feb)
-![Status](https://img.shields.io/badge/status-active-success)
-![CI](https://img.shields.io/badge/ci-github%20actions-2088FF)
-![Observability](https://img.shields.io/badge/observability-grafana%2Bprometheus-F46800)
-![Security](https://img.shields.io/badge/security-sast%20%7C%20sca%20%7C%20dast-8A2BE2)
-![License](https://img.shields.io/badge/license-internal-lightgrey)
+One platform for quality gates, release evidence, and policy-driven promotion decisions.
 
-> **One platform for quality gates, real test evidence, observability, and release decisions.**
-
-Make releases predictable with a practical, policy-driven assurance system developers can actually use.
-
----
-
-## ✨ Why this exists
-
-Most teams have tests. Fewer teams have **trusted release decisions**.
-
-UAP connects:
-- ✅ test execution
-- ✅ risk policy
-- ✅ CI/CD gates
-- ✅ evidence bundles
-- ✅ Grafana visibility
-
-So stakeholders get: **GO / CONDITIONAL / NO-GO** with traceable reasons.
-
----
-
-## 🧭 What you get
-
-- 📋 **Quality gates + risk model** (`policies/`)
-- ⚙️ **Assurance runner** (`scripts/run-assurance.sh`)
-- 🔎 **Real-tool mode** (k6, semgrep, trivy, ZAP, newman, playwright)
-- 📦 **Evidence + report generation**
-- 📈 **Autoprovisioned dashboards** (infra + assurance)
-- 🧱 **Golden paths** for API/web/event/payments/auth + multi-module apps
-- 🏭 **Enterprise CI/CD Phase 1** (PR/pre-release/post-deploy workflows)
-
----
-
-## 🏗️ Platform architecture
-
-```mermaid
-flowchart LR
-  Dev[👨‍💻 Developer] --> PR[🔀 Pull Request]
-  PR --> CI[⚙️ CI Assurance Pipeline]
-
-  CI --> Tests[🧪 Tests & Scans\nLint/Unit/Integration/Contract\nSAST/SCA/DAST/Perf]
-  CI --> Policy[📋 Risk + Quality Policy]
-
-  Tests --> Decision[🚦 Release Decision\nGO / CONDITIONAL / NO-GO]
-  Policy --> Decision
-
-  Decision --> Evidence[📦 Evidence Bundle\nChecksums + Optional Signature]
-  Evidence --> Report[📝 Release Report]
-
-  Tests --> Metrics[📡 Assurance Metrics Export]
-  Metrics --> Prom[📈 Prometheus]
-  Prom --> Grafana[📊 Grafana Dashboards]
-
-  Report --> Stakeholders[👥 Eng + Security + Product + Leadership]
-  Grafana --> Stakeholders
-```
-
----
-
-## 🚀 Quick start
+## 60-second quickstart
 
 ```bash
 make bootstrap
 make validate
-make tooling-check
 make run-assurance
 make report RESULTS=artifacts/latest/results.json OUT=artifacts/latest/release-report.md
 ```
 
-Resilience Intelligence quick run:
+Open:
+- Release report: `artifacts/latest/release-report.md`
+- Assurance artifacts: `artifacts/latest/`
+- Docs hub: [`docs/README.md`](docs/README.md)
 
-```bash
-make resilience-intelligence
-make resilience-intelligence-check
-make resilience-adapter-check
-make resilience-report
-```
+## Local demo flow
 
-Resilience Intelligence Phase 3 (incident + trends):
-
-```bash
-make resilience-incident-trigger INCIDENT_PAYLOAD=examples/incidents/sample-incident.json
-make resilience-scorecard
-make resilience-trend-export
-make resilience-schedule-help
-```
-
-## ⚡ Developer quick path (Phase 3 DX)
-
-```bash
-make preflight MODULE=payments-api TYPE=api
-make explain-last-fail
-make suggest-next-steps
-make request-exception CONTROL=dast_zap REASON='Temporary false positive' EXPIRY_DAYS=7
-```
-
-## 🧭 New Consumer Start Here
-
-If you are onboarding to UAP for the first time, start with:
-
-- 10-minute onboarding path: `docs/consumer-quickstart.md`
-- Tool installs + verification: `docs/required-tooling.md`
-- Common failure fixes: `docs/troubleshooting.md`
-- Completed sample onboarding bundle: `examples/onboarded-service/`
-- Full review framework: `docs/end-to-end-review.md`
-- Resilience Intelligence MVP (Phase 1): `docs/resilience-intelligence-phase1.md`
-- Resilience Intelligence Phase 2 runbook: `docs/resilience-intelligence-phase2.md`
-- Resilience Intelligence Phase 3 automation + scorecards: `docs/resilience-intelligence-phase3.md`
-- MCP-ready interface wrappers: `docs/mcp-resilience-intelligence-interface.md`
-
-One-command path to onboarding mode:
-
-```bash
-make consumer-quickstart
-```
-
-Artifacts generated in `artifacts/latest/`:
-- `preflight-summary.json` + `.md`
-- `failure-explanations.json` + `.md`
-- `next-steps.md`
-
-Exception drafts are generated in `config/exceptions/requests/`.
-
-See `docs/phase3-dx-pack.md` for the full workflow.
-
-## 🧩 Developer onboarding mode
-
-Onboard a new service with one scaffolding command + staged adoption:
-
-```bash
-make onboard SERVICE=payments-api TYPE=api TIER=high OWNERS=api-owner,security-owner
-make preflight MODULE=payments-api TYPE=api
-make onboarding-score SERVICE=payments-api
-make onboarding-plan SERVICE=payments-api
-```
-
-Generated assets:
-- `config/services/<service>.json`
-- `docs/generated/onboarding-<service>.md`
-- `artifacts/latest/onboarding/<service>-codeowners.txt`
-- `artifacts/latest/onboarding/<service>-score.json`
-- `artifacts/latest/onboarding/<service>-score.md`
-
-Full guide: `docs/onboarding-mode.md`.
-
----
-
-## 🎬 5-minute quick demo (GIF + walkthrough)
-
-> Add your demo GIF at `docs/assets/uap-demo.gif` and it will render below.
-
-![UAP quick demo](docs/assets/uap-demo.gif)
-
-No GIF yet? Run this walkthrough live:
+Run an end-to-end local demo:
 
 ```bash
 make demo-e2e
 ```
 
-Then show these screens in order:
-1. `http://127.0.0.1:8790/demo/site/` → Happy vs Broken path toggle
-2. `http://localhost:3000` → UAP Assurance Dashboard
-3. `artifacts/latest/demo-e2e-report.md` → Final GO/NO-GO report
+Then review:
+- Demo UI: `http://127.0.0.1:8790/demo/site/` (auto-fallback to 8791/8792)
+- Grafana: `http://localhost:3000`
+- Prometheus: `http://localhost:9090`
+- Demo report: `artifacts/latest/demo-e2e-report.md`
 
----
+Stop local services:
 
-## 🔥 One-command live demo (golden path)
-
-```bash
-make demo-e2e
-```
-
-This will:
-1. Start local observability stack
-2. Start demo service + demo UI
-3. Run real assurance flow
-4. Export assurance metrics
-5. Generate final report
-
-### Open these after `make demo-e2e`
-- 🌐 Demo UI: `http://127.0.0.1:8790/demo/site/` (auto-fallback to 8791/8792)
-- 📊 Grafana: `http://localhost:3000`
-- 📈 Prometheus: `http://localhost:9090`
-- 📝 Final report: `artifacts/latest/demo-e2e-report.md`
-
-Stop everything:
 ```bash
 make demo-down && make demo-site-down && make dev-stack-down
 ```
 
----
+## Control plane (hardened direction)
 
-## 📊 Dashboards (autoprovisioned)
+The control plane is the policy decision layer for GO / CONDITIONAL / NO-GO outcomes.
 
-In Grafana (`http://localhost:3000`):
+It is designed to be:
+- **Fail-closed for high-risk promotion paths**
+- **Evidence-first and auditable**
+- **Separation-friendly** between execution workers and decision APIs
 
-- **UAP Local Observability Overview**
-  - infra and collector health
-- **UAP Assurance Dashboard**
-  - release recommendation
-  - test statuses
-  - risk score/tier
-  - policy validation
-  - vulnerability and failure signals
-  - trends over time (local persistence caveats apply)
-- **UAP Assurance Governance Dashboard**
-  - promotion allowed (blocked/allowed)
-  - failed gates list + count
-  - evidence integrity state (signature required/present, attestation present, fail-closed)
-  - exceptions active/expired/violations
-  - flaky policy signals (violations/count/allowed)
-  - tier-required controls pass/fail matrix approximation
-  - PR-summary-style severity signals
-  - onboarding score/readiness/plan visibility per service
-  - current onboarding stage table (A/B/C one-hot)
+Read:
+- [Control plane MVP](docs/architecture/control-plane-mvp.md)
+- [Control plane hardening](docs/architecture/control-plane-hardening.md)
+- [Control plane API contract](docs/architecture/control-plane-api-contract.md)
 
-### Grafana vs artifact files (exact split)
+## CI gate model
 
-- **Grafana shows** aggregated/operational signals exported in `artifacts/metrics/assurance.prom` (Prometheus-scraped), including onboarding-mode signals (`onboarding_score`, `onboarding_ready`, `onboarding_stage_current`, `onboarding_plan_exists`).
-- **Artifacts remain source-of-truth details**:
-  - `artifacts/latest/promotion-decision.json` → full promotion rationale, failed gates, evidence integrity, exceptions used.
-  - `artifacts/latest/exceptions-audit.json` → exception governance details and violations.
-  - `artifacts/latest/flaky-policy.json` → flaky-policy evaluation details.
-  - `artifacts/latest/results.v2.json` → normalized cross-section contract used for downstream/reporting.
-  - `artifacts/latest/pr-comment.md` → human-readable PR summary text (severity metric export falls back to results-derived counts if absent).
+UAP supports two gate modes:
 
----
+1. **PR gates (fast feedback)**
+   - Lint/unit/integration/smoke checks
+   - Policy summary and PR-facing signal
+   - Artifact generation for reviewer context
 
-## 🧪 Real tool mode
+2. **Strict promotion gates (environment promotion)**
+   - Tier-aware control requirements
+   - Exception validation and expiry enforcement
+   - Evidence integrity + promotion decision output (`promotion-decision.json`)
 
-`make run-assurance` = pragmatic mode (graceful simulation where needed)
+Key docs:
+- [Phase 1 enterprise CI/CD](docs/guides/phase1-enterprise-cicd.md)
+- [Phase 2 enterprise controls](docs/guides/phase2-enterprise-assurance-controls.md)
+- [Phase 2.5 P0 model](docs/guides/phase2-5-p0.md)
 
-`make run-assurance-real` = force real tools:
-- ⚡ k6
-- 🔐 semgrep
-- 🧬 trivy
-- 🕷️ OWASP ZAP baseline
-- 📮 newman API smoke (`tests/api/postman_collection.json`)
-- 🎭 playwright UI smoke (`tests/ui/smoke.spec.ts`)
+## Documentation
 
-Run only ZAP smoke:
+Start here: **[docs/README.md](docs/README.md)**
+
+Primary sections:
+- [`docs/getting-started/`](docs/getting-started/)
+- [`docs/architecture/`](docs/architecture/)
+- [`docs/guides/`](docs/guides/)
+- [`docs/reference/`](docs/reference/)
+- [`docs/reviews/`](docs/reviews/)
+
+## Common commands
+
 ```bash
-make zap-smoke
-```
+# Baseline validation
+make validate
 
-Useful env overrides:
-```bash
-TRIVY_SEVERITY=CRITICAL,HIGH TRIVY_EXIT_CODE=0 \
-K6_VUS=2 K6_DURATION=5s PERF_TARGET_URL=https://test.k6.io \
-ZAP_TARGET_URL=http://127.0.0.1:5678 ZAP_TIMEOUT_MIN=2 ZAP_FAIL_LEVEL=medium \
-NEWMAN_BASE_URL=http://127.0.0.1:5678 PLAYWRIGHT_BASE_URL=http://127.0.0.1:8790 \
+# Real-tool assurance flow
 make run-assurance-real
-```
 
-Default sample assets are included so Newman/Playwright run by default:
-- API: `tests/api/postman_collection.json` (+ `tests/api/postman_environment.json`)
-- UI: `tests/ui/smoke.spec.ts` with `playwright.config.ts`
-
-One-time local setup (recommended):
-```bash
-npm install
-npx playwright install chromium
-```
-
-Quick verification:
-```bash
-make demo-up
-make demo-site-up
-make run-assurance-real || true
-cat artifacts/latest/newman_smoke.status
-cat artifacts/latest/playwright_smoke.status
-```
-
-Replace those files with your service-specific checks when onboarding your app.
-
----
-
-
-### Phase A open-source checks
-
-Laptop-safe wrappers (graceful skip with explicit reasons):
-- `scripts/run-gitleaks.sh` → `secret_scan`
-- `scripts/run-schemathesis.sh` → `api_fuzz_contract`
-- `scripts/run-hadolint.sh` → `dockerfile_policy`
-- `scripts/run-checkov.sh` → `iac_policy`
-
-Run all Phase A checks:
-```bash
-make phase-a-checks
-```
-
-Per-tool:
-```bash
-make gitleaks-check
-make schemathesis-check
-make hadolint-check
-make checkov-check
-```
-
-Sample assets for quick local runs:
-- `examples/openapi/sample-openapi.yaml`
-- `examples/docker/Dockerfile.sample`
-- `examples/iac/sample-terraform/`
-
-## 🌪️ Agnostic Chaos Integration
-
-Chaos is integrated as a policy control in the golden path, without introducing a custom chaos engine.
-
-Key assets:
-- `scripts/run-chaos-checks.sh`
-- `docs/chaos/experiment-contract.md`
-- `docs/chaos/scenario-catalog.md`
-- `templates/chaos/chaos-experiment-template.yaml`
-- `templates/chaos/chaos-runbook-template.md`
-- `docs/golden-paths/chaos-integration.md`
-
-Run locally (safe defaults):
-```bash
-make chaos-check
-make run-assurance
-make promotion-check ENV=stage || true
-make report
-```
-
-## 🧱 Golden paths for multi-module apps
-
-Use this for apps with `frontend`, `api`, `worker`, `shared-lib`, etc.
-
-Generate module-specific golden paths:
-```bash
-make module-golden-path MODULE=checkout-ui TYPE=frontend
-make module-golden-path MODULE=payments-api TYPE=api
-```
-
-Generated outputs:
-- `docs/generated/checkout-ui.md`
-- `docs/generated/payments-api.md`
-
-Core references:
-- `docs/golden-paths/multi-module-app.md`
-- `templates/module-onboarding-template.md`
-- `templates/module-assurance-profile.yaml`
-- `templates/module-ci-template.yml`
-
----
-
-## 🏢 Enterprise readiness (Phase 1 + Phase 2)
-
-Included in repo:
-- `.github/workflows/pr.yml`
-- `.github/workflows/pre-release.yml`
-- `.github/workflows/post-deploy.yml`
-- `.github/workflows/reusable-assurance.yml`
-- `config/promotion/{dev,stage,prod}.json`
-- `policies/tiers/{low,medium,high,critical}.json`
-- `config/exceptions/template.yaml`
-- `config/control-ownership.json`
-- `docs/compliance/control-traceability.md`
-- `.github/CODEOWNERS`
-- `scripts/evaluate-promotion.py`
-- `scripts/validate-exceptions.py`
-- `scripts/create-evidence-bundle.py`
-- `scripts/sign-evidence-bundle.sh`
-
-Setup docs:
-- `docs/phase1-enterprise-cicd.md`
-- `docs/phase2-enterprise-assurance-controls.md`
-- `docs/branch-protection-guidance.md`
-
-Phase 2 key commands:
-```bash
-make run-assurance-real
+# Promotion check (example: stage)
 make validate-exceptions ENV=stage
 make promotion-check ENV=stage
-make report
+
+# Resilience intelligence flow
+make resilience-intelligence
+make resilience-report
 ```
 
-### Phase 2.5 (P0) additions
-
-- Standardized results contract: `artifacts/latest/results.v2.json` (`schemas/results-v2.schema.json`)
-- Flaky policy evaluation: `config/flaky-policy.json` + `scripts/evaluate-flaky-policy.py`
-- PR summary rendering: `scripts/render-pr-comment.py` + PR artifact/comment workflow
-- Tier-based evidence integrity gate (high/critical fail-closed configurable)
-
-Commands:
-```bash
-make run-assurance
-make evaluate-flaky
-make promotion-check ENV=stage
-make normalize-results-v2
-make render-pr-comment
-```
-
-Detailed guide: `docs/phase2-5-p0.md`
-
----
-
-## 🧭 Platform Trial Pack (next 2 weeks)
-
-- Implementation plan: `docs/roadmap/platform-trial-pack-2week-plan.md`
-- Prioritized backlog: `docs/roadmap/platform-trial-pack-backlog.md`
-- Architecture + extension points: `docs/roadmap/platform-trial-pack-architecture.md`
-
-## 🗂️ Repo map
-
-- `docs/` → guides, architecture, golden paths
-- `policies/` → quality gates + risk model
-- `catalog/` → test catalog
-- `config/` → promotion + module configs
-- `ci/templates/` → CI templates
-- `infra/local/` → local observability stack + provisioning
-- `reporting/` → KPI/scorecard formats
-- `scripts/` → assurance engine + helpers
-- `templates/` → onboarding and governance templates
-
----
-
-## 🤝 Contribution standard
-
-For major design docs and stakeholder-facing reports:
-- follow `docs/contribution-standard.md`
-- include `templates/self-reflection-template.md`
-
----
-
-## 🧠 Agentic-QE inspired alignment
-
-- `docs/agentic-alignment-matrix.md`
-- `docs/enterprise-hardening-backlog.md`
-
----
-
-## ⚠️ macOS notes
-
-- If Gatekeeper blocks tools (like ZAP), allow in **Privacy & Security** or install via Homebrew.
-- For localhost scans in Dockerized ZAP path, use `host.docker.internal` where required.
-
----
-
-Built for practical teams: **ship faster, break less, prove quality.** 🚀
+For contribution expectations, see [docs/guides/contribution-standard.md](docs/guides/contribution-standard.md).
