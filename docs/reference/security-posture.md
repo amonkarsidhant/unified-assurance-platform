@@ -72,7 +72,7 @@ Status key:
 | Resilience and chaos | Partial | `artifacts/latest/resilience.status`, `artifacts/latest/chaos-results.json`, `artifacts/latest/resilience-intelligence.json` |
 | Exceptions governance | Implemented | `artifacts/latest/exceptions-audit.json`, `config/exceptions/*.yaml` |
 | Promotion policy decision audit | Implemented | `artifacts/latest/promotion-decision.json`, `artifacts/latest/release-report.md` |
-| Evidence integrity (immutability + signing) | Partial | `evidence/bundles/`, `docs/reviews/evidence/<snapshot>/` (control-plane run-scoped immutable path is planned for broader governance usage) |
+| Evidence integrity (immutability + signing) | Partial | `evidence/bundles/`, `docs/reviews/evidence/<snapshot>/`, `artifacts/control-plane/runs/<run-id>/` (implemented; planned for broader governance usage) |
 | Control-plane authentication/authorization | Partial | Token auth (`CONTROL_PLANE_API_TOKEN`), audit trigger events |
 | Tamper-evident audit chain | Planned | Roadmap item; no cryptographic event chaining yet |
 
@@ -97,7 +97,8 @@ For review-grade and audit-grade evidence, create and preserve immutable snapsho
    - Used for assessments where reviewers must verify claims without relying on ephemeral CI storage.
 3. **Control-plane run-scoped outputs (execution immutability):**
    - Path: `artifacts/control-plane/runs/<run-id>/`
-   - Captures run metadata, pointers, and result maps per run identifier.
+   - Implemented now: captures run metadata, pointers, and result maps per run identifier.
+   - Planned: broader governance workflows will reference this path more explicitly as a first-class immutable source.
 
 ### Naming/versioning guidance
 
@@ -139,5 +140,13 @@ For stakeholder review packs and governance checkpoints:
 Procedural note for bundle-backed reviews:
 - Extract the selected bundle from `evidence/bundles/` to a temporary directory (for example via `tar -xzf <bundle>.tar.gz -C <temp-dir>`).
 - Verify the extracted payload contains expected governance files (`promotion-decision.json`, release report, and required control evidence files/logs).
-- Validate each evidence file against [control traceability](../compliance/control-traceability.md) and confirm manifest/hash entries match before accepting the evidence set.
+- Manifest/checksum format used by `scripts/create-evidence-bundle.py`:
+  - Manifest file sits next to the bundle as `evidence-bundle-<timestamp>.manifest.txt`.
+  - Bundle checksum file sits next to the bundle as `evidence-bundle-<timestamp>.sha256`.
+  - Hash algorithm is SHA-256, encoded as lowercase hex.
+  - Manifest entries map `relative_path -> sha256` in the format: `<sha256>  <relative_path>`.
+- Validation procedure before acceptance:
+  - Compute SHA-256 for each extracted evidence file and compare with the matching manifest entry.
+  - Compute SHA-256 for the `.tar.gz` and compare with `evidence-bundle-<timestamp>.sha256`.
+  - Validate each control evidence file against [control traceability](../compliance/control-traceability.md); fail acceptance on hash mismatch or missing mapped evidence.
 - Cross-check the immutable promotion decision in `docs/reviews/evidence/<snapshot-id>/promotion-decision.json` when present; use run-scoped fallback only after immutable checks are exhausted.
