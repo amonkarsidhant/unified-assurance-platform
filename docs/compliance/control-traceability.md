@@ -1,5 +1,7 @@
 # Phase 2 Compliance Traceability (SOC2/ISO-style)
 
+For threat model context, evidence integrity expectations, and known roadmap gaps, see [Security posture](../reference/security-posture.md).
+
 | Control | Intent | Evidence Artifacts |
 |---|---|---|
 | SAST (`sast`) | Detect code-level security defects before release | `artifacts/latest/security_scan.status`, `artifacts/latest/semgrep.json`, `artifacts/latest/security_scan.log` |

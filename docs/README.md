@@ -22,6 +22,7 @@ Use this page as the entry point for all platform documentation.
 
 ### Security and governance
 
+- [Security posture (threat model, controls, evidence integrity)](reference/security-posture.md)
 - [Control traceability](compliance/control-traceability.md)
 - [Enterprise assurance controls](guides/phase2-enterprise-assurance-controls.md)
 - [Branch protection guidance](guides/branch-protection-guidance.md)
