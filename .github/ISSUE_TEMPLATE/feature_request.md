@@ -4,6 +4,8 @@ about: Propose a new capability or improvement
 labels: enhancement
 ---
 
+# Feature request
+
 ## Problem statement
 
 <!-- What user/operator pain are we solving? -->
@@ -21,8 +23,8 @@ labels: enhancement
 
 ## Acceptance criteria
 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ## Validation approach
 

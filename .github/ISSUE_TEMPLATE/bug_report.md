@@ -4,6 +4,8 @@ about: Report a defect in platform behavior, controls, or documentation
 labels: bug
 ---
 
+# Bug report
+
 ## Summary
 
 <!-- Clear one-line description of the issue -->
@@ -20,9 +22,9 @@ labels: bug
 
 ## Steps to reproduce
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Evidence
 

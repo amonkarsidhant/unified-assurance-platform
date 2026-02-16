@@ -1,4 +1,4 @@
-## Summary
+# Summary
 
 <!-- What changed and why? -->
 
@@ -25,8 +25,9 @@
 make validate
 ```
 
-Additional checks:
-- 
+Additional checks
+
+- (optional)
 
 ## Evidence
 
