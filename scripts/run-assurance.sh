@@ -97,7 +97,8 @@ run_wrapper_step() {
 }
 
 normalize_zap_level() {
-  local level="$(echo "${1:-WARN}" | tr '[:lower:]' '[:upper:]')"
+  local level
+  level="$(echo "${1:-WARN}" | tr '[:lower:]' '[:upper:]')"
   case "$level" in
     LOW) echo "INFO" ;;
     MEDIUM) echo "WARN" ;;
@@ -334,7 +335,7 @@ cp "$ART_DIR/security_scan.status" "$ART_DIR/security.status"
 cp "$ART_DIR/performance_smoke.status" "$ART_DIR/performance.status"
 
 TOTAL=14
-PASSED=$(grep -h '^pass$' \
+PASSED=$(grep -h -c '^pass$' \
   "$ART_DIR/lint.status" \
   "$ART_DIR/unit.status" \
   "$ART_DIR/integration.status" \
@@ -348,7 +349,7 @@ PASSED=$(grep -h '^pass$' \
   "$ART_DIR/secret_scan.status" \
   "$ART_DIR/api_fuzz_contract.status" \
   "$ART_DIR/dockerfile_policy.status" \
-  "$ART_DIR/iac_policy.status" | wc -l | tr -d ' ')
+  "$ART_DIR/iac_policy.status" | awk '{s += $1} END {print s+0}')
 PASS_RATE=$(python3 - <<PY
 print(round($PASSED/$TOTAL, 4))
 PY

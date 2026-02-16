@@ -24,9 +24,26 @@ permissions:
   contents: read
 
 jobs:
+  quality-hygiene:
+    name: quality-hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.20.0'
+      - name: Install lint tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck yamllint
+      - name: Run quality lint suite
+        run: make lint
+
   validate:
     name: validate
     runs-on: ubuntu-latest
+    needs: [quality-hygiene]
     steps:
       - uses: actions/checkout@v4
       - name: Run validate
