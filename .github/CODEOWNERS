@@ -1,8 +1,21 @@
-# Default ownership for all repository content
-* @your-org/platform-owners
+# Default ownership
+* @amonkarsidhant
 
-# CI/CD and security policy ownership
-/.github/ @your-org/platform-owners @your-org/security-engineering
-/policies/ @your-org/security-engineering
-/scripts/ @your-org/platform-owners
-/docs/ @your-org/platform-owners
+# Documentation and developer experience
+/docs/ @amonkarsidhant
+README.md @amonkarsidhant
+CONTRIBUTING.md @amonkarsidhant
+SECURITY.md @amonkarsidhant
+
+# Automation and CI/CD
+/.github/workflows/ @amonkarsidhant
+/scripts/ @amonkarsidhant
+Makefile @amonkarsidhant
+
+# Control-plane architecture and contracts
+/docs/architecture/control-plane-*.md @amonkarsidhant
+config/control-ownership.json @amonkarsidhant
+
+# Policies and governance
+/policies/ @amonkarsidhant
+config/exceptions/ @amonkarsidhant

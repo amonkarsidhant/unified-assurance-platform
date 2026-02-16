@@ -1,0 +1,8 @@
+# Canonical CODEOWNERS (mirrors .github/CODEOWNERS for discoverability)
+* @amonkarsidhant
+
+/docs/ @amonkarsidhant
+/scripts/ @amonkarsidhant
+/.github/workflows/ @amonkarsidhant
+/policies/ @amonkarsidhant
+/docs/architecture/control-plane-*.md @amonkarsidhant
