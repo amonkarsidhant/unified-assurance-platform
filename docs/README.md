@@ -39,8 +39,8 @@ Use this page as the entry point for all platform documentation.
 ### Documentation maintainers
 
 - [Design language (compact)](reference/design-language.md)
-- [Architecture diagram asset](assets/diagrams/uap-architecture.svg)
-- [Workflow diagram asset](assets/diagrams/uap-workflow.svg)
+- [Architecture diagram asset](assets/diagrams/uap-architecture.svg) ([diagram docs](reference-architecture/diagram.md))
+- [Workflow diagram asset](assets/diagrams/uap-workflow.svg) ([diagram docs](reference-architecture/diagram.md))
 
 ## Quick map
 
