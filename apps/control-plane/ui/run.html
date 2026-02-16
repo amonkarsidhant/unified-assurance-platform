@@ -7,12 +7,42 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main>
-      <h1>Run Detail</h1>
-      <nav>
-        <a href="./runs.html">Back to Runs</a>
-      </nav>
-      <pre id="detail">Loading...</pre>
+    <main class="container">
+      <header class="page-header">
+        <h1>Run Detail</h1>
+        <nav>
+          <a href="./runs.html">Back to Runs</a>
+        </nav>
+      </header>
+
+      <div id="runState" class="state" role="status" aria-live="polite"></div>
+
+      <section id="runContent" class="hidden">
+        <section class="panel">
+          <div class="row between wrap">
+            <h2 id="runTitle">Run</h2>
+            <span id="runStatusChip" class="status-chip">unknown</span>
+          </div>
+          <p id="runMeta" class="muted"></p>
+        </section>
+
+        <section class="panel" id="guidancePanel"></section>
+
+        <section class="panel">
+          <h2>Timeline</h2>
+          <dl id="timeline" class="timeline"></dl>
+        </section>
+
+        <section class="panel">
+          <h2>Artifacts</h2>
+          <div id="artifacts" class="artifact-grid"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Raw payload</h2>
+          <pre id="detail"></pre>
+        </section>
+      </section>
     </main>
     <script src="./run.js"></script>
   </body>
