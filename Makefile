@@ -1,6 +1,36 @@
 SHELL := /bin/bash
 
-.PHONY: all clean test bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check resilience-adapter-check resilience-report resilience-incident-trigger resilience-scorecard resilience-trend-export resilience-schedule-help zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+.PHONY: all clean fmt lint lint-markdown lint-yaml lint-shell lint-links test ci-local bootstrap validate tooling-check run-assurance run-assurance-real resilience-intelligence resilience-intelligence-check resilience-adapter-check resilience-report resilience-incident-trigger resilience-scorecard resilience-trend-export resilience-schedule-help zap-smoke phase-a-checks gitleaks-check schemathesis-check hadolint-check checkov-check chaos-check chaos-sample assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check report collect-evidence evidence-bundle sign-bundle validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart end-to-end-review explain-last-fail suggest-next-steps request-exception demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e dev-stack-up dev-stack-down dev-stack-status
+
+fmt:
+	@echo "Formatting Markdown/YAML/JSON with Prettier (where available)..."
+	@if command -v npx >/dev/null 2>&1; then \
+		find . -type f \( -name '*.md' -o -name '*.yml' -o -name '*.yaml' -o -name '*.json' \) \
+			-not -path './node_modules/*' \
+			-not -path './artifacts/*' \
+			-not -path './.git/*' \
+			-print0 | xargs -0 npx --yes prettier@3 --write; \
+	else \
+		echo "npx not found; skipping fmt"; \
+	fi
+
+lint: lint-markdown lint-yaml lint-shell lint-links
+	@echo "Lint complete."
+
+lint-markdown:
+	@./scripts/lint-markdown.sh
+
+lint-yaml:
+	@./scripts/lint-yaml.sh
+
+lint-shell:
+	@./scripts/lint-shell.sh
+
+lint-links:
+	@./scripts/lint-links.sh
+
+ci-local: validate lint test
+	@echo "Local CI suite complete."
 
 all: validate
 	@echo "Default target complete. Run 'make run-assurance' for a full assurance pass."

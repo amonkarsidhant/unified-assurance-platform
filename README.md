@@ -100,6 +100,11 @@ Primary sections:
 # Baseline validation
 make validate
 
+# Quality hygiene
+make fmt
+make lint
+make ci-local
+
 # Real-tool assurance flow
 make run-assurance-real
 
