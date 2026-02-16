@@ -7,21 +7,30 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main>
-      <h1>UAP Control Plane</h1>
-      <p>Dashboard (MVP)</p>
+    <main class="container">
+      <header class="page-header">
+        <h1>UAP Control Plane</h1>
+        <p class="muted">Trigger assurance workflows and inspect recent execution state.</p>
+      </header>
 
-      <section>
+      <div id="banner" class="banner hidden" role="status" aria-live="polite"></div>
+
+      <section class="panel">
         <h2>Trigger Runs</h2>
-        <div class="row">
+        <div class="row wrap">
           <button id="assuranceBtn">Trigger Assurance</button>
           <button id="resilienceBtn">Trigger Resilience</button>
         </div>
-        <div class="row">
+        <div class="row wrap">
+          <label for="incidentPath" class="sr-only">Incident payload path</label>
           <input id="incidentPath" value="examples/incidents/sample-incident.json" />
           <button id="incidentBtn">Trigger Incident</button>
         </div>
-        <pre id="result"></pre>
+      </section>
+
+      <section class="panel">
+        <h2>Last API Response</h2>
+        <pre id="result">No requests yet.</pre>
       </section>
 
       <nav>

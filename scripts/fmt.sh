@@ -7,7 +7,7 @@ if command -v npx >/dev/null 2>&1; then
     -not -path './node_modules/*' \
     -not -path './artifacts/*' \
     -not -path './.git/*' \
-    -print0 | xargs -0 npx --yes prettier@3 --write
+    -print0 | xargs -0 --no-run-if-empty npx --yes prettier@3 --write
 else
   echo "npx not found; skipping fmt"
 fi

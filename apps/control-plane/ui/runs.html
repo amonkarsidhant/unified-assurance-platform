@@ -7,13 +7,24 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main>
-      <h1>Runs</h1>
-      <nav>
+    <main class="container">
+      <header class="page-header">
+        <h1>Runs</h1>
+        <p class="muted">Newest runs first. Click a run for timeline, artifacts, and operator guidance.</p>
+      </header>
+
+      <nav class="row">
         <a href="./index.html">Dashboard</a>
       </nav>
-      <button id="refresh">Refresh</button>
-      <ul id="runs"></ul>
+
+      <section class="panel">
+        <div class="row between wrap">
+          <h2>Run History</h2>
+          <button id="refresh">Refresh</button>
+        </div>
+        <div id="runsState" class="state" role="status" aria-live="polite"></div>
+        <ul id="runs" class="run-list"></ul>
+      </section>
     </main>
     <script src="./runs.js"></script>
   </body>

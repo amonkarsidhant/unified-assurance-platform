@@ -9,7 +9,7 @@ Production-leaning hardening of the Control Plane MVP with explicit lifecycle st
 - `lib/db.mjs`: SQLite schema + best-effort migration from legacy `runs.json`.
 - `lib/repository.mjs`: atomic lifecycle transitions + event/audit writes.
 - `lib/artifacts.mjs`: immutable run-scoped artifact directory + pointer maps.
-- `ui/`: static pages (optional local UI).
+- `ui/`: static pages (optional local UI) with operator-focused status chips, timeline, artifacts, and guided failure handling.
 
 ## Lifecycle State Machine
 
@@ -38,21 +38,25 @@ Startup stale-run reconciliation marks orphaned `running` rows as `failed` when 
 ## Run locally
 
 ### 1) API
+
 ```bash
 make control-plane-api
 ```
 
 ### 2) Worker
+
 ```bash
 make control-plane-worker
 ```
 
 ### 3) UI (optional)
+
 ```bash
 make control-plane-ui
 ```
 
 ### 4) All together
+
 ```bash
 make control-plane-up
 ```
@@ -62,6 +66,18 @@ make control-plane-up
 ```bash
 make control-plane-demo
 ```
+
+## UI operator workflow notes
+
+- Dashboard trigger actions disable while requests are in flight and show success/failure banners.
+- Runs list renders explicit loading, empty, and actionable error states.
+- Run detail renders status-aware states (`loading`, `not found`, API error), timeline metadata, artifact cards, and a direct operator guidance panel when a run fails.
+- Status colors are consistent across pages:
+  - `queued` → neutral slate
+  - `running` → blue
+  - `passed` → green
+  - `failed` → red
+  - `canceled` → amber
 
 ## Key env vars
 
