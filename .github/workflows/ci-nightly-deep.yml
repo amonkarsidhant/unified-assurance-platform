@@ -1,0 +1,45 @@
+name: ci-nightly-deep
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-nightly-deep-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  assurance:
+    uses: ./.github/workflows/reusable-assurance.yml
+    with:
+      assurance-mode: real
+      run-real: true
+      upload-artifacts: true
+      enforce-promotion: true
+      promotion-environment: stage
+      artifact-suffix: nightly-real
+
+  nightly-summary:
+    name: nightly-summary
+    runs-on: ubuntu-latest
+    needs: [assurance]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download nightly artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: assurance-nightly-real
+          path: artifacts/latest
+      - name: Publish nightly summary
+        run: |
+          {
+            echo "## Nightly deep checks"
+            echo
+            echo "- Strictness: blocking (deep real-mode checks)"
+            echo "- Artifact: assurance-nightly-real"
+            echo "- Includes: results + normalized output + promotion evidence"
+          } >> "$GITHUB_STEP_SUMMARY"

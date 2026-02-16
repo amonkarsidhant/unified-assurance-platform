@@ -1,4 +1,4 @@
-name: pr-assurance
+name: ci-pr-quality
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-assurance-${{ github.event.pull_request.number || github.ref }}
+  group: ci-pr-quality-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,6 +20,8 @@ jobs:
       run-real: false
       upload-artifacts: true
       enforce-promotion: false
+      promotion-environment: stage
+      artifact-suffix: pr-pragmatic
 
   pr-feedback:
     name: pr-feedback
@@ -31,7 +33,7 @@ jobs:
       - name: Download assurance artifacts
         uses: actions/download-artifact@v4
         with:
-          name: assurance-pragmatic
+          name: assurance-pr-pragmatic
           path: artifacts/latest
       - name: Render PR comment body
         run: |
@@ -43,8 +45,17 @@ jobs:
       - name: Upload PR comment preview artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pr-comment-preview
+          name: comment-pr-pragmatic
           path: artifacts/latest/pr-comment.md
+      - name: Publish PR feedback summary
+        run: |
+          {
+            echo "## PR quality checks"
+            echo
+            echo "- Strictness: non-blocking promotion check (fast feedback)"
+            echo "- Input artifact: assurance-pr-pragmatic"
+            echo "- Comment artifact: comment-pr-pragmatic"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Comment on PR (best effort)
         uses: actions/github-script@v7
         continue-on-error: true

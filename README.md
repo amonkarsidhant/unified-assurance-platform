@@ -55,6 +55,17 @@ Supporting docs:
 - [Phase 2 enterprise controls](docs/guides/phase2-enterprise-assurance-controls.md)
 - [Phase 2.5 P0 model](docs/guides/phase2-5-p0.md)
 
+## CI status matrix
+
+| Workflow | Purpose | Trigger | Strictness | Deterministic artifacts |
+| --- | --- | --- | --- | --- |
+| `ci-pr-quality` | Fast reviewer feedback for pull requests (lint/validate/tooling + pragmatic assurance) | `pull_request` to `main` | Promotion check is non-blocking (`enforce-promotion: false`) | `assurance-pr-pragmatic`, `comment-pr-pragmatic` |
+| `ci-release-gate` | Release/promotion gate before delivery (real assurance + strict gate + signed evidence) | `push` to `main`, `push` tag `v*`, manual dispatch | Blocking gate (`enforce-promotion: true`) | `assurance-release-stage`, `evidence-release-stage` |
+| `ci-nightly-deep` | Scheduled deep confidence run with real-mode checks | Nightly cron + manual dispatch | Blocking deep check (`enforce-promotion: true`) | `assurance-nightly-real` |
+| `post-deploy-checks` | Post-deployment verification and evidence refresh | Deployment success + manual dispatch | Blocking post-deploy evaluation | `assurance-postdeploy-real`, `post-deploy-evidence` |
+
+All workflows publish a concise GitHub step summary with run mode, gate behavior, and artifact names for quick triage.
+
 ## What good looks like
 
 Use this as a readiness checklist before merge or promotion:

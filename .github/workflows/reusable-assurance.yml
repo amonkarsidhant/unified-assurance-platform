@@ -19,6 +19,14 @@ on:
         required: false
         type: boolean
         default: true
+      promotion-environment:
+        required: false
+        type: string
+        default: stage
+      artifact-suffix:
+        required: false
+        type: string
+        default: shared-pragmatic
 
 permissions:
   contents: read
@@ -98,27 +106,47 @@ jobs:
       - name: Generate report
         run: make report
       - name: Validate exceptions
-        run: make validate-exceptions ENV=stage
+        run: make validate-exceptions ENV=${{ inputs.promotion-environment }}
       - name: Evaluate flaky test policy
         run: make evaluate-flaky
-      - name: Evaluate promotion policy (stage)
+      - name: Evaluate promotion policy (${{ inputs.promotion-environment }})
         continue-on-error: ${{ !inputs.enforce-promotion }}
-        run: make promotion-check ENV=stage
+        run: make promotion-check ENV=${{ inputs.promotion-environment }}
       - name: Normalize results (results.v2)
         run: make normalize-results-v2
       - name: Render PR comment preview
         run: make render-pr-comment
+      - name: Build run summary (pragmatic)
+        run: |
+          artifact_name="assurance-${{ inputs.artifact-suffix }}"
+          {
+            echo "## Assurance run summary"
+            echo
+            echo "- Mode: pragmatic"
+            echo "- Promotion environment: ${{ inputs.promotion-environment }}"
+            echo "- Enforce promotion gate: ${{ inputs.enforce-promotion }}"
+            echo "- Artifact: ${artifact_name}"
+            echo
+            echo "### Included files"
+            echo "- artifacts/latest/results.json"
+            echo "- artifacts/latest/results.v2.json"
+            echo "- artifacts/latest/release-report.md"
+            echo "- artifacts/latest/promotion-decision.json"
+            echo "- artifacts/latest/flaky-policy.json"
+            echo "- artifacts/latest/pr-comment.md"
+          } | tee artifacts/latest/ci-summary-${{ inputs.artifact-suffix }}.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload assurance artifacts
         if: ${{ inputs.upload-artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: assurance-pragmatic
+          name: assurance-${{ inputs.artifact-suffix }}
           path: |
             artifacts/latest/results.json
             artifacts/latest/release-report.md
             artifacts/latest/*.status
             artifacts/latest/*.log
             artifacts/latest/*.json
+            artifacts/latest/ci-summary-${{ inputs.artifact-suffix }}.md
 
   run-assurance-real:
     name: run-assurance-real
@@ -161,24 +189,44 @@ jobs:
       - name: Generate report
         run: make report
       - name: Validate exceptions
-        run: make validate-exceptions ENV=stage
+        run: make validate-exceptions ENV=${{ inputs.promotion-environment }}
       - name: Evaluate flaky test policy
         run: make evaluate-flaky
-      - name: Evaluate promotion policy (stage)
+      - name: Evaluate promotion policy (${{ inputs.promotion-environment }})
         continue-on-error: ${{ !inputs.enforce-promotion }}
-        run: make promotion-check ENV=stage
+        run: make promotion-check ENV=${{ inputs.promotion-environment }}
       - name: Normalize results (results.v2)
         run: make normalize-results-v2
       - name: Render PR comment preview
         run: make render-pr-comment
+      - name: Build run summary (real)
+        run: |
+          artifact_name="assurance-${{ inputs.artifact-suffix }}"
+          {
+            echo "## Assurance run summary"
+            echo
+            echo "- Mode: real"
+            echo "- Promotion environment: ${{ inputs.promotion-environment }}"
+            echo "- Enforce promotion gate: ${{ inputs.enforce-promotion }}"
+            echo "- Artifact: ${artifact_name}"
+            echo
+            echo "### Included files"
+            echo "- artifacts/latest/results.json"
+            echo "- artifacts/latest/results.v2.json"
+            echo "- artifacts/latest/release-report.md"
+            echo "- artifacts/latest/promotion-decision.json"
+            echo "- artifacts/latest/flaky-policy.json"
+            echo "- artifacts/latest/pr-comment.md"
+          } | tee artifacts/latest/ci-summary-${{ inputs.artifact-suffix }}.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload assurance artifacts (real)
         if: ${{ inputs.upload-artifacts }}
         uses: actions/upload-artifact@v4
         with:
-          name: assurance-real
+          name: assurance-${{ inputs.artifact-suffix }}
           path: |
             artifacts/latest/results.json
             artifacts/latest/release-report.md
             artifacts/latest/*.status
             artifacts/latest/*.log
             artifacts/latest/*.json
+            artifacts/latest/ci-summary-${{ inputs.artifact-suffix }}.md
