@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Scoped markdown lint baseline for DX entrypoints + templates.
+shopt -s nullglob
 TARGETS=(
   README.md
   CONTRIBUTING.md
@@ -12,3 +13,4 @@ TARGETS=(
 )
 
 npx --yes markdownlint-cli "${TARGETS[@]}"
+shopt -u nullglob
