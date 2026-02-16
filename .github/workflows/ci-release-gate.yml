@@ -1,7 +1,8 @@
-name: pre-release-assurance
+name: ci-release-gate
 
 on:
   push:
+    branches: [main]
     tags:
       - 'v*'
   workflow_dispatch:
@@ -16,6 +17,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-release-gate-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   assurance:
     uses: ./.github/workflows/reusable-assurance.yml
@@ -23,6 +28,9 @@ jobs:
       assurance-mode: real
       run-real: true
       upload-artifacts: true
+      enforce-promotion: true
+      promotion-environment: ${{ inputs.target-environment || 'stage' }}
+      artifact-suffix: release-stage
 
   promotion-gate:
     name: promotion-gate
@@ -30,10 +38,10 @@ jobs:
     needs: [assurance]
     steps:
       - uses: actions/checkout@v4
-      - name: Download real artifacts
+      - name: Download release artifacts
         uses: actions/download-artifact@v4
         with:
-          name: assurance-real
+          name: assurance-release-stage
           path: artifacts/latest
       - name: Validate exceptions + evaluate promotion gate
         run: |
@@ -52,6 +60,15 @@ jobs:
             --flaky-result artifacts/latest/flaky-policy.json
           python3 scripts/normalize-results-v2.py --input artifacts/latest/results.json --output artifacts/latest/results.v2.json --exceptions artifacts/latest/exceptions-audit.json --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json
           python3 scripts/render-pr-comment.py --results artifacts/latest/results.json --promotion artifacts/latest/promotion-decision.json --flaky artifacts/latest/flaky-policy.json --output artifacts/latest/pr-comment.md
+      - name: Publish release gate summary
+        run: |
+          {
+            echo "## Release gate checks"
+            echo
+            echo "- Strictness: blocking (promotion enforced)"
+            echo "- Artifact: assurance-release-stage"
+            echo "- Promotion environment: ${{ inputs.target-environment || 'stage' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   evidence-bundle:
     name: evidence-bundle-and-sign
@@ -62,10 +79,10 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Download real artifacts
+      - name: Download release artifacts
         uses: actions/download-artifact@v4
         with:
-          name: assurance-real
+          name: assurance-release-stage
           path: artifacts/latest
       - name: Create immutable evidence bundle
         run: |
@@ -77,7 +94,7 @@ jobs:
       - name: Upload evidence bundle artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: evidence-bundle
+          name: evidence-release-stage
           path: |
             evidence/bundles/*.tar.gz
             evidence/bundles/*.sha256
@@ -85,3 +102,11 @@ jobs:
             evidence/bundles/*.sig
             evidence/bundles/*.cert
             evidence/bundles/*.sig.skip.txt
+      - name: Publish evidence summary
+        run: |
+          {
+            echo "## Evidence bundle"
+            echo
+            echo "- Artifact: evidence-release-stage"
+            echo "- Source artifact: assurance-release-stage"
+          } >> "$GITHUB_STEP_SUMMARY"
