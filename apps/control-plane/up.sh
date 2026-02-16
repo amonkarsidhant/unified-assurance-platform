@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 API_PORT="${CONTROL_PLANE_PORT:-4172}"
 UI_PORT="${CONTROL_PLANE_UI_PORT:-4173}"
 
+# cleanup terminates the background control-plane API process if it is running; errors during termination are ignored.
 cleanup() {
   if [[ -n "${API_PID:-}" ]] && kill -0 "${API_PID}" 2>/dev/null; then
     kill "${API_PID}" || true

@@ -92,6 +92,11 @@ server.listen(port, host, () => {
   console.log(`[control-plane] API listening on http://${host}:${port}`);
 });
 
+/**
+ * Ensure the on-disk store exists for run records and logs.
+ *
+ * Creates the logs directory (recursively) and, if missing, initializes the runs file with an empty JSON array.
+ */
 function ensureStore() {
   fs.mkdirSync(logsDir, { recursive: true });
   if (!fs.existsSync(runsFile)) {
@@ -99,6 +104,10 @@ function ensureStore() {
   }
 }
 
+/**
+ * Load persisted runs from the local store and return them sorted newest first by `createdAt`.
+ * @returns {Array} An array of run objects sorted by `createdAt` in descending order. Returns an empty array if the store is missing, malformed, or does not contain an array.
+ */
 function loadRuns() {
   ensureStore();
   const raw = fs.readFileSync(runsFile, 'utf8');
@@ -111,10 +120,22 @@ function loadRuns() {
   }
 }
 
+/**
+ * Persist the provided runs array to the on-disk runs file.
+ *
+ * @param {Array<Object>} runs - Array of run objects to save; overwrites the runs file with pretty-printed JSON.
+ */
 function saveRuns(runs) {
   fs.writeFileSync(runsFile, `${JSON.stringify(runs, null, 2)}\n`, 'utf8');
 }
 
+/**
+ * Insert or update a run in the persistent runs store.
+ *
+ * If a run with the same `id` already exists it is replaced; otherwise the run is added to the front
+ * of the list. The updated runs list is persisted to disk.
+ * @param {object} nextRun - Run object to insert or update; must include an `id` property used for matching.
+ */
 function upsertRun(nextRun) {
   const runs = loadRuns();
   const idx = runs.findIndex((r) => r.id === nextRun.id);
@@ -123,6 +144,14 @@ function upsertRun(nextRun) {
   saveRuns(runs);
 }
 
+/**
+ * Create and persist a new queued run record with metadata and log file paths.
+ *
+ * @param {string} type - Logical run type (e.g., "assurance", "resilience", "incident").
+ * @param {object} request - Payload or metadata that initiated the run.
+ * @param {string|string[]} command - Command (and optionally its arguments) to execute for the run.
+ * @param {any} artifacts - Artifact descriptors associated with the run.
+ * @returns {object} The created run object containing id, type, status `'queued'`, timestamps, command, request, artifacts, stdoutPath, stderrPath, and other metadata.
 function createRun(type, request, command, artifacts) {
   const id = `run_${Date.now()}_${randomUUID().slice(0, 8)}`;
   const run = {
@@ -147,6 +176,13 @@ function createRun(type, request, command, artifacts) {
   return run;
 }
 
+/**
+ * Start the run identified by `id` by launching its configured command and managing its lifecycle.
+ *
+ * Marks the run as running and records start time, streams the child process stdout/stderr to the run's log files, and updates the persisted run record on spawn failure or process exit. On completion it records finishedAt, durationMs, exitCode, status (`completed` if exit code is 0, `failed` otherwise) and an error message when applicable.
+ *
+ * @param {string} id - Identifier of the run to start; if no run with this id exists, the function does nothing.
+ */
 function startRun(id) {
   const run = loadRuns().find((r) => r.id === id);
   if (!run) return;
@@ -194,6 +230,11 @@ function startRun(id) {
   });
 }
 
+/**
+ * Validate and resolve an incident payload file path, ensuring it is a .json file located inside the repository root.
+ * @param {string} payloadPath - Path to the payload file (relative to repo root or absolute). Must refer to an existing `.json` file within the repository.
+ * @returns {{ok: true, absolutePath: string} | {ok: false, reason: string}} `ok: true` with `absolutePath` when validation succeeds; `ok: false` with `reason` when validation fails.
+ */
 function validateIncidentPayload(payloadPath) {
   if (!payloadPath || typeof payloadPath !== 'string') {
     return { ok: false, reason: 'payloadPath is required' };
@@ -215,6 +256,15 @@ function validateIncidentPayload(payloadPath) {
   return { ok: true, absolutePath: resolved };
 }
 
+/**
+ * Parse the HTTP request body as JSON and return the resulting object.
+ *
+ * @param {http.IncomingMessage} req - The incoming HTTP request to read.
+ * @returns {Promise<any>} The parsed JSON object, or {} if the body is empty.
+ * @throws {Error} When the request body exceeds 1,000,000 bytes ('request body too large').
+ * @throws {Error} When the body is not valid JSON ('invalid JSON body').
+ * @throws {Error} If the request stream emits an error.
+ */
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -236,17 +286,35 @@ function readBody(req) {
   });
 }
 
+/**
+ * Sets permissive CORS headers on the given HTTP response to allow requests from any origin.
+ * @param {import('http').ServerResponse} res - Response object to set CORS headers on.
+ */
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
+/**
+ * Send a JSON HTTP response with the specified status code and payload.
+ * @param {import('http').ServerResponse} res - The HTTP response object.
+ * @param {number} status - HTTP status code to send.
+ * @param {*} payload - Value to serialize as the JSON response body.
+ */
 function json(res, status, payload) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
 }
 
+/**
+ * Send a standardized JSON error response.
+ * @param {object} res - HTTP ServerResponse to write to.
+ * @param {number} status - HTTP status code for the response.
+ * @param {string} error - Short error identifier or key.
+ * @param {string} message - Human-readable error message.
+ * @param {any} [details] - Optional additional error details to include in the payload.
+ */
 function jsonError(res, status, error, message, details = undefined) {
   const payload = { error, message };
   if (details) payload.details = details;

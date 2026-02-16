@@ -1,6 +1,12 @@
 const API = window.CONTROL_PLANE_API || 'http://localhost:4172';
 const result = document.getElementById('result');
 
+/**
+ * Send a POST request with a JSON payload to the control-plane API at the given path and display the parsed response or any error in the page's result element.
+ *
+ * @param {string} path - The API path to POST to (appended to the configured API base URL).
+ * @param {Object} [body={}] - JSON-serializable payload to send as the request body.
+ */
 async function trigger(path, body = {}) {
   result.textContent = 'Running...';
   try {
