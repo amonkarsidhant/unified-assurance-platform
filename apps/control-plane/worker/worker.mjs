@@ -73,24 +73,42 @@ async function executeRun(run) {
     };
 
     child.on('error', (err) => {
-      clearInterval(heartbeatTimer);
-      completeRun({ id: run.id, exitCode: -1, status: 'failed', error: `spawn_error: ${err.message}` });
-      appendEvent({ runId: run.id, eventType: 'run.error', message: 'Spawn failure', payload: { error: err.message } });
-      finalizeSafely(run.id);
-      done();
+      try {
+        clearInterval(heartbeatTimer);
+        completeRun({ id: run.id, exitCode: -1, status: 'failed', error: `spawn_error: ${err.message}` });
+        appendEvent({ runId: run.id, eventType: 'run.error', message: 'Spawn failure', payload: { error: err.message } });
+      } catch (error) {
+        console.error('[control-plane-worker] loop error', error);
+      } finally {
+        try {
+          finalizeSafely(run.id);
+        } catch (error) {
+          console.error('[control-plane-worker] loop error', error);
+        }
+        done();
+      }
     });
 
     child.on('close', (code, signal) => {
-      clearInterval(heartbeatTimer);
-      const success = code === 0;
-      completeRun({
-        id: run.id,
-        exitCode: Number.isInteger(code) ? code : -1,
-        status: success ? 'passed' : 'failed',
-        error: success ? null : `script exited with code ${code}${signal ? ` signal=${signal}` : ''}`
-      });
-      finalizeSafely(run.id);
-      done();
+      try {
+        clearInterval(heartbeatTimer);
+        const success = code === 0;
+        completeRun({
+          id: run.id,
+          exitCode: Number.isInteger(code) ? code : -1,
+          status: success ? 'passed' : 'failed',
+          error: success ? null : `script exited with code ${code}${signal ? ` signal=${signal}` : ''}`
+        });
+      } catch (error) {
+        console.error('[control-plane-worker] loop error', error);
+      } finally {
+        try {
+          finalizeSafely(run.id);
+        } catch (error) {
+          console.error('[control-plane-worker] loop error', error);
+        }
+        done();
+      }
     });
   });
 }

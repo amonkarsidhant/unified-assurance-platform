@@ -45,9 +45,9 @@
 **Story**: As an operator, I can see run history even after restarting API.
 
 **Acceptance criteria**
-- Run metadata persisted to `artifacts/control-plane/runs.json`
-- Includes: `id`, `type`, `status`, timestamps, exit code, artifact pointers, payload metadata
-- API list and detail read from persisted store
+- Run metadata persisted to SQLite database at `artifacts/control-plane/control-plane.db`
+- `runs` table stores at minimum: `id`, `type`, `status`, timestamps (`created_at`, `started_at`, `finished_at`, `updated_at`, `heartbeat_at`), `exit_code`, `artifacts_json` (artifact pointers), and `request_json` (payload metadata)
+- API list and detail are served from SQLite persisted state (querying `runs`, with event enrichment from `run_events`)
 
 ---
 
