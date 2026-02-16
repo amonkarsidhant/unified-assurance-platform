@@ -68,5 +68,6 @@ If a secret leak is suspected:
 
 - [README.md](README.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/reference/security-posture.md](docs/reference/security-posture.md)
 - [docs/guides/branch-protection-guidance.md](docs/guides/branch-protection-guidance.md)
 - [docs/architecture/control-plane-hardening.md](docs/architecture/control-plane-hardening.md)

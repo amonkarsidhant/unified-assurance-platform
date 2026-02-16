@@ -107,6 +107,7 @@ Use this as a readiness checklist before merge or promotion:
 
 For contribution and review quality bars, see [CONTRIBUTING.md](CONTRIBUTING.md).
 For vulnerability handling and security boundaries, see [SECURITY.md](SECURITY.md).
+For a consolidated trust/governance view (threat model, control coverage, evidence integrity, roadmap), see [docs/reference/security-posture.md](docs/reference/security-posture.md).
 
 ## Control plane (hardened direction)
 
