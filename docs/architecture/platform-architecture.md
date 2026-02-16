@@ -4,6 +4,14 @@
 
 Provide one executable framework to evaluate release readiness across **quality, security, resilience (chaos), policy, and evidence integrity** signals.
 
+## Visual references
+
+![UAP architecture overview](../assets/diagrams/uap-architecture.svg)
+*Figure: platform surfaces and data/control flow.*
+
+![UAP workflow](../assets/diagrams/uap-workflow.svg)
+*Figure: release-assurance workflow from PR checks to promotion decision.*
+
 ## Core components
 
 ### 1) Policy and control plane

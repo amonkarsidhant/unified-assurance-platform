@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Assurance run/report screenshot placeholder</title>
+  <desc id="desc">Placeholder asset for assurance run/report screenshot. See issue #22.</desc>
+  <rect width="1280" height="720" fill="#f8fafc"/>
+  <rect x="80" y="90" width="1120" height="540" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+  <text x="120" y="180" fill="#0f172a" font-family="Arial, sans-serif" font-size="42" font-weight="700">TODO: Assurance Run/Report Screenshot</text>
+  <text x="120" y="240" fill="#334155" font-family="Arial, sans-serif" font-size="28">Capture a stable terminal + release report view from the demo flow.</text>
+  <text x="120" y="300" fill="#1d4ed8" font-family="Arial, sans-serif" font-size="28">Tracking issue: https://github.com/amonkarsidhant/unified-assurance-platform/issues/22</text>
+</svg>

@@ -36,6 +36,12 @@ Use this page as the entry point for all platform documentation.
 - [Roadmap](reference/roadmap.md)
 - [Control-plane backlog](reference/control-plane-backlog.md)
 
+### Documentation maintainers
+
+- [Design language (compact)](reference/design-language.md)
+- [Architecture diagram asset](assets/diagrams/uap-architecture.svg)
+- [Workflow diagram asset](assets/diagrams/uap-workflow.svg)
+
 ## Quick map
 
 - **Getting started and setup**: [`docs/getting-started/`](getting-started/)

@@ -1,5 +1,11 @@
 # Unified Assurance Platform (UAP)
 
+[![ci-pr-quality](docs/assets/badges/ci-pr-quality.svg)](.github/workflows/ci-pr-quality.yml)
+[![ci-release-gate](docs/assets/badges/ci-release-gate.svg)](.github/workflows/ci-release-gate.yml)
+[![ci-nightly-deep](docs/assets/badges/ci-nightly-deep.svg)](.github/workflows/ci-nightly-deep.yml)
+[![post-deploy-checks](docs/assets/badges/post-deploy-checks.svg)](.github/workflows/post-deploy.yml)
+[![license-pending](docs/assets/badges/license-pending.svg)](./README.md#repository-metadata)
+
 A practical platform for quality gates, release evidence, and policy-driven promotion decisions.
 
 ## 60-second quickstart
@@ -66,6 +72,28 @@ Supporting docs:
 
 All workflows publish a concise GitHub step summary with run mode, gate behavior, and artifact names for quick triage.
 
+## Architecture and workflow diagrams
+
+![UAP architecture overview](docs/assets/diagrams/uap-architecture.svg)
+*Figure: UAP control plane, execution, policy, artifact, and observability surfaces.*
+
+![UAP release-assurance workflow](docs/assets/diagrams/uap-workflow.svg)
+*Figure: PR-to-promotion decision flow with resilience intelligence and status outcomes.*
+
+## Capability snapshots
+
+![Assurance run and report (placeholder)](docs/assets/screenshots/assurance-run-report-placeholder.svg)
+*Assurance run/report capability snapshot. TODO tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
+
+![Promotion gate decision (placeholder)](docs/assets/screenshots/promotion-gate-decision-placeholder.svg)
+*Promotion gate decision capability snapshot. TODO tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
+
+![Resilience intelligence (placeholder)](docs/assets/screenshots/resilience-intelligence-placeholder.svg)
+*Resilience intelligence capability snapshot. TODO tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
+
+![Control plane UI dashboard](docs/assets/screenshots/control-plane-ui-dashboard.png)
+*Control-plane UI capability snapshot (dashboard trigger view).*
+
 ## What good looks like
 
 Use this as a readiness checklist before merge or promotion:
@@ -93,6 +121,10 @@ Read:
 - [Control plane MVP](docs/architecture/control-plane-mvp.md)
 - [Control plane hardening](docs/architecture/control-plane-hardening.md)
 - [Control plane API contract](docs/architecture/control-plane-api-contract.md)
+
+## Repository metadata
+
+- License file: pending addition (badge kept explicit as `license-pending` until a canonical license is committed).
 
 ## Documentation
 

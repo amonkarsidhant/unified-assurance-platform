@@ -18,11 +18,10 @@ Show that UAP gives a clear release recommendation from evidence, even for non-Q
    - Recommendation is **NO-GO**
    - Mandatory gate failures are explicit
 
-## Screenshot placeholders
-- TODO (#17): Add screenshot asset for terminal running `make demo-happy` and replace this line with markdown image syntax.
-- TODO (#17): Add screenshot asset for `demo-happy-report.md` plain-language summary and replace this line with markdown image syntax.
-- TODO (#17): Add screenshot asset for terminal running `make demo-broken` and replace this line with markdown image syntax.
-- TODO (#17): Add screenshot asset for `demo-broken-report.md` mandatory failures and replace this line with markdown image syntax.
+## Capability snapshot
+
+![Assurance run and report (placeholder)](../assets/screenshots/assurance-run-report-placeholder.svg)
+*Assurance run/report screenshot placeholder. Reliable capture is tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
 
 ## Expected outputs
 - Happy path recommendation: `GO`
