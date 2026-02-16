@@ -52,6 +52,11 @@ The MVP must orchestrate existing UAP scripts (not replace them) and provide saf
 - Views run history and pass/fail trends
 - Uses artifact pointers for review and governance conversations
 
+## Capability snapshot
+
+![Control-plane UI dashboard](../assets/screenshots/control-plane-ui-dashboard.png)
+*Control-plane UI dashboard showing trigger actions and latest API response.*
+
 ## Core workflows
 
 ### 1) Trigger run (assurance/resilience)

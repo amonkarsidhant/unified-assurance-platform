@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">UAP workflow from change to promotion decision</title>
+  <desc id="desc">Workflow diagram showing pull request checks, strict release gate, resilience intelligence, and promotion decision outcomes.</desc>
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 2; rx: 14; }
+      .go { fill: #dcfce7; stroke: #16a34a; }
+      .warn { fill: #fef3c7; stroke: #f59e0b; }
+      .fail { fill: #fee2e2; stroke: #dc2626; }
+      .title { fill: #0f172a; font: 700 24px Inter, Arial, sans-serif; }
+      .label { fill: #0f172a; font: 600 17px Inter, Arial, sans-serif; }
+      .text { fill: #334155; font: 500 13px Inter, Arial, sans-serif; }
+      .line { stroke: #1d4ed8; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <polygon points="0,0 10,4 0,8" fill="#1d4ed8" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="620" />
+  <text class="title" x="60" y="56">UAP release-assurance workflow</text>
+
+  <rect class="box" x="60" y="110" width="230" height="100" />
+  <text class="label" x="88" y="150">Code change</text>
+  <text class="text" x="88" y="176">PR opened to main</text>
+
+  <rect class="box" x="350" y="110" width="250" height="100" />
+  <text class="label" x="378" y="150">ci-pr-quality</text>
+  <text class="text" x="378" y="176">Fast lint + assurance signal</text>
+
+  <rect class="box" x="660" y="110" width="260" height="100" />
+  <text class="label" x="688" y="150">ci-release-gate</text>
+  <text class="text" x="688" y="176">Strict promotion controls</text>
+
+  <rect class="box" x="980" y="110" width="170" height="100" />
+  <text class="label" x="1008" y="150">Artifacts</text>
+  <text class="text" x="1008" y="176">Evidence bundle</text>
+
+  <rect class="box" x="350" y="280" width="250" height="110" />
+  <text class="label" x="378" y="322">Resilience intelligence</text>
+  <text class="text" x="378" y="348">Load + chaos posture</text>
+  <text class="text" x="378" y="368">Score + rationale</text>
+
+  <rect class="box" x="660" y="280" width="260" height="110" />
+  <text class="label" x="688" y="322">Promotion evaluation</text>
+  <text class="text" x="688" y="348">Policy + exceptions + integrity</text>
+  <text class="text" x="688" y="368">Writes promotion-decision.json</text>
+
+  <rect class="box go" x="980" y="265" width="170" height="60" />
+  <text class="label" x="1034" y="302">GO</text>
+
+  <rect class="box warn" x="980" y="335" width="170" height="60" />
+  <text class="label" x="997" y="372">CONDITIONAL</text>
+
+  <rect class="box fail" x="980" y="405" width="170" height="60" />
+  <text class="label" x="1016" y="442">NO-GO</text>
+
+  <path class="line" d="M290 160 L350 160" />
+  <path class="line" d="M600 160 L660 160" />
+  <path class="line" d="M920 160 L980 160" />
+  <path class="line" d="M475 210 L475 280" />
+  <path class="line" d="M790 210 L790 280" />
+  <path class="line" d="M600 335 L660 335" />
+  <path class="line" d="M920 335 L980 335" />
+
+  <text class="text" x="60" y="575">Nightly deep validation runs via ci-nightly-deep and feeds the same artifact + decision path.</text>
+</svg>

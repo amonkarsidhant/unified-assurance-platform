@@ -1,7 +1,9 @@
 {
   "ignorePatterns": [
     { "pattern": "^http://localhost" },
-    { "pattern": "^http://127\\.0\\.0\\.1" }
+    { "pattern": "^http://127\\.0\\.0\\.1" },
+    { "pattern": "^https://github\\.com/amonkarsidhant/unified-assurance-platform$" },
+    { "pattern": "^https://github\\.com/amonkarsidhant/unified-assurance-platform/issues/22$" }
   ],
   "retryOn429": true,
   "retryCount": 2,

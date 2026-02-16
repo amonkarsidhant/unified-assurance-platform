@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="152" height="20" role="img" aria-label="ci-pr-quality: configured">
+  <rect width="90" height="20" fill="#555"/>
+  <rect x="90" width="62" height="20" fill="#1d4ed8"/>
+  <text x="45" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">ci-pr-quality</text>
+  <text x="121" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">configured</text>
+</svg>

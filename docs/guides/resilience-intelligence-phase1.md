@@ -35,6 +35,11 @@ RESILIENCE_INTELLIGENCE_MODE=CHAOS ./scripts/run-resilience-intelligence.sh
 
 `make run-assurance` now also executes this step and writes status under `tests.resilience_intelligence` in `artifacts/latest/results.json`.
 
+## Capability snapshot
+
+![Resilience intelligence (placeholder)](../assets/screenshots/resilience-intelligence-placeholder.svg)
+*Resilience intelligence screenshot placeholder. Reliable capture is tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
+
 ## Artifacts
 
 Generated under `artifacts/latest/`:

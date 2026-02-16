@@ -1,5 +1,10 @@
 # Reference Architecture Diagram
 
+## UAP SVG assets
+
+- [UAP architecture overview (SVG)](../assets/diagrams/uap-architecture.svg)
+- [UAP workflow (SVG)](../assets/diagrams/uap-workflow.svg)
+
 ## Text view
 - Clients hit a public LB.
 - LB routes requests to API VM pool.

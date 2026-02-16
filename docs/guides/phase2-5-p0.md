@@ -26,6 +26,11 @@ This document captures the P0 enterprise gap closure implementation.
    - Evaluator: `scripts/evaluate-flaky-policy.py`
    - Integrated into promotion decision (`flaky_policy`) and release report section.
 
+## Capability snapshot
+
+![Promotion gate decision (placeholder)](../assets/screenshots/promotion-gate-decision-placeholder.svg)
+*Promotion gate decision screenshot placeholder. Reliable capture is tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
+
 ## Verification commands
 
 ```bash

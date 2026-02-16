@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="166" height="20" role="img" aria-label="post-deploy-checks: configured">
+  <rect width="104" height="20" fill="#555"/>
+  <rect x="104" width="62" height="20" fill="#1d4ed8"/>
+  <text x="52" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">post-deploy-checks</text>
+  <text x="135" y="14" fill="#fff" font-family="Verdana" font-size="11" text-anchor="middle">configured</text>
+</svg>
