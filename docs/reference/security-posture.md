@@ -68,7 +68,7 @@ Status key:
 | DAST | Implemented | `artifacts/latest/dast_zap.status`, `artifacts/latest/dast_zap.log` |
 | Secrets scanning | Implemented | `artifacts/latest/secret_scan.log`, `artifacts/latest/gitleaks.json` |
 | Contract/API compatibility | Implemented | `artifacts/latest/contract.status`, `artifacts/latest/contract.log` |
-| Performance smoke | Implemented | `artifacts/latest/performance_smoke.status`, `artifacts/latest/k6-summary.json` |
+| Performance smoke | Implemented | `artifacts/latest/performance_smoke.status`, `artifacts/latest/k6-summary.json`, `artifacts/latest/performance_smoke.log` |
 | Resilience and chaos | Partial | `artifacts/latest/resilience.status`, `artifacts/latest/chaos-results.json`, `artifacts/latest/resilience-intelligence.json` |
 | Exceptions governance | Implemented | `artifacts/latest/exceptions-audit.json`, `config/exceptions/*.yaml` |
 | Promotion policy decision audit | Implemented | `artifacts/latest/promotion-decision.json`, `artifacts/latest/release-report.md` |
