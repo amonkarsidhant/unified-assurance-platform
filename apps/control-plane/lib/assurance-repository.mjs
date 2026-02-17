@@ -52,9 +52,8 @@ export function upsertExecution(execution) {
   });
 }
 
-export function insertEvidence(evidenceList) {
-  const db = getDb();
-  const stmt = db.prepare(`
+function getEvidenceInsertStmt(db) {
+  return db.prepare(`
     INSERT INTO assurance_evidence (
       id, execution_id, category, kind, uri, checksum, summary,
       raw_json, source_tool, source_tool_version, source_adapter, source_adapter_version, created_at
@@ -76,30 +75,39 @@ export function insertEvidence(evidenceList) {
       created_at=excluded.created_at
     WHERE assurance_evidence.execution_id = excluded.execution_id
   `);
+}
+
+function insertEvidenceRows(stmt, evidenceList) {
+  for (const evidence of evidenceList) {
+    const result = stmt.run({
+      id: evidence.id,
+      execution_id: evidence.executionId,
+      category: evidence.category,
+      kind: evidence.kind,
+      uri: evidence.uri,
+      checksum: evidence.checksum,
+      summary: evidence.summary,
+      raw_json: evidence.raw ? JSON.stringify(evidence.raw) : null,
+      source_tool: evidence.source.tool,
+      source_tool_version: evidence.source.toolVersion,
+      source_adapter: evidence.source.adapter,
+      source_adapter_version: evidence.source.adapterVersion,
+      created_at: evidence.createdAt
+    });
+
+    if (result.changes === 0) {
+      throw new Error(`Evidence id ${evidence.id} already exists for a different execution`);
+    }
+  }
+}
+
+export function insertEvidence(evidenceList) {
+  const db = getDb();
+  const stmt = getEvidenceInsertStmt(db);
 
   db.exec('BEGIN IMMEDIATE');
   try {
-    for (const evidence of evidenceList) {
-      const result = stmt.run({
-        id: evidence.id,
-        execution_id: evidence.executionId,
-        category: evidence.category,
-        kind: evidence.kind,
-        uri: evidence.uri,
-        checksum: evidence.checksum,
-        summary: evidence.summary,
-        raw_json: evidence.raw ? JSON.stringify(evidence.raw) : null,
-        source_tool: evidence.source.tool,
-        source_tool_version: evidence.source.toolVersion,
-        source_adapter: evidence.source.adapter,
-        source_adapter_version: evidence.source.adapterVersion,
-        created_at: evidence.createdAt
-      });
-
-      if (result.changes === 0) {
-        throw new Error(`Evidence id ${evidence.id} already exists for a different execution`);
-      }
-    }
+    insertEvidenceRows(stmt, evidenceList);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
@@ -107,9 +115,8 @@ export function insertEvidence(evidenceList) {
   }
 }
 
-export function insertSignals(signals) {
-  const db = getDb();
-  const stmt = db.prepare(`
+function getSignalInsertStmt(db) {
+  return db.prepare(`
     INSERT INTO assurance_signals (
       id, execution_id, category, status, name, metric, value, unit,
       severity, confidence, message, evidence_ids_json, tags_json, created_at
@@ -132,31 +139,56 @@ export function insertSignals(signals) {
       created_at=excluded.created_at
     WHERE assurance_signals.execution_id = excluded.execution_id
   `);
+}
+
+function insertSignalRows(stmt, signals) {
+  for (const signal of signals) {
+    const result = stmt.run({
+      id: signal.id,
+      execution_id: signal.executionId,
+      category: signal.category,
+      status: signal.status,
+      name: signal.name,
+      metric: signal.metric,
+      value: signal.value,
+      unit: signal.unit,
+      severity: signal.severity,
+      confidence: signal.confidence,
+      message: signal.message,
+      evidence_ids_json: JSON.stringify(signal.evidenceIds),
+      tags_json: signal.tags ? JSON.stringify(signal.tags) : null,
+      created_at: signal.createdAt
+    });
+
+    if (result.changes === 0) {
+      throw new Error(`Signal id ${signal.id} already exists for a different execution`);
+    }
+  }
+}
+
+export function insertSignals(signals) {
+  const db = getDb();
+  const stmt = getSignalInsertStmt(db);
 
   db.exec('BEGIN IMMEDIATE');
   try {
-    for (const signal of signals) {
-      const result = stmt.run({
-        id: signal.id,
-        execution_id: signal.executionId,
-        category: signal.category,
-        status: signal.status,
-        name: signal.name,
-        metric: signal.metric,
-        value: signal.value,
-        unit: signal.unit,
-        severity: signal.severity,
-        confidence: signal.confidence,
-        message: signal.message,
-        evidence_ids_json: JSON.stringify(signal.evidenceIds),
-        tags_json: signal.tags ? JSON.stringify(signal.tags) : null,
-        created_at: signal.createdAt
-      });
+    insertSignalRows(stmt, signals);
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
 
-      if (result.changes === 0) {
-        throw new Error(`Signal id ${signal.id} already exists for a different execution`);
-      }
-    }
+export function insertEvidenceAndSignals(evidenceList, signals) {
+  const db = getDb();
+  const evidenceStmt = getEvidenceInsertStmt(db);
+  const signalStmt = getSignalInsertStmt(db);
+
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    insertEvidenceRows(evidenceStmt, evidenceList);
+    insertSignalRows(signalStmt, signals);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
@@ -293,14 +325,19 @@ export function getAssuranceDecision(id) {
 export function getFlakyBaseline({ service = null, lookbackRuns = 20, limit = 20 } = {}) {
   const db = getDb();
   const rows = db.prepare(`
-    SELECT s.tags_json, s.status, s.execution_id, e.started_at
+    WITH recent_runs AS (
+      SELECT id, started_at
+      FROM assurance_executions
+      WHERE (@service IS NULL OR service = @service)
+      ORDER BY started_at DESC
+      LIMIT @lookback_runs
+    )
+    SELECT s.tags_json, s.status, s.execution_id, r.started_at
     FROM assurance_signals s
-    JOIN assurance_executions e ON e.id = s.execution_id
+    JOIN recent_runs r ON r.id = s.execution_id
     WHERE s.name = 'test-case-result'
-      AND (@service IS NULL OR e.service = @service)
-    ORDER BY e.started_at DESC
-    LIMIT @row_limit
-  `).all({ service, row_limit: Math.max(lookbackRuns, 1) * 500 });
+    ORDER BY r.started_at DESC
+  `).all({ service, lookback_runs: Math.max(lookbackRuns, 1) });
 
   const byTest = new Map();
   const distinctRuns = new Set();

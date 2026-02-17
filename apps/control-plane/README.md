@@ -268,5 +268,5 @@ curl -X GET 'http://127.0.0.1:4172/analytics/flaky?service=payments-api&lookback
 Troubleshooting:
 - Ensure execution exists before JUnit adapter ingest (`executionId` must map to ingested execution).
 - If JUnit response has `warnings: ["no junit testcases found"]`, verify XML includes `<testcase>` tags.
-- Flaky report requires mixed pass/fail results for the same `testCase` across recent runs.
+- Flaky report requires a mix of pass/fail results for the same `testCase` across recent runs.
 

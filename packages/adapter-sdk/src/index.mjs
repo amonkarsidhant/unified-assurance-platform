@@ -14,7 +14,7 @@ export function assertAdapterInput(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new AdapterError('adapter input must be an object');
   }
-  if (!('payload' in input)) {
+  if (!('payload' in input) || input.payload == null) {
     throw new AdapterError('adapter input payload is required');
   }
   return input;

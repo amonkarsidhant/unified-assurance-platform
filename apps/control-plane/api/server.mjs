@@ -7,6 +7,7 @@ import { createQueuedRun, listRuns, getRun, appendEvent, listRunEvents } from '.
 import {
   upsertExecution,
   insertEvidence,
+  insertEvidenceAndSignals,
   insertSignals,
   listAssuranceExecutions,
   listAssuranceEvidence,
@@ -147,8 +148,7 @@ const server = http.createServer(async (req, res) => {
       const signals = validateItemsWithIndex(result.signals || [], validateSignal, 'signal');
 
       try {
-        insertEvidence(evidence);
-        insertSignals(signals);
+        insertEvidenceAndSignals(evidence, signals);
       } catch (error) {
         if (isExecutionForeignKeyConstraint(error)) {
           return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more ingested items');

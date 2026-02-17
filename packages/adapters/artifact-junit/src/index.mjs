@@ -34,9 +34,9 @@ export const junitAdapter = {
       id: `sig-test-${randomUUID()}`,
       executionId,
       category: 'unit',
-      status: tc.failed ? 'fail' : 'pass',
+      status: tc.skipped ? 'skip' : tc.failed ? 'fail' : 'pass',
       name: 'test-case-result',
-      message: tc.failed ? tc.failureMessage || 'test failed' : 'test passed',
+      message: tc.skipped ? 'test skipped' : tc.failed ? tc.failureMessage || 'test failed' : 'test passed',
       evidenceIds: [evidenceId],
       tags: {
         testCase: tc.name,
@@ -58,11 +58,19 @@ function parseTestCases(xml) {
     const body = match[2] || '';
     const failureWithBody = /<failure\b[^>]*>([\s\S]*?)<\/failure>/.exec(body);
     const failureSelfClosing = /<failure\b[^>]*\/\s*>/.test(body);
-    const failureMessage = failureWithBody ? failureWithBody[1].trim().slice(0, 300) : null;
+    const errorWithBody = /<error\b[^>]*>([\s\S]*?)<\/error>/.exec(body);
+    const errorSelfClosing = /<error\b[^>]*\/\s*>/.test(body);
+    const skipped = /<skipped\b[^>]*\/?\s*>/.test(body);
+    const failureMessage = failureWithBody
+      ? failureWithBody[1].trim().slice(0, 300)
+      : errorWithBody
+        ? errorWithBody[1].trim().slice(0, 300)
+        : null;
     cases.push({
       name: attrs.name || 'unknown',
       className: attrs.classname || attrs.className || null,
-      failed: Boolean(failureWithBody) || failureSelfClosing,
+      failed: Boolean(failureWithBody) || failureSelfClosing || Boolean(errorWithBody) || errorSelfClosing,
+      skipped,
       failureMessage
     });
   }

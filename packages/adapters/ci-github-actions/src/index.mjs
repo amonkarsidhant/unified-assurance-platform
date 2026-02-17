@@ -13,6 +13,12 @@ export const githubActionsAdapter = {
       throw new AdapterError('github actions payload missing workflow_run.id/head_sha/repository.full_name');
     }
 
+    const startedAt = run.run_started_at || run.created_at || null;
+    const warnings = [];
+    if (!startedAt) {
+      warnings.push('workflow_run missing run_started_at and created_at');
+    }
+
     const execution = {
       id: `gha-${run.id}`,
       service: payload.service || run.repository.name,
@@ -22,7 +28,7 @@ export const githubActionsAdapter = {
       environment: payload.environment || 'ci',
       pipelineId: String(run.id),
       jobId: null,
-      startedAt: run.run_started_at || run.created_at || new Date().toISOString(),
+      startedAt,
       finishedAt: run.updated_at || null,
       source: {
         provider: 'github-actions',
@@ -30,6 +36,6 @@ export const githubActionsAdapter = {
       }
     };
 
-    return createAdapterResult({ execution, evidence: [], signals: [] });
+    return createAdapterResult({ execution, evidence: [], signals: [], warnings });
   }
 };
