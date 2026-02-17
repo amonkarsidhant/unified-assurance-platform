@@ -62,6 +62,7 @@ Use this page as the entry point for all platform documentation.
 - **Formal reviews**: [`docs/reviews/`](reviews/)
 - **Trial-pack planning**: [`docs/roadmap/`](roadmap/)
 - **DevEx baselines and backlog**: [`docs/devex/`](devex/)
+  - [PR-B first-green path](devex/pr-b-first-green.md)
 - **Product sprint prioritization**: [`docs/product/`](product/)
 - **Coordination protocols**: [`docs/coordination/`](coordination/)
   - [Idea review gate](coordination/idea-review-gate.md)
