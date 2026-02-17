@@ -137,6 +137,14 @@ Primary sections:
 - [`docs/guides/`](docs/guides/)
 - [`docs/reference/`](docs/reference/)
 - [`docs/reviews/`](docs/reviews/)
+- [`docs/devex/`](docs/devex/)
+- [`docs/product/`](docs/product/)
+- [`docs/coordination/`](docs/coordination/)
+
+Sprint-01 Batch-1 policy artifacts:
+- [`policies/reliability-gates.yaml`](policies/reliability-gates.yaml)
+- [`policies/quality-evidence-matrix.yaml`](policies/quality-evidence-matrix.yaml)
+- [`policies/release-confidence-rubric.yaml`](policies/release-confidence-rubric.yaml)
 
 ## Common commands
 
