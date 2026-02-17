@@ -18,7 +18,7 @@ SHELL := /bin/bash
 
 # Developer workflows
 .PHONY: module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart
-.PHONY: end-to-end-review explain-last-fail suggest-next-steps request-exception
+.PHONY: end-to-end-review explain-last-fail suggest-next-steps request-exception first-green
 
 # Demo & local stack
 .PHONY: demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e
@@ -44,6 +44,9 @@ lint-links:
 
 ci-local: validate lint test
 	@echo "Local CI suite complete."
+
+first-green: validate governance-artifacts-check lint-markdown
+	@echo "First-green path complete."
 
 all: validate
 	@echo "Default target complete. Run 'make run-assurance' for a full assurance pass."

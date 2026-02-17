@@ -4,6 +4,7 @@ Use this contract for governance/enforcement failures so contributors get clear,
 
 ```text
 ❌ Governance gate failed
+check: <gate-or-check-name>
 reason: <clear-failure-reason>
 fix_hint: <what-to-change>
 reproduce: <local-command>
@@ -12,8 +13,13 @@ evidence: <link-to-evidence>
 ```
 
 Minimum requirements:
+- `check`: failing gate/check identifier
 - `reason`: unambiguous rule or artifact that failed
 - `fix_hint`: smallest next action to pass gate
 - `reproduce`: exact local command
 - `owner`: accountable team/role for the gate
 - `evidence`: placeholder or link to proof artifact
+
+Compatibility note:
+- Existing automation still keys on `fix_hint`.
+- You may additionally mirror `fix_hint` as `fix` in step summaries for contributor readability.

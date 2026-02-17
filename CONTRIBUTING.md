@@ -57,6 +57,23 @@ Reviewer checks:
 - [ ] Failure modes and rollback path are clear
 - [ ] Ownership/reviewers are appropriate (see `CODEOWNERS`)
 
+## CI failure summary contract (DevEx)
+
+When reporting CI/gate failures in PR threads, prefer this structure:
+
+- `check`: gate/check name
+- `reason`: exact failure reason
+- `reproduce`: exact local command
+- `fix`: smallest next action
+- `owner`: accountable role/team
+- `evidence`: artifact link/path
+
+For the deterministic fast path before full CI, run:
+
+```bash
+make first-green
+```
+
 ## Security and disclosure
 
 Do not open public issues for vulnerabilities or leaked secrets.

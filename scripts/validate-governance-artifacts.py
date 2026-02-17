@@ -11,8 +11,9 @@ OWNER = "@release-governance"
 EVIDENCE_PLACEHOLDER = "<link-to-evidence>"
 
 
-def gate_fail(reason: str, fix_hint: str, reproduce: str):
+def gate_fail(reason: str, fix_hint: str, reproduce: str, check: str = "governance-guardrails"):
     print("❌ Governance gate failed")
+    print(f"check: {check}")
     print(f"reason: {reason}")
     print(f"fix_hint: {fix_hint}")
     print(f"reproduce: {reproduce}")
@@ -183,7 +184,7 @@ def main():
 
     assert_contains_all(
         root / "docs/governance/gate-failure-message-contract.md",
-        ["reason:", "fix_hint:", "reproduce:", "owner:", "evidence:"],
+        ["check:", "reason:", "fix_hint:", "reproduce:", "owner:", "evidence:"],
         "python3 scripts/validate-governance-artifacts.py",
     )
 
