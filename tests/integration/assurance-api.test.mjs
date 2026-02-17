@@ -376,6 +376,7 @@ test('adapter ingestion (github actions + junit) powers flaky baseline report', 
     assert.equal(flakyRes.status, 200);
     const flakyBody = await flakyRes.json();
     assert.ok(Array.isArray(flakyBody.flakyTests));
+    assert.ok(flakyBody.flakyTests.length > 0, 'Expected at least one flaky test');
     assert.equal(flakyBody.flakyTests[0].testCase, 'login');
     assert.ok(flakyBody.flakyTests[0].flakyScore > 0);
   } finally {
