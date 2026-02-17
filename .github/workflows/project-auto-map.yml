@@ -93,9 +93,11 @@ jobs:
           echo "$labels" | grep -q '^risk:low$' && risk="Low"
 
           # Priority mapping (default P2)
+          # Precedence: explicit P3 label < authority-review (P1) < epic (P0)
           priority="P2"
-          echo "$labels" | grep -q '^type:epic$' && priority="P0"
+          echo "$labels" | grep -q '^priority:p3$' && priority="P3"
           echo "$labels" | grep -q '^status:authority-review$' && priority="P1"
+          echo "$labels" | grep -q '^type:epic$' && priority="P0"
 
           set_single_select() {
             local item="$1" field="$2" opt_id="$3"
