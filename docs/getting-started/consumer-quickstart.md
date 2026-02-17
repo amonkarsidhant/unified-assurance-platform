@@ -14,7 +14,16 @@ cd unified-assurance-platform
 ```bash
 make bootstrap
 make validate
+make first-green
 ```
+
+If `make first-green` fails, next step is:
+
+```bash
+make governance-artifacts-check
+```
+
+Then follow the failure contract in [`docs/devex/failure-summary-contract.md`](../devex/failure-summary-contract.md).
 
 ## 2) Onboard one service (example: payments-api)
 
