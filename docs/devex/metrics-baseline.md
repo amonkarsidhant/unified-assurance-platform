@@ -24,5 +24,5 @@ Output file:
 
 ## Notes
 
-- This script uses `gh api` and requires authenticated GitHub CLI.
+- This script uses `gh api` and requires an authenticated GitHub CLI session.
 - Metrics are intended for trend direction and sprint-level comparisons.

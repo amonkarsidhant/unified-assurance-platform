@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import shutil
 import statistics
 import subprocess
 from pathlib import Path
@@ -19,8 +20,19 @@ from typing import Any
 
 
 def gh_api(path: str) -> Any:
-    out = subprocess.check_output(["gh", "api", path], text=True)
-    return json.loads(out)
+    gh_path = shutil.which("gh")
+    if not gh_path:
+        raise SystemExit("GitHub CLI (gh) not found in PATH.")
+    if not path.startswith("repos/"):
+        raise ValueError(f"Unexpected GitHub API path: {path!r}")
+
+    try:
+        proc = subprocess.run([gh_path, "api", path], check=True, text=True, capture_output=True)
+    except subprocess.CalledProcessError as exc:
+        message = (exc.stderr or exc.stdout or "").strip()
+        raise SystemExit(f"gh api failed for {path}: {message}") from exc
+
+    return json.loads(proc.stdout)
 
 
 def parse_iso(ts: str | None) -> dt.datetime | None:
