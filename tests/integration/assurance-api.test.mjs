@@ -10,11 +10,11 @@ function uniqueTmpDir() {
 }
 
 test('assurance ingest + query endpoints persist and return normalized data', async () => {
-  const tmp = uniqueTmpDir();
+  const tempDir = uniqueTmpDir();
   const port = 43180;
   const env = {
     ...process.env,
-    CONTROL_PLANE_DB_PATH: path.join(tmp, 'control-plane.db'),
+    CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
     CONTROL_PLANE_PORT: String(port),
     CONTROL_PLANE_HOST: '127.0.0.1',
     CONTROL_PLANE_DISABLE_MIGRATION: '1',
@@ -114,16 +114,17 @@ test('assurance ingest + query endpoints persist and return normalized data', as
     assert.equal(signalsBody.signals.length, 1);
     assert.equal(signalsBody.signals[0].name, 'unit-pass-rate');
   } finally {
-    api.kill('SIGTERM');
+    await terminateProcess(api);
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
   }
 });
 
 test('ingest validation returns item index and FK violations map to 400', async () => {
-  const tmp = uniqueTmpDir();
+  const tempDir = uniqueTmpDir();
   const port = 43181;
   const env = {
     ...process.env,
-    CONTROL_PLANE_DB_PATH: path.join(tmp, 'control-plane.db'),
+    CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
     CONTROL_PLANE_PORT: String(port),
     CONTROL_PLANE_HOST: '127.0.0.1',
     CONTROL_PLANE_DISABLE_MIGRATION: '1',
@@ -189,9 +190,37 @@ test('ingest validation returns item index and FK violations map to 400', async 
     const fkBody = await fkFail.json();
     assert.match(fkBody.message, /invalid execution_id/i);
   } finally {
-    api.kill('SIGTERM');
+    await terminateProcess(api);
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+async function terminateProcess(child) {
+  if (!child || child.exitCode !== null) return;
+
+  child.kill('SIGTERM');
+  const exited = await waitForExit(child, 1200);
+  if (exited) return;
+
+  child.kill('SIGKILL');
+  await waitForExit(child, 1200);
+}
+
+function waitForExit(child, timeoutMs) {
+  return new Promise((resolve) => {
+    const onExit = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+
+    const timer = setTimeout(() => {
+      child.off('exit', onExit);
+      resolve(false);
+    }, timeoutMs);
+
+    child.once('exit', onExit);
+  });
+}
 
 async function waitForHealth(port) {
   for (let i = 0; i < 40; i += 1) {

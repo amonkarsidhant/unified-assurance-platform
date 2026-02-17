@@ -63,7 +63,6 @@ export function insertEvidence(evidenceList) {
       @raw_json, @source_tool, @source_tool_version, @source_adapter, @source_adapter_version, @created_at
     )
     ON CONFLICT(id) DO UPDATE SET
-      execution_id=excluded.execution_id,
       category=excluded.category,
       kind=excluded.kind,
       uri=excluded.uri,
@@ -75,12 +74,13 @@ export function insertEvidence(evidenceList) {
       source_adapter=excluded.source_adapter,
       source_adapter_version=excluded.source_adapter_version,
       created_at=excluded.created_at
+    WHERE assurance_evidence.execution_id = excluded.execution_id
   `);
 
   db.exec('BEGIN IMMEDIATE');
   try {
     for (const evidence of evidenceList) {
-      stmt.run({
+      const result = stmt.run({
         id: evidence.id,
         execution_id: evidence.executionId,
         category: evidence.category,
@@ -95,6 +95,10 @@ export function insertEvidence(evidenceList) {
         source_adapter_version: evidence.source.adapterVersion,
         created_at: evidence.createdAt
       });
+
+      if (result.changes === 0) {
+        throw new Error(`Evidence id ${evidence.id} already exists for a different execution`);
+      }
     }
     db.exec('COMMIT');
   } catch (error) {
@@ -114,7 +118,6 @@ export function insertSignals(signals) {
       @severity, @confidence, @message, @evidence_ids_json, @tags_json, @created_at
     )
     ON CONFLICT(id) DO UPDATE SET
-      execution_id=excluded.execution_id,
       category=excluded.category,
       status=excluded.status,
       name=excluded.name,
@@ -127,12 +130,13 @@ export function insertSignals(signals) {
       evidence_ids_json=excluded.evidence_ids_json,
       tags_json=excluded.tags_json,
       created_at=excluded.created_at
+    WHERE assurance_signals.execution_id = excluded.execution_id
   `);
 
   db.exec('BEGIN IMMEDIATE');
   try {
     for (const signal of signals) {
-      stmt.run({
+      const result = stmt.run({
         id: signal.id,
         execution_id: signal.executionId,
         category: signal.category,
@@ -148,6 +152,10 @@ export function insertSignals(signals) {
         tags_json: signal.tags ? JSON.stringify(signal.tags) : null,
         created_at: signal.createdAt
       });
+
+      if (result.changes === 0) {
+        throw new Error(`Signal id ${signal.id} already exists for a different execution`);
+      }
     }
     db.exec('COMMIT');
   } catch (error) {

@@ -87,6 +87,9 @@ const server = http.createServer(async (req, res) => {
         if (isExecutionForeignKeyConstraint(error)) {
           return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more evidence items');
         }
+        if (isCrossExecutionIdConflict(error)) {
+          return jsonError(res, 400, 'bad_request', error.message);
+        }
         throw error;
       }
       return json(res, 202, { ingested: evidence.length });
@@ -103,6 +106,9 @@ const server = http.createServer(async (req, res) => {
       } catch (error) {
         if (isExecutionForeignKeyConstraint(error)) {
           return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more signal items');
+        }
+        if (isCrossExecutionIdConflict(error)) {
+          return jsonError(res, 400, 'bad_request', error.message);
         }
         throw error;
       }
@@ -195,4 +201,8 @@ function isExecutionForeignKeyConstraint(error) {
   const code = error.code || '';
   const message = error.message || '';
   return code.includes('SQLITE_CONSTRAINT') || /FOREIGN KEY constraint failed|constraint failed/i.test(message);
+}
+
+function isCrossExecutionIdConflict(error) {
+  return error instanceof Error && /already exists for a different execution/i.test(error.message);
 }

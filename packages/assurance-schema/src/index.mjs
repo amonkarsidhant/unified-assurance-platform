@@ -19,7 +19,7 @@ export const ASSURANCE_CATEGORIES = [
   'reliability'
 ];
 
-export const SIGNAL_STATUSES = ['pass', 'fail', 'warn', 'error', 'skip', 'unknown'];
+export const SIGNAL_STATUSES = ['pass', 'fail', 'warn', 'error', 'skip'];
 export const DECISION_OUTCOMES = ['allow', 'block', 'advisory'];
 export const GATE_MODES = ['advisory', 'hard'];
 
@@ -37,7 +37,10 @@ function assertString(value, name) {
 
 function assertIsoTimestamp(value, name) {
   assertString(value, name);
-  if (Number.isNaN(Date.parse(value))) throw new ValidationError(`${name} must be an ISO timestamp`);
+  const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+  if (!iso8601Regex.test(value) || Number.isNaN(Date.parse(value))) {
+    throw new ValidationError(`${name} must be an ISO timestamp`);
+  }
 }
 
 function assertOneOf(value, allowed, name) {
@@ -64,12 +67,16 @@ export function validateExecutionRef(input) {
   assertString(input.source.provider, 'execution.source.provider');
 
   return {
-    ...input,
+    id: input.id,
+    service: input.service,
+    repo: input.repo,
+    commitSha: input.commitSha,
+    startedAt: input.startedAt,
+    finishedAt: input.finishedAt || null,
     branch: input.branch || null,
     environment: input.environment || null,
     pipelineId: input.pipelineId || null,
     jobId: input.jobId || null,
-    finishedAt: input.finishedAt || null,
     source: {
       provider: input.source.provider,
       version: input.source.version || null
