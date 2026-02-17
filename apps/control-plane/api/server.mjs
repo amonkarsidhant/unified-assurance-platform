@@ -4,8 +4,17 @@ import { host, port } from '../lib/config.mjs';
 import { isAuthorized } from '../lib/auth.mjs';
 import { buildRunRequest } from '../lib/runs.mjs';
 import { createQueuedRun, listRuns, getRun, appendEvent, listRunEvents } from '../lib/repository.mjs';
+import {
+  upsertExecution,
+  insertEvidence,
+  insertSignals,
+  listAssuranceExecutions,
+  listAssuranceEvidence,
+  listAssuranceSignals
+} from '../lib/assurance-repository.mjs';
 import { createRunArtifactSkeleton } from '../lib/artifacts.mjs';
 import { validateIncidentBody, validateJsonBody } from '../lib/validation.mjs';
+import { validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
 import { json, jsonError, readBody, setCors } from '../lib/http.mjs';
 
 openDb();
@@ -59,10 +68,64 @@ const server = http.createServer(async (req, res) => {
       return queueRun(res, req, 'incident', { payloadPath: validated.payloadPath });
     }
 
+    if (req.method === 'POST' && url.pathname === '/ingest/execution') {
+      const payload = validateJsonBody(await readBody(req));
+      const execution = validateExecutionRef(payload);
+      upsertExecution(execution);
+      return json(res, 202, { executionId: execution.id });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/ingest/evidence') {
+      const payload = validateJsonBody(await readBody(req));
+      if (!Array.isArray(payload.items)) {
+        return jsonError(res, 400, 'bad_request', 'items array is required');
+      }
+      const evidence = payload.items.map((item) => validateEvidenceRef(item));
+      insertEvidence(evidence);
+      return json(res, 202, { ingested: evidence.length });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/ingest/signals') {
+      const payload = validateJsonBody(await readBody(req));
+      if (!Array.isArray(payload.items)) {
+        return jsonError(res, 400, 'bad_request', 'items array is required');
+      }
+      const signals = payload.items.map((item) => validateSignal(item));
+      insertSignals(signals);
+      return json(res, 202, { ingested: signals.length });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/query/executions') {
+      const service = url.searchParams.get('service');
+      const commitSha = url.searchParams.get('commitSha');
+      const environment = url.searchParams.get('environment');
+      const executions = listAssuranceExecutions({
+        service: service || null,
+        commitSha: commitSha || null,
+        environment: environment || null
+      });
+      return json(res, 200, { executions });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/query/evidence') {
+      const executionId = url.searchParams.get('executionId');
+      if (!executionId) return jsonError(res, 400, 'bad_request', 'executionId is required');
+      return json(res, 200, { evidence: listAssuranceEvidence(executionId) });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/query/signals') {
+      const executionId = url.searchParams.get('executionId');
+      if (!executionId) return jsonError(res, 400, 'bad_request', 'executionId is required');
+      return json(res, 200, { signals: listAssuranceSignals(executionId) });
+    }
+
     return jsonError(res, 404, 'not_found', 'Endpoint not found');
   } catch (error) {
     if (error?.code === 'PAYLOAD_TOO_LARGE' || error?.statusCode === 413) {
       return jsonError(res, 413, 'payload_too_large', 'Request body exceeds 1 MB limit');
+    }
+    if (error instanceof Error && /required|must be|invalid JSON|body must be/.test(error.message)) {
+      return jsonError(res, 400, 'bad_request', error.message);
     }
     console.error('[control-plane] request failure', error);
     return jsonError(res, 500, 'internal_error', 'Unexpected server error');
