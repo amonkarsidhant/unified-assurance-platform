@@ -7,19 +7,24 @@ import { createQueuedRun, listRuns, getRun, appendEvent, listRunEvents } from '.
 import {
   upsertExecution,
   insertEvidence,
+  insertEvidenceAndSignals,
   insertSignals,
   listAssuranceExecutions,
   listAssuranceEvidence,
   listAssuranceSignals,
   getAssuranceExecution,
   insertAssuranceDecision,
-  getAssuranceDecision
+  getAssuranceDecision,
+  getFlakyBaseline
 } from '../lib/assurance-repository.mjs';
 import { createRunArtifactSkeleton } from '../lib/artifacts.mjs';
 import { validateIncidentBody, validateJsonBody } from '../lib/validation.mjs';
 import { ValidationError, validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
 import { json, jsonError, readBody, setCors } from '../lib/http.mjs';
 import { evaluatePolicies, ALLOWED_OPERATORS } from '../../../packages/policy-engine/src/index.mjs';
+import { githubActionsAdapter } from '../../../packages/adapters/ci-github-actions/src/index.mjs';
+import { junitAdapter } from '../../../packages/adapters/artifact-junit/src/index.mjs';
+import { AdapterError } from '../../../packages/adapter-sdk/src/index.mjs';
 
 openDb();
 
@@ -119,6 +124,48 @@ const server = http.createServer(async (req, res) => {
       return json(res, 202, { ingested: signals.length });
     }
 
+    if (req.method === 'POST' && url.pathname === '/ingest/adapter/github-actions') {
+      const payload = validateJsonBody(await readBody(req));
+      const result = githubActionsAdapter.transform({ payload });
+      if (result.execution) {
+        const execution = validateExecutionRef(result.execution);
+        upsertExecution(execution);
+      }
+      return json(res, 202, {
+        ingestedExecution: Boolean(result.execution),
+        warnings: result.warnings || []
+      });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/ingest/adapter/junit') {
+      const payload = validateJsonBody(await readBody(req));
+      const result = junitAdapter.transform({ payload });
+      if (result.noData) {
+        return json(res, 202, { ingested: 0, warnings: result.warnings || [] });
+      }
+
+      const evidence = validateItemsWithIndex(result.evidence || [], validateEvidenceRef, 'evidence');
+      const signals = validateItemsWithIndex(result.signals || [], validateSignal, 'signal');
+
+      try {
+        insertEvidenceAndSignals(evidence, signals);
+      } catch (error) {
+        if (isExecutionForeignKeyConstraint(error)) {
+          return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more ingested items');
+        }
+        if (isCrossExecutionIdConflict(error)) {
+          return jsonError(res, 400, 'bad_request', error.message);
+        }
+        throw error;
+      }
+
+      return json(res, 202, {
+        ingestedEvidence: evidence.length,
+        ingestedSignals: signals.length,
+        warnings: result.warnings || []
+      });
+    }
+
     if (req.method === 'GET' && url.pathname === '/query/executions') {
       const service = url.searchParams.get('service');
       const commitSha = url.searchParams.get('commitSha');
@@ -145,6 +192,18 @@ const server = http.createServer(async (req, res) => {
       const executionId = url.searchParams.get('executionId');
       if (!executionId) return jsonError(res, 400, 'bad_request', 'executionId is required');
       return json(res, 200, { signals: listAssuranceSignals(executionId) });
+    }
+
+    if (req.method === 'GET' && url.pathname === '/analytics/flaky') {
+      const service = url.searchParams.get('service');
+      const lookbackRuns = parseInt(url.searchParams.get('lookbackRuns') || '20', 10);
+      const limit = parseInt(url.searchParams.get('limit') || '20', 10);
+      const report = getFlakyBaseline({
+        service: service || null,
+        lookbackRuns: Number.isFinite(lookbackRuns) && lookbackRuns > 0 ? lookbackRuns : 20,
+        limit: Number.isFinite(limit) && limit > 0 ? limit : 20
+      });
+      return json(res, 200, report);
     }
 
     if (req.method === 'POST' && url.pathname === '/policy/evaluate') {
@@ -193,6 +252,9 @@ const server = http.createServer(async (req, res) => {
       return jsonError(res, 413, 'payload_too_large', 'Request body exceeds 1 MB limit');
     }
     if (error instanceof ValidationError) {
+      return jsonError(res, 400, 'bad_request', error.message, error.details ? { details: error.details } : undefined);
+    }
+    if (error instanceof AdapterError) {
       return jsonError(res, 400, 'bad_request', error.message, error.details ? { details: error.details } : undefined);
     }
     console.error('[control-plane] request failure', error);

@@ -52,9 +52,8 @@ export function upsertExecution(execution) {
   });
 }
 
-export function insertEvidence(evidenceList) {
-  const db = getDb();
-  const stmt = db.prepare(`
+function getEvidenceInsertStmt(db) {
+  return db.prepare(`
     INSERT INTO assurance_evidence (
       id, execution_id, category, kind, uri, checksum, summary,
       raw_json, source_tool, source_tool_version, source_adapter, source_adapter_version, created_at
@@ -76,30 +75,39 @@ export function insertEvidence(evidenceList) {
       created_at=excluded.created_at
     WHERE assurance_evidence.execution_id = excluded.execution_id
   `);
+}
+
+function insertEvidenceRows(stmt, evidenceList) {
+  for (const evidence of evidenceList) {
+    const result = stmt.run({
+      id: evidence.id,
+      execution_id: evidence.executionId,
+      category: evidence.category,
+      kind: evidence.kind,
+      uri: evidence.uri,
+      checksum: evidence.checksum,
+      summary: evidence.summary,
+      raw_json: evidence.raw ? JSON.stringify(evidence.raw) : null,
+      source_tool: evidence.source.tool,
+      source_tool_version: evidence.source.toolVersion,
+      source_adapter: evidence.source.adapter,
+      source_adapter_version: evidence.source.adapterVersion,
+      created_at: evidence.createdAt
+    });
+
+    if (result.changes === 0) {
+      throw new Error(`Evidence id ${evidence.id} already exists for a different execution`);
+    }
+  }
+}
+
+export function insertEvidence(evidenceList) {
+  const db = getDb();
+  const stmt = getEvidenceInsertStmt(db);
 
   db.exec('BEGIN IMMEDIATE');
   try {
-    for (const evidence of evidenceList) {
-      const result = stmt.run({
-        id: evidence.id,
-        execution_id: evidence.executionId,
-        category: evidence.category,
-        kind: evidence.kind,
-        uri: evidence.uri,
-        checksum: evidence.checksum,
-        summary: evidence.summary,
-        raw_json: evidence.raw ? JSON.stringify(evidence.raw) : null,
-        source_tool: evidence.source.tool,
-        source_tool_version: evidence.source.toolVersion,
-        source_adapter: evidence.source.adapter,
-        source_adapter_version: evidence.source.adapterVersion,
-        created_at: evidence.createdAt
-      });
-
-      if (result.changes === 0) {
-        throw new Error(`Evidence id ${evidence.id} already exists for a different execution`);
-      }
-    }
+    insertEvidenceRows(stmt, evidenceList);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
@@ -107,9 +115,8 @@ export function insertEvidence(evidenceList) {
   }
 }
 
-export function insertSignals(signals) {
-  const db = getDb();
-  const stmt = db.prepare(`
+function getSignalInsertStmt(db) {
+  return db.prepare(`
     INSERT INTO assurance_signals (
       id, execution_id, category, status, name, metric, value, unit,
       severity, confidence, message, evidence_ids_json, tags_json, created_at
@@ -132,31 +139,56 @@ export function insertSignals(signals) {
       created_at=excluded.created_at
     WHERE assurance_signals.execution_id = excluded.execution_id
   `);
+}
+
+function insertSignalRows(stmt, signals) {
+  for (const signal of signals) {
+    const result = stmt.run({
+      id: signal.id,
+      execution_id: signal.executionId,
+      category: signal.category,
+      status: signal.status,
+      name: signal.name,
+      metric: signal.metric,
+      value: signal.value,
+      unit: signal.unit,
+      severity: signal.severity,
+      confidence: signal.confidence,
+      message: signal.message,
+      evidence_ids_json: JSON.stringify(signal.evidenceIds),
+      tags_json: signal.tags ? JSON.stringify(signal.tags) : null,
+      created_at: signal.createdAt
+    });
+
+    if (result.changes === 0) {
+      throw new Error(`Signal id ${signal.id} already exists for a different execution`);
+    }
+  }
+}
+
+export function insertSignals(signals) {
+  const db = getDb();
+  const stmt = getSignalInsertStmt(db);
 
   db.exec('BEGIN IMMEDIATE');
   try {
-    for (const signal of signals) {
-      const result = stmt.run({
-        id: signal.id,
-        execution_id: signal.executionId,
-        category: signal.category,
-        status: signal.status,
-        name: signal.name,
-        metric: signal.metric,
-        value: signal.value,
-        unit: signal.unit,
-        severity: signal.severity,
-        confidence: signal.confidence,
-        message: signal.message,
-        evidence_ids_json: JSON.stringify(signal.evidenceIds),
-        tags_json: signal.tags ? JSON.stringify(signal.tags) : null,
-        created_at: signal.createdAt
-      });
+    insertSignalRows(stmt, signals);
+    db.exec('COMMIT');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
 
-      if (result.changes === 0) {
-        throw new Error(`Signal id ${signal.id} already exists for a different execution`);
-      }
-    }
+export function insertEvidenceAndSignals(evidenceList, signals) {
+  const db = getDb();
+  const evidenceStmt = getEvidenceInsertStmt(db);
+  const signalStmt = getSignalInsertStmt(db);
+
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    insertEvidenceRows(evidenceStmt, evidenceList);
+    insertSignalRows(signalStmt, signals);
     db.exec('COMMIT');
   } catch (error) {
     db.exec('ROLLBACK');
@@ -287,5 +319,75 @@ export function getAssuranceDecision(id) {
     summary: row.summary,
     evaluations: parseJson(row.evaluations_json, []),
     createdAt: row.created_at
+  };
+}
+
+export function getFlakyBaseline({ service = null, lookbackRuns = 20, limit = 20 } = {}) {
+  const db = getDb();
+  const rows = db.prepare(`
+    WITH recent_runs AS (
+      SELECT id, started_at
+      FROM assurance_executions
+      WHERE (@service IS NULL OR service = @service)
+      ORDER BY started_at DESC
+      LIMIT @lookback_runs
+    )
+    SELECT s.tags_json, s.status, s.execution_id, r.started_at
+    FROM assurance_signals s
+    JOIN recent_runs r ON r.id = s.execution_id
+    WHERE s.name = 'test-case-result'
+    ORDER BY r.started_at DESC
+  `).all({ service, lookback_runs: Math.max(lookbackRuns, 1) });
+
+  const byTest = new Map();
+  const distinctRuns = new Set();
+
+  for (const row of rows) {
+    distinctRuns.add(row.execution_id);
+    const tags = parseJson(row.tags_json, {});
+    const testCase = tags?.testCase;
+    if (!testCase) continue;
+    const className = tags?.className || 'unknown';
+    const testIdentity = `${className}::${testCase}`;
+
+    const entry = byTest.get(testIdentity) || {
+      testCase,
+      className,
+      testIdentity,
+      pass: 0,
+      fail: 0,
+      runs: new Set(),
+      lastSeenAt: row.started_at
+    };
+    if (row.status === 'pass') entry.pass += 1;
+    if (row.status === 'fail') entry.fail += 1;
+    entry.runs.add(row.execution_id);
+    if (row.started_at > entry.lastSeenAt) entry.lastSeenAt = row.started_at;
+    byTest.set(testIdentity, entry);
+  }
+
+  const flaky = [];
+  for (const item of byTest.values()) {
+    if (item.pass > 0 && item.fail > 0) {
+      const score = Math.round((item.fail / (item.pass + item.fail)) * 100);
+      flaky.push({
+        testCase: item.testCase,
+        className: item.className,
+        testIdentity: item.testIdentity,
+        passCount: item.pass,
+        failCount: item.fail,
+        seenInRuns: item.runs.size,
+        flakyScore: score,
+        lastSeenAt: item.lastSeenAt
+      });
+    }
+  }
+
+  flaky.sort((a, b) => b.flakyScore - a.flakyScore || b.failCount - a.failCount);
+
+  return {
+    lookbackRuns,
+    analyzedRuns: distinctRuns.size,
+    flakyTests: flaky.slice(0, limit)
   };
 }
