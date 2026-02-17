@@ -28,6 +28,8 @@ Use this page as the entry point for all platform documentation.
 - [Branch protection guidance](guides/branch-protection-guidance.md)
 - [Control-plane hardening direction](architecture/control-plane-hardening.md)
 - [Enterprise hardening backlog](reference/enterprise-hardening-backlog.md)
+- [Guardrail checklist](architecture/guardrail-checklist.md)
+- [Cross-agent collaboration protocol](coordination/cross-agent-collaboration-protocol.md)
 
 ### Release manager
 
@@ -59,3 +61,6 @@ Use this page as the entry point for all platform documentation.
 - **Architecture diagrams**: [`docs/reference-architecture/`](reference-architecture/)
 - **Formal reviews**: [`docs/reviews/`](reviews/)
 - **Trial-pack planning**: [`docs/roadmap/`](roadmap/)
+- **DevEx baselines and backlog**: [`docs/devex/`](devex/)
+- **Product sprint prioritization**: [`docs/product/`](product/)
+- **Coordination protocols**: [`docs/coordination/`](coordination/)

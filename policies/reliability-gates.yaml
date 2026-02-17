@@ -1,0 +1,60 @@
+version: 1
+policy: reliability-gates
+scope:
+  environments: [dev, stage, prod]
+  tiers: [low, medium, high, critical]
+
+defaults:
+  decision_on_missing_evidence: no-go
+  allow_manual_override: true
+  override_requires: [owner, rationale, expiry, ticket]
+
+gates:
+  dev:
+    low:
+      required: [unit_tests, lint]
+      max_flaky_failures: 2
+      min_pass_rate: 0.95
+    medium:
+      required: [unit_tests, lint, integration_tests]
+      max_flaky_failures: 1
+      min_pass_rate: 0.97
+    high:
+      required: [unit_tests, lint, integration_tests, contract_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.98
+    critical:
+      required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.99
+  stage:
+    medium:
+      required: [unit_tests, lint, integration_tests, contract_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.98
+    high:
+      required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.99
+    critical:
+      required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests, security_scan]
+      max_flaky_failures: 0
+      min_pass_rate: 0.995
+  prod:
+    medium:
+      required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.99
+    high:
+      required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests, security_scan]
+      max_flaky_failures: 0
+      min_pass_rate: 0.995
+    critical:
+      required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests, security_scan, chaos_checks]
+      max_flaky_failures: 0
+      min_pass_rate: 0.999
+
+decision_rules:
+  go: [all_required_checks_pass, pass_rate_at_or_above_threshold]
+  conditional: [approved_exception_present, exception_not_expired]
+  no_go: [required_check_failed, missing_required_evidence, expired_exception, pass_rate_below_threshold]

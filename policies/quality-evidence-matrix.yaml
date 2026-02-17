@@ -1,0 +1,37 @@
+version: 1
+policy: quality-evidence-matrix
+
+artifacts:
+  unit_tests:
+    source: ci
+    mandatory_for: [low, medium, high, critical]
+  integration_tests:
+    source: ci
+    mandatory_for: [medium, high, critical]
+  contract_tests:
+    source: ci
+    mandatory_for: [high, critical]
+  smoke_tests:
+    source: ci
+    mandatory_for: [critical]
+  lint:
+    source: ci
+    mandatory_for: [low, medium, high, critical]
+  security_scan:
+    source: ci
+    mandatory_for: [high, critical]
+  resilience_scorecard:
+    source: artifacts/latest/resilience-scorecard.json
+    mandatory_for: [high, critical]
+  promotion_decision:
+    source: artifacts/latest/promotion-decision.json
+    mandatory_for: [medium, high, critical]
+
+validation:
+  fail_on_missing_artifact: true
+  fail_on_unreadable_artifact: true
+
+reporting:
+  output:
+    - artifacts/latest/release-report.md
+    - artifacts/latest/promotion-decision.json
