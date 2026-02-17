@@ -81,6 +81,10 @@ function initSchema(database) {
 
     CREATE INDEX IF NOT EXISTS idx_assurance_exec_lookup
       ON assurance_executions(service, commit_sha, environment, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_assurance_exec_commit_sha
+      ON assurance_executions(commit_sha, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_assurance_exec_environment
+      ON assurance_executions(environment, started_at DESC);
 
     CREATE TABLE IF NOT EXISTS assurance_evidence (
       id TEXT PRIMARY KEY,

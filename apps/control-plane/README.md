@@ -103,7 +103,7 @@ make control-plane-demo
 - `POST /ingest/execution`
 - `POST /ingest/evidence`
 - `POST /ingest/signals`
-- `GET /query/executions?service=&commitSha=&environment=`
+- `GET /query/executions?service=&commitSha=&environment=&limit=&offset=`
 - `GET /query/evidence?executionId=`
 - `GET /query/signals?executionId=`
 

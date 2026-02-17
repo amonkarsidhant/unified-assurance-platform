@@ -14,7 +14,7 @@ import {
 } from '../lib/assurance-repository.mjs';
 import { createRunArtifactSkeleton } from '../lib/artifacts.mjs';
 import { validateIncidentBody, validateJsonBody } from '../lib/validation.mjs';
-import { validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
+import { ValidationError, validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
 import { json, jsonError, readBody, setCors } from '../lib/http.mjs';
 
 openDb();
@@ -80,8 +80,15 @@ const server = http.createServer(async (req, res) => {
       if (!Array.isArray(payload.items)) {
         return jsonError(res, 400, 'bad_request', 'items array is required');
       }
-      const evidence = payload.items.map((item) => validateEvidenceRef(item));
-      insertEvidence(evidence);
+      const evidence = validateItemsWithIndex(payload.items, validateEvidenceRef, 'evidence');
+      try {
+        insertEvidence(evidence);
+      } catch (error) {
+        if (isExecutionForeignKeyConstraint(error)) {
+          return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more evidence items');
+        }
+        throw error;
+      }
       return json(res, 202, { ingested: evidence.length });
     }
 
@@ -90,8 +97,15 @@ const server = http.createServer(async (req, res) => {
       if (!Array.isArray(payload.items)) {
         return jsonError(res, 400, 'bad_request', 'items array is required');
       }
-      const signals = payload.items.map((item) => validateSignal(item));
-      insertSignals(signals);
+      const signals = validateItemsWithIndex(payload.items, validateSignal, 'signal');
+      try {
+        insertSignals(signals);
+      } catch (error) {
+        if (isExecutionForeignKeyConstraint(error)) {
+          return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more signal items');
+        }
+        throw error;
+      }
       return json(res, 202, { ingested: signals.length });
     }
 
@@ -99,10 +113,14 @@ const server = http.createServer(async (req, res) => {
       const service = url.searchParams.get('service');
       const commitSha = url.searchParams.get('commitSha');
       const environment = url.searchParams.get('environment');
+      const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+      const offset = parseInt(url.searchParams.get('offset') || '0', 10);
       const executions = listAssuranceExecutions({
         service: service || null,
         commitSha: commitSha || null,
-        environment: environment || null
+        environment: environment || null,
+        limit: Number.isFinite(limit) && limit > 0 ? limit : 100,
+        offset: Number.isFinite(offset) && offset >= 0 ? offset : 0
       });
       return json(res, 200, { executions });
     }
@@ -124,8 +142,8 @@ const server = http.createServer(async (req, res) => {
     if (error?.code === 'PAYLOAD_TOO_LARGE' || error?.statusCode === 413) {
       return jsonError(res, 413, 'payload_too_large', 'Request body exceeds 1 MB limit');
     }
-    if (error instanceof Error && /required|must be|invalid JSON|body must be/.test(error.message)) {
-      return jsonError(res, 400, 'bad_request', error.message);
+    if (error instanceof ValidationError) {
+      return jsonError(res, 400, 'bad_request', error.message, error.details ? { details: error.details } : undefined);
     }
     console.error('[control-plane] request failure', error);
     return jsonError(res, 500, 'internal_error', 'Unexpected server error');
@@ -152,4 +170,29 @@ function queueRun(res, req, type, request) {
     }
   });
   return json(res, 202, { run });
+}
+
+function validateItemsWithIndex(items, validator, itemType) {
+  const validated = [];
+  for (let i = 0; i < items.length; i += 1) {
+    try {
+      validated.push(validator(items[i]));
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw new ValidationError(`${itemType} item at index ${i} failed validation: ${error.message}`, {
+          index: i,
+          itemType
+        });
+      }
+      throw error;
+    }
+  }
+  return validated;
+}
+
+function isExecutionForeignKeyConstraint(error) {
+  if (!(error instanceof Error)) return false;
+  const code = error.code || '';
+  const message = error.message || '';
+  return code.includes('SQLITE_CONSTRAINT') || /FOREIGN KEY constraint failed|constraint failed/i.test(message);
 }

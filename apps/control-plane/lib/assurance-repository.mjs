@@ -156,7 +156,7 @@ export function insertSignals(signals) {
   }
 }
 
-export function listAssuranceExecutions({ service = null, commitSha = null, environment = null, limit = 100 } = {}) {
+export function listAssuranceExecutions({ service = null, commitSha = null, environment = null, limit = 100, offset = 0 } = {}) {
   const db = getDb();
   const rows = db
     .prepare(`
@@ -166,8 +166,9 @@ export function listAssuranceExecutions({ service = null, commitSha = null, envi
         AND (@environment IS NULL OR environment = @environment)
       ORDER BY started_at DESC
       LIMIT @limit
+      OFFSET @offset
     `)
-    .all({ service, commit_sha: commitSha, environment, limit });
+    .all({ service, commit_sha: commitSha, environment, limit, offset });
 
   return rows.map((row) => parseJson(row.payload_json, {
     id: row.id,

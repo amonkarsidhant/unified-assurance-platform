@@ -1,3 +1,11 @@
+export class ValidationError extends Error {
+  constructor(message, details = null) {
+    super(message);
+    this.name = 'ValidationError';
+    this.details = details;
+  }
+}
+
 export const ASSURANCE_CATEGORIES = [
   'unit',
   'integration',
@@ -17,29 +25,29 @@ export const GATE_MODES = ['advisory', 'hard'];
 
 function assertRecord(value, name) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`${name} must be a JSON object`);
+    throw new ValidationError(`${name} must be a JSON object`);
   }
 }
 
 function assertString(value, name) {
   if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`${name} is required`);
+    throw new ValidationError(`${name} is required`);
   }
 }
 
 function assertIsoTimestamp(value, name) {
   assertString(value, name);
-  if (Number.isNaN(Date.parse(value))) throw new Error(`${name} must be an ISO timestamp`);
+  if (Number.isNaN(Date.parse(value))) throw new ValidationError(`${name} must be an ISO timestamp`);
 }
 
 function assertOneOf(value, allowed, name) {
   if (!allowed.includes(value)) {
-    throw new Error(`${name} must be one of: ${allowed.join(', ')}`);
+    throw new ValidationError(`${name} must be one of: ${allowed.join(', ')}`);
   }
 }
 
 function assertStringArray(value, name) {
-  if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
+  if (!Array.isArray(value)) throw new ValidationError(`${name} must be an array`);
   for (const item of value) assertString(item, `${name}[]`);
 }
 
@@ -106,11 +114,11 @@ export function validateSignal(input) {
   assertStringArray(input.evidenceIds || [], 'signal.evidenceIds');
 
   if (input.value != null && !Number.isFinite(input.value)) {
-    throw new Error('signal.value must be a finite number');
+    throw new ValidationError('signal.value must be a finite number');
   }
 
   if (input.confidence != null && (!Number.isFinite(input.confidence) || input.confidence < 0 || input.confidence > 1)) {
-    throw new Error('signal.confidence must be between 0 and 1');
+    throw new ValidationError('signal.confidence must be between 0 and 1');
   }
 
   if (input.severity != null) {

@@ -118,6 +118,81 @@ test('assurance ingest + query endpoints persist and return normalized data', as
   }
 });
 
+test('ingest validation returns item index and FK violations map to 400', async () => {
+  const tmp = uniqueTmpDir();
+  const port = 43181;
+  const env = {
+    ...process.env,
+    CONTROL_PLANE_DB_PATH: path.join(tmp, 'control-plane.db'),
+    CONTROL_PLANE_PORT: String(port),
+    CONTROL_PLANE_HOST: '127.0.0.1',
+    CONTROL_PLANE_DISABLE_MIGRATION: '1',
+    CONTROL_PLANE_API_TOKEN: 'secret-token'
+  };
+
+  const api = spawn(process.execPath, ['apps/control-plane/api/server.mjs'], {
+    cwd: path.resolve('.'),
+    env,
+    stdio: 'ignore'
+  });
+
+  try {
+    await waitForHealth(port);
+
+    const headers = {
+      Authorization: 'Bearer secret-token',
+      'Content-Type': 'application/json'
+    };
+
+    const badEvidence = await fetch(`http://127.0.0.1:${port}/ingest/evidence`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        items: [
+          {
+            id: 'ev-bad',
+            executionId: 'exec-1',
+            category: 'bad-category',
+            kind: 'artifact',
+            source: { tool: 'jest', adapter: 'artifact-junit' },
+            createdAt: '2026-02-17T09:01:00.000Z'
+          }
+        ]
+      })
+    });
+
+    assert.equal(badEvidence.status, 400);
+    const badEvidenceBody = await badEvidence.json();
+    assert.match(badEvidenceBody.message, /index 0/i);
+
+    const fkFail = await fetch(`http://127.0.0.1:${port}/ingest/signals`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        items: [
+          {
+            id: 'sig-missing-exec',
+            executionId: 'missing-exec',
+            category: 'unit',
+            status: 'pass',
+            name: 'unit-pass-rate',
+            value: 90,
+            unit: '%',
+            evidenceIds: [],
+            createdAt: '2026-02-17T09:02:00.000Z'
+          }
+        ]
+      })
+    });
+
+    assert.equal(fkFail.status, 400);
+    const fkBody = await fkFail.json();
+    assert.match(fkBody.message, /invalid execution_id/i);
+  } finally {
+    api.kill('SIGTERM');
+  }
+});
+
 async function waitForHealth(port) {
   for (let i = 0; i < 40; i += 1) {
     try {
