@@ -18,7 +18,7 @@ SHELL := /bin/bash
 
 # Developer workflows
 .PHONY: module-golden-path preflight onboard onboarding-score onboarding-plan consumer-quickstart
-.PHONY: end-to-end-review explain-last-fail suggest-next-steps request-exception first-green
+.PHONY: end-to-end-review explain-last-fail suggest-next-steps request-exception first-green devex-baseline
 
 # Demo & local stack
 .PHONY: demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e
@@ -367,6 +367,9 @@ explain-last-fail:
 
 suggest-next-steps:
 	@./scripts/suggest-next-steps.py
+
+devex-baseline:
+	@./scripts/capture-pr-devex-baseline.py --repo amonkarsidhant/unified-assurance-platform --limit 20 --out artifacts/latest/devex-baseline.json
 
 CONTROL ?=
 REASON ?=
