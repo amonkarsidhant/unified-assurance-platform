@@ -72,7 +72,7 @@ def main():
 
     for file in files:
         for exc in parse_exceptions_yaml(file):
-            required = ["id", "service", "environment", "tier", "control", "approver", "approved_at", "expires_at", "reason"]
+            required = ["id", "service", "environment", "tier", "control", "owner", "approver", "approved_at", "expires_at", "rationale"]
             missing = [k for k in required if not exc.get(k)]
             if missing:
                 violations.append({"file": str(file), "id": exc.get("id", "unknown"), "reason": f"missing fields: {missing}"})
@@ -106,7 +106,8 @@ def main():
                 "approver": exc["approver"],
                 "approved_at": exc["approved_at"],
                 "expires_at": exc["expires_at"],
-                "reason": exc["reason"],
+                "owner": exc["owner"],
+                "rationale": exc["rationale"],
                 "ticket": exc.get("ticket", "n/a"),
                 "file": str(file),
             })
@@ -127,7 +128,13 @@ def main():
     print(f"Wrote exception audit: {out_path}")
 
     if violations:
-        print("❌ Exception validation failed")
+        first = violations[0]
+        print("❌ Governance gate failed")
+        print(f"reason: exception metadata validation failed ({len(violations)} violation(s)); first={first['id']}: {first['reason']}")
+        print("fix_hint: add required exception metadata fields (owner, expires_at, rationale) and remove expired exceptions")
+        print("reproduce: python3 scripts/validate-exceptions.py --exceptions-dir config/exceptions --service sample-service --environment stage --tier high")
+        print("owner: @release-governance")
+        print("evidence: <link-to-evidence>")
         for v in violations:
             print(f" - {v['id']}: {v['reason']}")
         sys.exit(1)

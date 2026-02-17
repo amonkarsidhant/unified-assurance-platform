@@ -8,7 +8,7 @@ SHELL := /bin/bash
 
 # Assurance & reporting
 .PHONY: run-assurance run-assurance-real report collect-evidence evidence-bundle sign-bundle
-.PHONY: validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check
+.PHONY: validate-exceptions evaluate-flaky normalize-results-v2 render-pr-comment promotion-check governance-artifacts-check
 .PHONY: assurance-metrics-export assurance-metrics-export-if-ready assurance-dashboard-check assurance-governance-check
 
 # Resilience & chaos
@@ -92,6 +92,8 @@ validate:
 	@test -x scripts/evaluate-flaky-policy.py
 	@test -x scripts/render-pr-comment.py
 	@test -x scripts/run-chaos-checks.sh
+	@test -x scripts/validate-governance-artifacts.py
+	@test -f docs/governance/gate-failure-message-contract.md
 	@test -x scripts/run-resilience-intelligence.sh
 	@test -f config/resilience-intelligence.json
 	@test -f templates/scenarios/resilience/robustness-fixed.json
@@ -274,6 +276,9 @@ sign-bundle:
 	@latest_bundle=$$(ls -1 $(EVIDENCE_OUT)/*.tar.gz | tail -n1); \
 		if [ -z "$$latest_bundle" ]; then echo "No bundle found in $(EVIDENCE_OUT)"; exit 1; fi; \
 		./scripts/sign-evidence-bundle.sh "$$latest_bundle"
+
+governance-artifacts-check:
+	@./scripts/validate-governance-artifacts.py
 
 validate-exceptions:
 	@tier=$$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("risk_context",{}).get("risk_tier","low"))'); \

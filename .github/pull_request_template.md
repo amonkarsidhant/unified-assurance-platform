@@ -48,6 +48,33 @@ Details:
 - [ ] No docs updates needed
 - [ ] Docs updated (README/runbooks/guides)
 
+## Architecture guardrail compliance declaration
+
+- [ ] I confirm this change complies with established architecture guardrails.
+- [ ] If any guardrail deviation exists, it is explicitly documented with rationale and approval link.
+
+Details:
+
+## Reliability impact + rollback criteria
+
+- Reliability impact (latency/error budget/SLO risk):
+- Rollback trigger criteria (objective threshold):
+- Rollback command or procedure:
+
+## QA evidence completeness declaration
+
+- [ ] I confirm QA evidence is complete for the claimed scope.
+- Evidence links (tests, logs, artifacts, screenshots):
+
+## DevEx impact + local reproduce command
+
+- Developer workflow impact (if any):
+- Local reproduce command:
+
+```bash
+make validate
+```
+
 ## Rollback plan
 
 <!-- How to revert safely if needed -->
