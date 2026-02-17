@@ -51,11 +51,11 @@ export const junitAdapter = {
 
 function parseTestCases(xml) {
   const cases = [];
-  const testCaseRegex = /<testcase\b([^>]*)>([\s\S]*?)<\/testcase>|<testcase\b([^>]*)\/>/g;
+  const testCaseRegex = /<testcase\b([^>]*?)\/\s*>|<testcase\b([^>]*?)>([\s\S]*?)<\/testcase>/g;
   let match;
   while ((match = testCaseRegex.exec(xml)) !== null) {
-    const attrs = parseAttrs(match[1] || match[3] || '');
-    const body = match[2] || '';
+    const attrs = parseAttrs(match[1] || match[2] || '');
+    const body = match[3] || '';
     const failureWithBody = /<failure\b[^>]*>([\s\S]*?)<\/failure>/.exec(body);
     const failureSelfClosing = /<failure\b[^>]*\/\s*>/.test(body);
     const errorWithBody = /<error\b[^>]*>([\s\S]*?)<\/error>/.exec(body);
