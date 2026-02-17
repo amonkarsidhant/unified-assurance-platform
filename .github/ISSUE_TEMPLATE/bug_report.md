@@ -37,4 +37,26 @@ labels: bug
 - Severity: low / medium / high
 - Affected scope (services, controls, environments):
 
+## Architecture guardrail compliance declaration
+
+- [ ] This report includes architecture guardrail impact/compliance notes.
+
+## Reliability impact + rollback criteria
+
+- Reliability impact:
+- Rollback criteria (if relevant):
+
+## QA evidence completeness declaration
+
+- [ ] Repro logs/artifacts attached and sufficient for triage.
+
+## DevEx impact + local reproduce command
+
+- DevEx impact:
+- Local reproduce command:
+
+```bash
+# provide exact local reproduction command
+```
+
 ## Proposed fix (optional)

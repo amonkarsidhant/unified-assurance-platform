@@ -3,6 +3,7 @@ name: ci-pr-quality
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
 
 permissions:
   contents: read
@@ -13,7 +14,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  governance-guardrails:
+    name: governance-guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate governance artifacts and PR body contract
+        run: python3 scripts/validate-governance-artifacts.py --event-path "$GITHUB_EVENT_PATH"
+
   assurance:
+    needs: [governance-guardrails]
     uses: ./.github/workflows/reusable-assurance.yml
     with:
       assurance-mode: pragmatic
