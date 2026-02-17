@@ -62,7 +62,22 @@ def parse_sections(markdown: str) -> dict[str, str]:
     return sections
 
 
-def validate_pr_body(event_path: Path):
+def normalize_section_text(text: str) -> str:
+    lines = [ln.rstrip() for ln in text.strip().splitlines()]
+    return "\n".join(lines).strip()
+
+
+def has_unanswered_field(section_text: str) -> bool:
+    for raw in section_text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if re.match(r"^[-*]?\s*[^:]+:\s*$", line):
+            return True
+    return False
+
+
+def validate_pr_body(event_path: Path, template_path: Path):
     if not event_path.exists():
         return
     payload = json.loads(event_path.read_text(encoding="utf-8"))
@@ -72,6 +87,7 @@ def validate_pr_body(event_path: Path):
 
     body = pr.get("body") or ""
     sections = parse_sections(body)
+    template_sections = parse_sections(read_text(template_path))
     required = {
         "architecture guardrail compliance declaration": "declare compliance status and any justified deviations",
         "reliability impact + rollback criteria": "include blast radius and explicit rollback trigger",
@@ -84,6 +100,27 @@ def validate_pr_body(event_path: Path):
         if not value or re.search(r"\bTODO\b|<fill|TBD", value, flags=re.IGNORECASE):
             gate_fail(
                 reason=f"pull request body section incomplete or missing: '{section}'",
+                fix_hint=hint,
+                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+            )
+
+        if normalize_section_text(value) == normalize_section_text(template_sections.get(section, "")):
+            gate_fail(
+                reason=f"pull request body section left unchanged from template: '{section}'",
+                fix_hint=hint,
+                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+            )
+
+        if "[ ]" in value and not re.search(r"\[[xX]\]", value):
+            gate_fail(
+                reason=f"pull request body section has no completed checkboxes: '{section}'",
+                fix_hint=hint,
+                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+            )
+
+        if has_unanswered_field(value):
+            gate_fail(
+                reason=f"pull request body section has blank answer fields: '{section}'",
                 fix_hint=hint,
                 reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
             )
@@ -150,7 +187,7 @@ def main():
     validate_exception_template(root / "config/exceptions/template.yaml")
 
     if args.event_path:
-        validate_pr_body(Path(args.event_path))
+        validate_pr_body(Path(args.event_path), root / ".github/pull_request_template.md")
 
     print("✅ Governance artifact checks passed")
 

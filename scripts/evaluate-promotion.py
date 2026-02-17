@@ -63,8 +63,10 @@ def load_active_exceptions(exceptions_dir: Path, service: str, environment: str,
     active, invalid = [], []
     for f in [x for x in sorted(exceptions_dir.glob("*.yaml")) if x.name != "template.yaml"]:
         for exc in parse_exceptions_yaml(f):
-            required = ["id", "service", "environment", "tier", "control", "owner", "approver", "expires_at", "rationale"]
+            required = ["id", "service", "environment", "tier", "control", "owner", "approver", "expires_at"]
             missing = [k for k in required if not exc.get(k)]
+            if not exc.get("rationale") and not exc.get("reason"):
+                missing.append("rationale|reason")
             if missing:
                 invalid.append({"id": exc.get("id", "unknown"), "reason": f"missing fields {missing}", "file": str(f)})
                 continue
