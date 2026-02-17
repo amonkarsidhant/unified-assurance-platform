@@ -455,30 +455,17 @@ test('flaky baseline keeps distinct classes separate and handles self-closing fa
       'Content-Type': 'application/json'
     };
 
-    const mkRun = (id, updatedAt) => ({
-      service: 'payments-api',
-      environment: 'ci',
-      workflow_run: {
-        id,
-        head_sha: `sha-${id}`,
-        head_branch: 'main',
-        run_started_at: '2026-02-17T09:00:00.000Z',
-        updated_at: updatedAt,
-        repository: { name: 'unified-assurance-platform', full_name: 'amonkarsidhant/unified-assurance-platform' }
-      }
-    });
-
     const run1 = await fetch(`http://127.0.0.1:${port}/ingest/adapter/github-actions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(mkRun(3001, '2026-02-17T09:05:00.000Z'))
+      body: JSON.stringify(mkWorkflowRun(3001, '2026-02-17T09:05:00.000Z'))
     });
     assert.equal(run1.status, 202);
 
     const run2 = await fetch(`http://127.0.0.1:${port}/ingest/adapter/github-actions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(mkRun(3002, '2026-02-17T09:10:00.000Z'))
+      body: JSON.stringify(mkWorkflowRun(3002, '2026-02-17T09:10:00.000Z'))
     });
     assert.equal(run2.status, 202);
 
@@ -544,30 +531,17 @@ test('junit parser keeps self-closing testcase separate from following closed te
       'Content-Type': 'application/json'
     };
 
-    const mkRun = (id, updatedAt) => ({
-      service: 'payments-api',
-      environment: 'ci',
-      workflow_run: {
-        id,
-        head_sha: `sha-${id}`,
-        head_branch: 'main',
-        run_started_at: '2026-02-17T09:00:00.000Z',
-        updated_at: updatedAt,
-        repository: { name: 'unified-assurance-platform', full_name: 'amonkarsidhant/unified-assurance-platform' }
-      }
-    });
-
     const run1 = await fetch(`http://127.0.0.1:${port}/ingest/adapter/github-actions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(mkRun(4001, '2026-02-17T09:05:00.000Z'))
+      body: JSON.stringify(mkWorkflowRun(4001, '2026-02-17T09:05:00.000Z'))
     });
     assert.equal(run1.status, 202);
 
     const run2 = await fetch(`http://127.0.0.1:${port}/ingest/adapter/github-actions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(mkRun(4002, '2026-02-17T09:10:00.000Z'))
+      body: JSON.stringify(mkWorkflowRun(4002, '2026-02-17T09:10:00.000Z'))
     });
     assert.equal(run2.status, 202);
 
@@ -682,6 +656,22 @@ test('ingest validation returns item index and FK violations map to 400', async 
     await fs.promises.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+
+function mkWorkflowRun(id, updatedAt, service = 'payments-api') {
+  return {
+    service,
+    environment: 'ci',
+    workflow_run: {
+      id,
+      head_sha: `sha-${id}`,
+      head_branch: 'main',
+      run_started_at: '2026-02-17T09:00:00.000Z',
+      updated_at: updatedAt,
+      repository: { name: 'unified-assurance-platform', full_name: 'amonkarsidhant/unified-assurance-platform' }
+    }
+  };
+}
 
 async function terminateProcess(child) {
   if (!child || child.exitCode !== null) return;
