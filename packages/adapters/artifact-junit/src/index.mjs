@@ -79,10 +79,10 @@ function parseTestCases(xml) {
 
 function parseAttrs(raw) {
   const attrs = {};
-  const attrRegex = /(\w+)="([^"]*)"/g;
+  const attrRegex = /(\w+)=(?:"([^"]*)"|'([^']*)')/g;
   let match;
   while ((match = attrRegex.exec(raw)) !== null) {
-    attrs[match[1]] = match[2];
+    attrs[match[1]] = match[2] ?? match[3];
   }
   return attrs;
 }
