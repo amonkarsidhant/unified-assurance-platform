@@ -109,6 +109,12 @@ make control-plane-demo
 - `POST /policy/evaluate?executionId=`
 - `GET /decisions/{id}`
 
+### Initial connectors + flaky baseline endpoints (P0 PR-3)
+
+- `POST /ingest/adapter/github-actions`
+- `POST /ingest/adapter/junit`
+- `GET /analytics/flaky?service=&lookbackRuns=&limit=`
+
 ### Sample payloads
 
 ```bash
@@ -227,3 +233,40 @@ Sample `GET /decisions/{id}` not found response:
   "message": "Decision not found"
 }
 ```
+
+Connector onboarding quickstart (GitHub Actions + JUnit):
+
+```bash
+curl -X POST http://127.0.0.1:4172/ingest/adapter/github-actions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "service": "payments-api",
+    "environment": "ci",
+    "workflow_run": {
+      "id": 12345,
+      "head_sha": "abc123",
+      "head_branch": "main",
+      "run_started_at": "2026-02-17T09:00:00.000Z",
+      "updated_at": "2026-02-17T09:04:00.000Z",
+      "repository": { "name": "unified-assurance-platform", "full_name": "amonkarsidhant/unified-assurance-platform" }
+    }
+  }'
+
+curl -X POST http://127.0.0.1:4172/ingest/adapter/junit \
+  -H 'Content-Type: application/json' \
+  -d @- <<'JSON'
+{
+  "executionId": "gha-12345",
+  "tool": "jest",
+  "xml": "<testsuite><testcase classname=\"auth\" name=\"login ok\"/><testcase classname=\"auth\" name=\"token refresh\"><failure>timeout</failure></testcase></testsuite>"
+}
+JSON
+
+curl -X GET 'http://127.0.0.1:4172/analytics/flaky?service=payments-api&lookbackRuns=20&limit=10'
+```
+
+Troubleshooting:
+- Ensure execution exists before JUnit adapter ingest (`executionId` must map to ingested execution).
+- If JUnit response has `warnings: ["no junit testcases found"]`, verify XML includes `<testcase>` tags.
+- Flaky report requires mixed pass/fail results for the same `testCase` across recent runs.
+

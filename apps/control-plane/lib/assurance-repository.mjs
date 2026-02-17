@@ -289,3 +289,56 @@ export function getAssuranceDecision(id) {
     createdAt: row.created_at
   };
 }
+
+export function getFlakyBaseline({ service = null, lookbackRuns = 20, limit = 20 } = {}) {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT s.tags_json, s.status, s.execution_id, e.started_at
+    FROM assurance_signals s
+    JOIN assurance_executions e ON e.id = s.execution_id
+    WHERE s.name = 'test-case-result'
+      AND (@service IS NULL OR e.service = @service)
+    ORDER BY e.started_at DESC
+    LIMIT @row_limit
+  `).all({ service, row_limit: Math.max(lookbackRuns, 1) * 500 });
+
+  const byTest = new Map();
+  const distinctRuns = new Set();
+
+  for (const row of rows) {
+    distinctRuns.add(row.execution_id);
+    const tags = parseJson(row.tags_json, {});
+    const testCase = tags?.testCase;
+    if (!testCase) continue;
+
+    const entry = byTest.get(testCase) || { testCase, pass: 0, fail: 0, runs: new Set(), lastSeenAt: row.started_at };
+    if (row.status === 'pass') entry.pass += 1;
+    if (row.status === 'fail') entry.fail += 1;
+    entry.runs.add(row.execution_id);
+    if (row.started_at > entry.lastSeenAt) entry.lastSeenAt = row.started_at;
+    byTest.set(testCase, entry);
+  }
+
+  const flaky = [];
+  for (const item of byTest.values()) {
+    if (item.pass > 0 && item.fail > 0) {
+      const score = Math.round((item.fail / (item.pass + item.fail)) * 100);
+      flaky.push({
+        testCase: item.testCase,
+        passCount: item.pass,
+        failCount: item.fail,
+        seenInRuns: item.runs.size,
+        flakyScore: score,
+        lastSeenAt: item.lastSeenAt
+      });
+    }
+  }
+
+  flaky.sort((a, b) => b.flakyScore - a.flakyScore || b.failCount - a.failCount);
+
+  return {
+    lookbackRuns,
+    analyzedRuns: distinctRuns.size,
+    flakyTests: flaky.slice(0, limit)
+  };
+}
