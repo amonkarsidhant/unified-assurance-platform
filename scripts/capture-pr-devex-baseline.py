@@ -41,17 +41,37 @@ def percentile(values: list[float], p: float) -> float | None:
     return vals[f] + (vals[c] - vals[f]) * (k - f)
 
 
-def first_commit_time(repo: str, pr_number: int) -> dt.datetime | None:
-    commits = gh_api(f"repos/{repo}/pulls/{pr_number}/commits")
+def pr_commits(repo: str, pr_number: int) -> list[dict[str, Any]]:
+    return gh_api(f"repos/{repo}/pulls/{pr_number}/commits")
+
+
+def first_commit_time(commits: list[dict[str, Any]]) -> dt.datetime | None:
     if not commits:
         return None
     first = commits[0]
     return parse_iso(first.get("commit", {}).get("author", {}).get("date"))
 
 
-def runs_for_branch(repo: str, branch: str, limit: int = 50) -> list[dict[str, Any]]:
+def runs_for_branch(repo: str, branch: str, limit: int = 100) -> list[dict[str, Any]]:
     payload = gh_api(f"repos/{repo}/actions/runs?branch={branch}&per_page={limit}")
     return payload.get("workflow_runs", [])
+
+
+def recent_merged_prs(repo: str, limit: int) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    page = 1
+    per_page = min(max(limit, 20), 100)
+
+    while len(merged) < limit:
+        pulls = gh_api(
+            f"repos/{repo}/pulls?state=closed&sort=updated&direction=desc&per_page={per_page}&page={page}"
+        )
+        if not pulls:
+            break
+        merged.extend([p for p in pulls if p.get("merged_at")])
+        page += 1
+
+    return merged[:limit]
 
 
 def summarize(repo: str, prs: list[dict[str, Any]]) -> dict[str, Any]:
@@ -69,8 +89,11 @@ def summarize(repo: str, prs: list[dict[str, Any]]) -> dict[str, Any]:
         if opened and merged:
             cycle_vals.append((merged - opened).total_seconds() / 3600)
 
-        first_commit = first_commit_time(repo, num)
+        commits = pr_commits(repo, num)
+        first_commit = first_commit_time(commits)
+        commit_shas = {c.get("sha") for c in commits if c.get("sha")}
         runs = runs_for_branch(repo, head_ref) if head_ref else []
+        runs = [r for r in runs if r.get("head_sha") in commit_shas]
         runs_sorted = sorted(runs, key=lambda r: r.get("created_at") or "")
 
         first_success = None
@@ -136,8 +159,7 @@ def main() -> None:
     ap.add_argument("--out", default="artifacts/latest/devex-baseline.json")
     args = ap.parse_args()
 
-    pulls = gh_api(f"repos/{args.repo}/pulls?state=closed&sort=updated&direction=desc&per_page={args.limit}")
-    merged = [p for p in pulls if p.get("merged_at")]
+    merged = recent_merged_prs(args.repo, args.limit)
     report = summarize(args.repo, merged)
 
     out = Path(args.out)
