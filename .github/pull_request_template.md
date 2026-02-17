@@ -50,15 +50,15 @@ Details:
 
 ## Architecture guardrail compliance declaration
 
-- [ ] I confirm this change complies with established architecture guardrails ([reference](docs/architecture/guardrails.md)).
+- [ ] I confirm this change complies with established architecture guardrails ([reference](docs/architecture/guardrail-checklist.md)).
 - [ ] Any guardrail deviations are documented with rationale + approval link (write "None" if there are no deviations).
 
 Details (list guardrail(s) checked, compliance/deviation status, and if deviating include rationale + approval link):
 
 ## Reliability impact + rollback criteria
 
-- Reliability impact (latency/error budget/SLO risk):
-- Rollback trigger criteria (objective threshold):
+- Reliability impact (latency/error budget/SLO risk): <!-- e.g., +5% p95 latency, 2% error budget burn in 1h, or "none" -->
+- Rollback trigger criteria (objective threshold): <!-- e.g., rollback if error rate >1% for 10m or SLO breach persists -->
 
 ## QA evidence completeness declaration
 
@@ -67,7 +67,7 @@ Details (list guardrail(s) checked, compliance/deviation status, and if deviatin
 
 ## DevEx impact + local reproduce command
 
-- Developer workflow impact (if any):
+- Developer workflow impact (if any): <!-- e.g., no impact; requires DB migration + rerun seed scripts -->
 - Local reproduce command:
 
 ```bash
