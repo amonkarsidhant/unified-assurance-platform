@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import net from 'node:net';
 
 function uniqueTmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cp-assurance-'));
@@ -11,7 +12,7 @@ function uniqueTmpDir() {
 
 test('assurance ingest + query endpoints persist and return normalized data', async () => {
   const tempDir = uniqueTmpDir();
-  const port = 43180;
+  const port = await getFreePort();
   const env = {
     ...process.env,
     CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
@@ -121,7 +122,7 @@ test('assurance ingest + query endpoints persist and return normalized data', as
 
 test('ingest validation returns item index and FK violations map to 400', async () => {
   const tempDir = uniqueTmpDir();
-  const port = 43181;
+  const port = await getFreePort();
   const env = {
     ...process.env,
     CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
@@ -219,6 +220,25 @@ function waitForExit(child, timeoutMs) {
     }, timeoutMs);
 
     child.once('exit', onExit);
+  });
+}
+
+async function getFreePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      if (!address || typeof address === 'string') {
+        server.close(() => reject(new Error('Unable to allocate free port')));
+        return;
+      }
+      const { port } = address;
+      server.close((error) => {
+        if (error) return reject(error);
+        resolve(port);
+      });
+    });
+    server.on('error', reject);
   });
 }
 
