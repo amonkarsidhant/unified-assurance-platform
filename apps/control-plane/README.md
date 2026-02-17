@@ -106,6 +106,8 @@ make control-plane-demo
 - `GET /query/executions?service=&commitSha=&environment=&limit=&offset=`
 - `GET /query/evidence?executionId=`
 - `GET /query/signals?executionId=`
+- `POST /policy/evaluate?executionId=`
+- `GET /decisions/{id}`
 
 ### Sample payloads
 
@@ -152,4 +154,76 @@ curl -X POST http://127.0.0.1:4172/ingest/signals \
       "createdAt": "2026-02-17T09:02:00.000Z"
     }]
   }'
+
+curl -X POST 'http://127.0.0.1:4172/policy/evaluate?executionId=exec-1' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "rules": [{
+      "id": "unit-hard-gate",
+      "name": "Unit pass rate main gate",
+      "mode": "hard",
+      "scope": { "branches": ["main"], "categories": ["unit"] },
+      "condition": { "signalName": "unit-pass-rate", "operator": "gte", "threshold": 95 },
+      "failMessage": "Unit pass rate below 95% on main"
+    }]
+  }'
+
+curl -X GET http://127.0.0.1:4172/decisions/<decision-id> \
+  -H 'Authorization: Bearer <token>'
+```
+
+Sample `POST /policy/evaluate` response:
+
+```json
+{
+  "decision": {
+    "id": "a2f7a8e2-2f11-4f59-b98e-7d3b7dc59e95",
+    "executionId": "exec-1",
+    "outcome": "block",
+    "summary": "1 rule(s) failed including hard-gate policies",
+    "evaluations": [
+      {
+        "ruleId": "unit-hard-gate",
+        "passed": false,
+        "mode": "hard",
+        "reason": "Unit pass rate below 95% on main",
+        "evidenceIds": ["ev-1"]
+      }
+    ],
+    "createdAt": "2026-02-17T09:03:00.000Z"
+  }
+}
+```
+
+Sample `GET /decisions/{id}` success response:
+
+```json
+{
+  "decision": {
+    "id": "a2f7a8e2-2f11-4f59-b98e-7d3b7dc59e95",
+    "executionId": "exec-1",
+    "outcome": "block",
+    "summary": "1 rule(s) failed including hard-gate policies",
+    "evaluations": [
+      {
+        "ruleId": "unit-hard-gate",
+        "passed": false,
+        "mode": "hard",
+        "reason": "Unit pass rate below 95% on main",
+        "evidenceIds": ["ev-1"]
+      }
+    ],
+    "createdAt": "2026-02-17T09:03:00.000Z"
+  }
+}
+```
+
+Sample `GET /decisions/{id}` not found response:
+
+```json
+{
+  "error": "not_found",
+  "message": "Decision not found"
+}
 ```

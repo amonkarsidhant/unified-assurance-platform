@@ -1,0 +1,35 @@
+rules:
+  - id: unit-pass-rate-main
+    name: Unit pass rate on main
+    mode: hard
+    scope:
+      branches: ["main"]
+      categories: ["unit"]
+    condition:
+      signalName: unit-pass-rate
+      operator: gte
+      threshold: 95
+    failMessage: Unit pass rate below 95% on main.
+
+  - id: critical-vuln-block
+    name: Block on critical vulnerabilities
+    mode: hard
+    scope:
+      categories: ["security"]
+    condition:
+      signalName: critical-vuln-count
+      operator: eq
+      threshold: 0
+    failMessage: Critical vulnerabilities detected.
+
+  - id: p95-regression-advisory
+    name: p95 latency regression
+    mode: advisory
+    scope:
+      categories: ["performance"]
+      environments: ["staging"]
+    condition:
+      signalName: p95-regression-percent
+      operator: lt
+      threshold: 10
+    failMessage: p95 latency regressed >= 10%.

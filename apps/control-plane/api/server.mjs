@@ -10,12 +10,16 @@ import {
   insertSignals,
   listAssuranceExecutions,
   listAssuranceEvidence,
-  listAssuranceSignals
+  listAssuranceSignals,
+  getAssuranceExecution,
+  insertAssuranceDecision,
+  getAssuranceDecision
 } from '../lib/assurance-repository.mjs';
 import { createRunArtifactSkeleton } from '../lib/artifacts.mjs';
 import { validateIncidentBody, validateJsonBody } from '../lib/validation.mjs';
 import { ValidationError, validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
 import { json, jsonError, readBody, setCors } from '../lib/http.mjs';
+import { evaluatePolicies, ALLOWED_OPERATORS } from '../../../packages/policy-engine/src/index.mjs';
 
 openDb();
 
@@ -143,6 +147,46 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { signals: listAssuranceSignals(executionId) });
     }
 
+    if (req.method === 'POST' && url.pathname === '/policy/evaluate') {
+      const executionId = url.searchParams.get('executionId');
+      if (!executionId) return jsonError(res, 400, 'bad_request', 'executionId is required');
+
+      const execution = getAssuranceExecution(executionId);
+      if (!execution) return jsonError(res, 404, 'not_found', 'Execution not found');
+
+      const payload = validateJsonBody(await readBody(req));
+      if (!Array.isArray(payload.rules)) {
+        return jsonError(res, 400, 'bad_request', 'rules array is required');
+      }
+
+      const rulesValidationError = validatePolicyRules(payload.rules);
+      if (rulesValidationError) {
+        return jsonError(res, 400, 'bad_request', rulesValidationError);
+      }
+
+      const decision = evaluatePolicies({
+        execution,
+        signals: listAssuranceSignals(executionId),
+        rules: payload.rules
+      });
+
+      try {
+        insertAssuranceDecision(decision);
+      } catch (persistError) {
+        console.error('[control-plane] decision persistence failed', { executionId, error: persistError });
+        return json(res, 200, { decision, warning: 'Decision computed but persistence failed' });
+      }
+
+      return json(res, 200, { decision });
+    }
+
+    if (req.method === 'GET' && /^\/decisions\/[a-zA-Z0-9_-]+$/.test(url.pathname)) {
+      const id = url.pathname.split('/')[2];
+      const decision = getAssuranceDecision(id);
+      if (!decision) return jsonError(res, 404, 'not_found', 'Decision not found');
+      return json(res, 200, { decision });
+    }
+
     return jsonError(res, 404, 'not_found', 'Endpoint not found');
   } catch (error) {
     if (error?.code === 'PAYLOAD_TOO_LARGE' || error?.statusCode === 413) {
@@ -194,6 +238,30 @@ function validateItemsWithIndex(items, validator, itemType) {
     }
   }
   return validated;
+}
+
+const ALLOWED_POLICY_OPERATORS = new Set(ALLOWED_OPERATORS);
+const ALLOWED_POLICY_MODES = new Set(['advisory', 'hard']);
+
+function validatePolicyRules(rules) {
+  for (let i = 0; i < rules.length; i += 1) {
+    const rule = rules[i];
+    if (!rule?.id || typeof rule.id !== 'string') {
+      return `rules[${i}].id is required and must be a string`;
+    }
+    if (!rule?.name || typeof rule.name !== 'string') {
+      return `rules[${i}].name is required and must be a string`;
+    }
+    if (rule.mode && !ALLOWED_POLICY_MODES.has(rule.mode)) {
+      return `rules[${i}].mode must be one of: ${Array.from(ALLOWED_POLICY_MODES).join(', ')}`;
+    }
+
+    const operator = rule?.condition?.operator;
+    if (operator && !ALLOWED_POLICY_OPERATORS.has(operator)) {
+      return `rules[${i}].condition.operator must be one of: ${Array.from(ALLOWED_POLICY_OPERATORS).join(', ')}`;
+    }
+  }
+  return null;
 }
 
 function isExecutionForeignKeyConstraint(error) {
