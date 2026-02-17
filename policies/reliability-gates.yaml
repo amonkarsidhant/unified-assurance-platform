@@ -5,7 +5,7 @@ scope:
   tiers: [low, medium, high, critical]
 
 defaults:
-  decision_on_missing_evidence: no-go
+  decision_on_missing_evidence: no_go
   allow_manual_override: true
   override_requires: [owner, rationale, expiry, ticket]
 
@@ -28,6 +28,10 @@ gates:
       max_flaky_failures: 0
       min_pass_rate: 0.99
   stage:
+    low:
+      required: [unit_tests, lint, integration_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.97
     medium:
       required: [unit_tests, lint, integration_tests, contract_tests]
       max_flaky_failures: 0
@@ -41,6 +45,10 @@ gates:
       max_flaky_failures: 0
       min_pass_rate: 0.995
   prod:
+    low:
+      required: [unit_tests, lint, integration_tests, contract_tests]
+      max_flaky_failures: 0
+      min_pass_rate: 0.98
     medium:
       required: [unit_tests, lint, integration_tests, contract_tests, smoke_tests]
       max_flaky_failures: 0
