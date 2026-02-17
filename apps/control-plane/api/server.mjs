@@ -10,12 +10,16 @@ import {
   insertSignals,
   listAssuranceExecutions,
   listAssuranceEvidence,
-  listAssuranceSignals
+  listAssuranceSignals,
+  getAssuranceExecution,
+  insertAssuranceDecision,
+  getAssuranceDecision
 } from '../lib/assurance-repository.mjs';
 import { createRunArtifactSkeleton } from '../lib/artifacts.mjs';
 import { validateIncidentBody, validateJsonBody } from '../lib/validation.mjs';
 import { ValidationError, validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
 import { json, jsonError, readBody, setCors } from '../lib/http.mjs';
+import { evaluatePolicies } from '../../../packages/policy-engine/src/index.mjs';
 
 openDb();
 
@@ -141,6 +145,34 @@ const server = http.createServer(async (req, res) => {
       const executionId = url.searchParams.get('executionId');
       if (!executionId) return jsonError(res, 400, 'bad_request', 'executionId is required');
       return json(res, 200, { signals: listAssuranceSignals(executionId) });
+    }
+
+    if (req.method === 'POST' && url.pathname === '/policy/evaluate') {
+      const executionId = url.searchParams.get('executionId');
+      if (!executionId) return jsonError(res, 400, 'bad_request', 'executionId is required');
+
+      const execution = getAssuranceExecution(executionId);
+      if (!execution) return jsonError(res, 404, 'not_found', 'Execution not found');
+
+      const payload = validateJsonBody(await readBody(req));
+      if (!Array.isArray(payload.rules)) {
+        return jsonError(res, 400, 'bad_request', 'rules array is required');
+      }
+
+      const decision = evaluatePolicies({
+        execution,
+        signals: listAssuranceSignals(executionId),
+        rules: payload.rules
+      });
+      insertAssuranceDecision(decision);
+      return json(res, 200, { decision });
+    }
+
+    if (req.method === 'GET' && /^\/decisions\/[a-zA-Z0-9_-]+$/.test(url.pathname)) {
+      const id = url.pathname.split('/')[2];
+      const decision = getAssuranceDecision(id);
+      if (!decision) return jsonError(res, 404, 'not_found', 'Decision not found');
+      return json(res, 200, { decision });
     }
 
     return jsonError(res, 404, 'not_found', 'Endpoint not found');

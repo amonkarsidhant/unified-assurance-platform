@@ -120,6 +120,101 @@ test('assurance ingest + query endpoints persist and return normalized data', as
   }
 });
 
+test('policy evaluation returns deterministic block/allow decision with explanations', async () => {
+  const tempDir = uniqueTmpDir();
+  const port = await getFreePort();
+  const env = {
+    ...process.env,
+    CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
+    CONTROL_PLANE_PORT: String(port),
+    CONTROL_PLANE_HOST: '127.0.0.1',
+    CONTROL_PLANE_DISABLE_MIGRATION: '1',
+    CONTROL_PLANE_API_TOKEN: 'secret-token'
+  };
+
+  const api = spawn(process.execPath, ['apps/control-plane/api/server.mjs'], {
+    cwd: path.resolve('.'),
+    env,
+    stdio: 'ignore'
+  });
+
+  try {
+    await waitForHealth(port);
+
+    const headers = {
+      Authorization: 'Bearer secret-token',
+      'Content-Type': 'application/json'
+    };
+
+    await fetch(`http://127.0.0.1:${port}/ingest/execution`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        id: 'exec-policy',
+        service: 'payments-api',
+        repo: 'amonkarsidhant/unified-assurance-platform',
+        commitSha: 'abc123',
+        branch: 'main',
+        environment: 'staging',
+        startedAt: '2026-02-17T09:00:00.000Z',
+        source: { provider: 'github-actions', version: '1' }
+      })
+    });
+
+    await fetch(`http://127.0.0.1:${port}/ingest/signals`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        items: [
+          {
+            id: 'sig-policy-1',
+            executionId: 'exec-policy',
+            category: 'unit',
+            status: 'pass',
+            name: 'unit-pass-rate',
+            value: 90,
+            unit: '%',
+            evidenceIds: [],
+            createdAt: '2026-02-17T09:02:00.000Z'
+          }
+        ]
+      })
+    });
+
+    const evalRes = await fetch(`http://127.0.0.1:${port}/policy/evaluate?executionId=exec-policy`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        rules: [
+          {
+            id: 'unit-hard-gate',
+            name: 'Unit pass rate main gate',
+            mode: 'hard',
+            scope: { branches: ['main'], categories: ['unit'] },
+            condition: { signalName: 'unit-pass-rate', operator: 'gte', threshold: 95 },
+            failMessage: 'Unit pass rate below 95% on main'
+          }
+        ]
+      })
+    });
+
+    assert.equal(evalRes.status, 200);
+    const evalBody = await evalRes.json();
+    assert.equal(evalBody.decision.outcome, 'block');
+    assert.equal(evalBody.decision.evaluations[0].passed, false);
+
+    const decisionRes = await fetch(`http://127.0.0.1:${port}/decisions/${evalBody.decision.id}`, {
+      headers: { Authorization: 'Bearer secret-token' }
+    });
+    assert.equal(decisionRes.status, 200);
+    const decisionBody = await decisionRes.json();
+    assert.equal(decisionBody.decision.id, evalBody.decision.id);
+  } finally {
+    await terminateProcess(api);
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('ingest validation returns item index and FK violations map to 400', async () => {
   const tempDir = uniqueTmpDir();
   const port = await getFreePort();

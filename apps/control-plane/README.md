@@ -106,6 +106,8 @@ make control-plane-demo
 - `GET /query/executions?service=&commitSha=&environment=&limit=&offset=`
 - `GET /query/evidence?executionId=`
 - `GET /query/signals?executionId=`
+- `POST /policy/evaluate?executionId=`
+- `GET /decisions/{id}`
 
 ### Sample payloads
 

@@ -126,6 +126,19 @@ function initSchema(database) {
 
     CREATE INDEX IF NOT EXISTS idx_assurance_signals_execution
       ON assurance_signals(execution_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS assurance_decisions (
+      id TEXT PRIMARY KEY,
+      execution_id TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      evaluations_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(execution_id) REFERENCES assurance_executions(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_assurance_decisions_execution
+      ON assurance_decisions(execution_id, created_at DESC);
   `);
 }
 

@@ -193,6 +193,25 @@ export function listAssuranceExecutions({ service = null, commitSha = null, envi
   }));
 }
 
+export function getAssuranceExecution(executionId) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM assurance_executions WHERE id = ?').get(executionId);
+  if (!row) return null;
+  return parseJson(row.payload_json, {
+    id: row.id,
+    service: row.service,
+    repo: row.repo,
+    commitSha: row.commit_sha,
+    branch: row.branch,
+    environment: row.environment,
+    pipelineId: row.pipeline_id,
+    jobId: row.job_id,
+    startedAt: row.started_at,
+    finishedAt: row.finished_at,
+    source: { provider: row.source_provider, version: row.source_version }
+  });
+}
+
 export function listAssuranceEvidence(executionId) {
   const db = getDb();
   const rows = db
@@ -240,4 +259,33 @@ export function listAssuranceSignals(executionId) {
     tags: parseJson(row.tags_json, null),
     createdAt: row.created_at
   }));
+}
+
+export function insertAssuranceDecision(decision) {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO assurance_decisions(id, execution_id, outcome, summary, evaluations_json, created_at)
+    VALUES (@id, @execution_id, @outcome, @summary, @evaluations_json, @created_at)
+  `).run({
+    id: decision.id,
+    execution_id: decision.executionId,
+    outcome: decision.outcome,
+    summary: decision.summary,
+    evaluations_json: JSON.stringify(decision.evaluations || []),
+    created_at: decision.createdAt
+  });
+}
+
+export function getAssuranceDecision(id) {
+  const db = getDb();
+  const row = db.prepare('SELECT * FROM assurance_decisions WHERE id = ?').get(id);
+  if (!row) return null;
+  return {
+    id: row.id,
+    executionId: row.execution_id,
+    outcome: row.outcome,
+    summary: row.summary,
+    evaluations: parseJson(row.evaluations_json, []),
+    createdAt: row.created_at
+  };
 }
