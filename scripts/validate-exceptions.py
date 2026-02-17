@@ -134,7 +134,11 @@ def main():
         print("❌ Governance gate failed")
         print(f"reason: exception metadata validation failed ({len(violations)} violation(s)); first={first['id']}: {first['reason']}")
         print("fix_hint: add required exception metadata fields (owner, expires_at, rationale or legacy reason) and remove expired exceptions")
-        print("reproduce: python3 scripts/validate-exceptions.py --exceptions-dir config/exceptions --service sample-service --environment stage --tier high")
+        print(
+            "reproduce: "
+            f"python3 scripts/validate-exceptions.py --exceptions-dir {args.exceptions_dir} "
+            f"--service {args.service} --environment {args.environment} --tier {args.tier}"
+        )
         print("owner: @release-governance")
         print("evidence: <link-to-evidence>")
         for v in violations:
