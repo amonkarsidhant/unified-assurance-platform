@@ -6,7 +6,7 @@ export class ValidationError extends Error {
   }
 }
 
-export const ASSURANCE_CATEGORIES = [
+export const ASSURANCE_CATEGORIES = Object.freeze([
   'unit',
   'integration',
   'performance',
@@ -17,11 +17,13 @@ export const ASSURANCE_CATEGORIES = [
   'smoke',
   'e2e',
   'reliability'
-];
+]);
 
-export const SIGNAL_STATUSES = ['pass', 'fail', 'warn', 'error', 'skip'];
-export const DECISION_OUTCOMES = ['allow', 'block', 'advisory'];
-export const GATE_MODES = ['advisory', 'hard'];
+export const SIGNAL_STATUSES = Object.freeze(['pass', 'fail', 'warn', 'error', 'skip']);
+export const DECISION_OUTCOMES = Object.freeze(['allow', 'block', 'advisory']);
+export const GATE_MODES = Object.freeze(['advisory', 'hard']);
+export const EVIDENCE_KINDS = Object.freeze(['artifact', 'metric', 'log', 'vuln', 'contract', 'event']);
+export const SIGNAL_SEVERITIES = Object.freeze(['low', 'medium', 'high', 'critical']);
 
 function assertRecord(value, name) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -89,14 +91,18 @@ export function validateEvidenceRef(input) {
   assertString(input.id, 'evidence.id');
   assertString(input.executionId, 'evidence.executionId');
   assertOneOf(input.category, ASSURANCE_CATEGORIES, 'evidence.category');
-  assertOneOf(input.kind, ['artifact', 'metric', 'log', 'vuln', 'contract', 'event'], 'evidence.kind');
+  assertOneOf(input.kind, EVIDENCE_KINDS, 'evidence.kind');
   assertIsoTimestamp(input.createdAt, 'evidence.createdAt');
   assertRecord(input.source, 'evidence.source');
   assertString(input.source.tool, 'evidence.source.tool');
   assertString(input.source.adapter, 'evidence.source.adapter');
 
   return {
-    ...input,
+    id: input.id,
+    executionId: input.executionId,
+    category: input.category,
+    kind: input.kind,
+    createdAt: input.createdAt,
     uri: input.uri || null,
     checksum: input.checksum || null,
     summary: input.summary || null,
@@ -130,11 +136,16 @@ export function validateSignal(input) {
   }
 
   if (input.severity != null) {
-    assertOneOf(input.severity, ['low', 'medium', 'high', 'critical'], 'signal.severity');
+    assertOneOf(input.severity, SIGNAL_SEVERITIES, 'signal.severity');
   }
 
   return {
-    ...input,
+    id: input.id,
+    executionId: input.executionId,
+    category: input.category,
+    status: input.status,
+    name: input.name,
+    createdAt: input.createdAt,
     metric: input.metric || null,
     value: input.value ?? null,
     unit: input.unit || null,
