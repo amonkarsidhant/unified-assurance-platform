@@ -118,7 +118,8 @@ export function validateSignal(input) {
   assertOneOf(input.status, SIGNAL_STATUSES, 'signal.status');
   assertString(input.name, 'signal.name');
   assertIsoTimestamp(input.createdAt, 'signal.createdAt');
-  assertStringArray(input.evidenceIds || [], 'signal.evidenceIds');
+  const evidenceIds = input.evidenceIds == null ? [] : input.evidenceIds;
+  assertStringArray(evidenceIds, 'signal.evidenceIds');
 
   if (input.value != null && !Number.isFinite(input.value)) {
     throw new ValidationError('signal.value must be a finite number');
@@ -140,7 +141,7 @@ export function validateSignal(input) {
     severity: input.severity || null,
     confidence: input.confidence ?? null,
     message: input.message || null,
-    evidenceIds: input.evidenceIds || [],
+    evidenceIds,
     tags: input.tags && typeof input.tags === 'object' && !Array.isArray(input.tags) ? input.tags : null
   };
 }
