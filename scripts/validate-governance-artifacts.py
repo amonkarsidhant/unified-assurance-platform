@@ -74,6 +74,9 @@ def has_unanswered_field(section_text: str) -> bool:
         # Matches field lines ending with ':' and no value (e.g., '- Field:' or 'Field:')
         if re.match(r"^[-*]?\s*[^:]+:\s*$", line):
             return True
+        # Treat comment-only values as unanswered (e.g., '- Field: <!-- example -->').
+        if re.match(r"^[-*]?\s*[^:]+:\s*<!--.*?-->\s*$", line):
+            return True
     return False
 
 
