@@ -50,20 +50,19 @@ Details:
 
 ## Architecture guardrail compliance declaration
 
-- [ ] I confirm this change complies with established architecture guardrails.
+- [ ] I confirm this change complies with established architecture guardrails ([reference](docs/architecture/guardrails.md)).
 - [ ] If any guardrail deviation exists, it is explicitly documented with rationale and approval link.
 
-Details:
+Details (list guardrail(s) checked, compliance/deviation status, and if deviating include rationale + approval link):
 
 ## Reliability impact + rollback criteria
 
 - Reliability impact (latency/error budget/SLO risk):
 - Rollback trigger criteria (objective threshold):
-- Rollback command or procedure:
 
 ## QA evidence completeness declaration
 
-- [ ] I confirm QA evidence is complete for the claimed scope.
+- [ ] I confirm the PR scope is covered by evidence above (automated test results, logs/artifacts for failures, and screenshots/repro steps where applicable).
 - Evidence links (tests, logs, artifacts, screenshots):
 
 ## DevEx impact + local reproduce command
@@ -72,6 +71,7 @@ Details:
 - Local reproduce command:
 
 ```bash
+# Command to reproduce this specific change locally
 make validate
 ```
 

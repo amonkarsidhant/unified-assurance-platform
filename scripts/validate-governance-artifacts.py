@@ -71,6 +71,7 @@ def has_unanswered_field(section_text: str) -> bool:
         line = raw.strip()
         if not line:
             continue
+        # Matches field lines ending with ':' and no value (e.g., '- Field:' or 'Field:')
         if re.match(r"^[-*]?\s*[^:]+:\s*$", line):
             return True
     return False
@@ -100,28 +101,28 @@ def validate_pr_body(event_path: Path, template_path: Path):
             gate_fail(
                 reason=f"pull request body section incomplete or missing: '{section}'",
                 fix_hint=hint,
-                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
             )
 
         if normalize_section_text(value) == normalize_section_text(template_sections.get(section, "")):
             gate_fail(
                 reason=f"pull request body section left unchanged from template: '{section}'",
                 fix_hint=hint,
-                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
             )
 
-        if "[ ]" in value and not re.search(r"\[[xX]\]", value):
+        if re.search(r"\[\s*\]", value):
             gate_fail(
-                reason=f"pull request body section has no completed checkboxes: '{section}'",
+                reason=f"pull request body section still contains unchecked checkboxes: '{section}'",
                 fix_hint=hint,
-                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
             )
 
         if has_unanswered_field(value):
             gate_fail(
                 reason=f"pull request body section has blank answer fields: '{section}'",
                 fix_hint=hint,
-                reproduce="python3 scripts/validate-governance-artifacts.py --event-path .github/mock-pr-event.json",
+                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
             )
 
 
