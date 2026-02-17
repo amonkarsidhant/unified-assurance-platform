@@ -97,3 +97,59 @@ make control-plane-demo
 - `POST /runs/assurance`
 - `POST /runs/resilience`
 - `POST /runs/incident`
+
+### Assurance core ingestion/query endpoints (P0 PR-1)
+
+- `POST /ingest/execution`
+- `POST /ingest/evidence`
+- `POST /ingest/signals`
+- `GET /query/executions?service=&commitSha=&environment=&limit=&offset=`
+- `GET /query/evidence?executionId=`
+- `GET /query/signals?executionId=`
+
+### Sample payloads
+
+```bash
+curl -X POST http://127.0.0.1:4172/ingest/execution \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "exec-1",
+    "service": "payments-api",
+    "repo": "amonkarsidhant/unified-assurance-platform",
+    "commitSha": "abc123",
+    "branch": "main",
+    "environment": "staging",
+    "startedAt": "2026-02-17T09:00:00.000Z",
+    "source": { "provider": "github-actions", "version": "1" }
+  }'
+
+curl -X POST http://127.0.0.1:4172/ingest/evidence \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "items": [{
+      "id": "ev-1",
+      "executionId": "exec-1",
+      "category": "unit",
+      "kind": "artifact",
+      "uri": "artifacts/junit.xml",
+      "source": { "tool": "jest", "adapter": "artifact-junit" },
+      "createdAt": "2026-02-17T09:01:00.000Z"
+    }]
+  }'
+
+curl -X POST http://127.0.0.1:4172/ingest/signals \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "items": [{
+      "id": "sig-1",
+      "executionId": "exec-1",
+      "category": "unit",
+      "status": "pass",
+      "name": "unit-pass-rate",
+      "value": 98.4,
+      "unit": "%",
+      "evidenceIds": ["ev-1"],
+      "createdAt": "2026-02-17T09:02:00.000Z"
+    }]
+  }'
+```

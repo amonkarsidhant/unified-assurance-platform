@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { ValidationError } from '../../../packages/assurance-schema/src/index.mjs';
 import { repoRoot } from './config.mjs';
 
 export function validateIncidentBody(body) {
@@ -41,10 +42,10 @@ export function validateJsonBody(raw) {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error('invalid JSON body');
+    throw new ValidationError('invalid JSON body');
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('body must be a JSON object');
+    throw new ValidationError('body must be a JSON object');
   }
   return parsed;
 }

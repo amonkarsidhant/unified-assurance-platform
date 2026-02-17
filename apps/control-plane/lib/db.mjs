@@ -60,6 +60,72 @@ function initSchema(database) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_run_events_run_id_created_at ON run_events(run_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS assurance_executions (
+      id TEXT PRIMARY KEY,
+      service TEXT NOT NULL,
+      repo TEXT NOT NULL,
+      commit_sha TEXT NOT NULL,
+      branch TEXT,
+      environment TEXT,
+      pipeline_id TEXT,
+      job_id TEXT,
+      started_at TEXT NOT NULL,
+      finished_at TEXT,
+      source_provider TEXT NOT NULL,
+      source_version TEXT,
+      payload_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_assurance_exec_lookup
+      ON assurance_executions(service, commit_sha, environment, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_assurance_exec_commit_sha
+      ON assurance_executions(commit_sha, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_assurance_exec_environment
+      ON assurance_executions(environment, started_at DESC);
+
+    CREATE TABLE IF NOT EXISTS assurance_evidence (
+      id TEXT PRIMARY KEY,
+      execution_id TEXT NOT NULL,
+      category TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      uri TEXT,
+      checksum TEXT,
+      summary TEXT,
+      raw_json TEXT,
+      source_tool TEXT NOT NULL,
+      source_tool_version TEXT,
+      source_adapter TEXT NOT NULL,
+      source_adapter_version TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(execution_id) REFERENCES assurance_executions(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_assurance_evidence_execution
+      ON assurance_evidence(execution_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS assurance_signals (
+      id TEXT PRIMARY KEY,
+      execution_id TEXT NOT NULL,
+      category TEXT NOT NULL,
+      status TEXT NOT NULL,
+      name TEXT NOT NULL,
+      metric TEXT,
+      value REAL,
+      unit TEXT,
+      severity TEXT,
+      confidence REAL,
+      message TEXT,
+      evidence_ids_json TEXT NOT NULL,
+      tags_json TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(execution_id) REFERENCES assurance_executions(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_assurance_signals_execution
+      ON assurance_signals(execution_id, created_at DESC);
   `);
 }
 
