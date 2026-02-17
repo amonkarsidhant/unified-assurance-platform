@@ -63,6 +63,7 @@ Use this page as the entry point for all platform documentation.
 - **Trial-pack planning**: [`docs/roadmap/`](roadmap/)
 - **DevEx baselines and backlog**: [`docs/devex/`](devex/)
   - [PR-B first-green path](devex/pr-b-first-green.md)
+  - [DevEx failure summary contract](devex/failure-summary-contract.md)
   - [DevEx metrics baseline](devex/metrics-baseline.md)
 - **Product sprint prioritization**: [`docs/product/`](product/)
 - **Coordination protocols**: [`docs/coordination/`](coordination/)

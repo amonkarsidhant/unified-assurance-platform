@@ -65,6 +65,12 @@ Details (list guardrail(s) checked, compliance/deviation status, and if deviatin
 - [ ] I confirm the PR scope is covered by evidence above (automated test results, logs/artifacts for failures, and screenshots/repro steps where applicable).
 - Evidence links (tests, logs, artifacts, screenshots):
 
+Evidence Matrix (required)
+
+| Requirement/Change | Risk Tier | Test(s) | Evidence Link | Result | Owner |
+|---|---|---|---|---|---|
+|  | T0/T1/T2 |  |  | Pass/Fail |  |
+
 ## DevEx impact + local reproduce command
 
 - Developer workflow impact (if any): <!-- e.g., no impact; requires DB migration + rerun seed scripts -->
@@ -86,3 +92,6 @@ make validate
 - [ ] No unresolved review threads
 - [ ] Security-sensitive changes are explicitly called out
 - [ ] Ownership reviewers are assigned per CODEOWNERS
+- [ ] Negative-path proof exists for touched guards/policies
+- [ ] Rollback verification evidence is present
+- [ ] No unresolved P0/P1 defects
