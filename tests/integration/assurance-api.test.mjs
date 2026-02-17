@@ -203,6 +203,85 @@ test('policy evaluation returns deterministic block/allow decision with explanat
     assert.equal(evalBody.decision.outcome, 'block');
     assert.equal(evalBody.decision.evaluations[0].passed, false);
 
+    const allowRes = await fetch(`http://127.0.0.1:${port}/policy/evaluate?executionId=exec-policy`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        rules: [
+          {
+            id: 'all-pass',
+            name: 'Unit pass rate >= 80',
+            mode: 'hard',
+            scope: { branches: ['main'], categories: ['unit'] },
+            condition: { signalName: 'unit-pass-rate', operator: 'gte', threshold: 80 },
+            failMessage: 'Unit pass rate below 80% on main'
+          }
+        ]
+      })
+    });
+    assert.equal(allowRes.status, 200);
+    const allowBody = await allowRes.json();
+    assert.equal(allowBody.decision.outcome, 'allow');
+
+    const advisoryRes = await fetch(`http://127.0.0.1:${port}/policy/evaluate?executionId=exec-policy`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        rules: [
+          {
+            id: 'advisory-fail',
+            name: 'Advisory unit pass rate >= 95',
+            mode: 'advisory',
+            scope: { branches: ['main'], categories: ['unit'] },
+            condition: { signalName: 'unit-pass-rate', operator: 'gte', threshold: 95 },
+            failMessage: 'Unit pass rate below 95% on main'
+          }
+        ]
+      })
+    });
+    assert.equal(advisoryRes.status, 200);
+    const advisoryBody = await advisoryRes.json();
+    assert.equal(advisoryBody.decision.outcome, 'advisory');
+
+    const scopedRes = await fetch(`http://127.0.0.1:${port}/policy/evaluate?executionId=exec-policy`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        rules: [
+          {
+            id: 'main-only-rule',
+            name: 'Main-only strict rule',
+            mode: 'hard',
+            scope: { branches: ['release'], categories: ['unit'] },
+            condition: { signalName: 'unit-pass-rate', operator: 'gte', threshold: 99 },
+            failMessage: 'Should not fail outside scope'
+          }
+        ]
+      })
+    });
+    assert.equal(scopedRes.status, 200);
+    const scopedBody = await scopedRes.json();
+    assert.equal(scopedBody.decision.outcome, 'allow');
+    assert.equal(scopedBody.decision.evaluations[0].skipped, true);
+
+    const badOperatorRes = await fetch(`http://127.0.0.1:${port}/policy/evaluate?executionId=exec-policy`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        rules: [
+          {
+            id: 'bad-op',
+            name: 'Bad op',
+            mode: 'hard',
+            scope: { branches: ['main'], categories: ['unit'] },
+            condition: { signalName: 'unit-pass-rate', operator: 'gtee', threshold: 95 },
+            failMessage: 'Bad operator should not 500'
+          }
+        ]
+      })
+    });
+    assert.equal(badOperatorRes.status, 400);
+
     const decisionRes = await fetch(`http://127.0.0.1:${port}/decisions/${evalBody.decision.id}`, {
       headers: { Authorization: 'Bearer secret-token' }
     });

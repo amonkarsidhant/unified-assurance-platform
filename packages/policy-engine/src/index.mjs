@@ -15,6 +15,19 @@ export function evaluatePolicies({ execution, signals, rules }) {
   const evaluations = [];
 
   for (const rule of rules || []) {
+    const scopeMatchesExecution = matchesExecutionScope(execution, rule.scope || {});
+    if (!scopeMatchesExecution) {
+      evaluations.push({
+        ruleId: rule.id,
+        passed: true,
+        mode: rule.mode || 'advisory',
+        skipped: true,
+        reason: `Rule skipped: ${rule.name} (scope mismatch)`,
+        evidenceIds: []
+      });
+      continue;
+    }
+
     const scopedSignals = (signals || []).filter((signal) => matchesScope(signal, execution, rule.scope || {}));
     const target = scopedSignals.find((signal) => {
       if (rule.condition?.signalName && signal.name !== rule.condition.signalName) return false;
@@ -22,7 +35,11 @@ export function evaluatePolicies({ execution, signals, rules }) {
       return true;
     });
 
-    const op = OPERATORS[rule.condition?.operator || 'exists'];
+    const operatorName = rule.condition?.operator || 'exists';
+    const op = OPERATORS[operatorName];
+    if (!op) {
+      throw new Error(`Unsupported operator: ${operatorName}`);
+    }
     const passed = target ? op(target.value ?? target.status, rule.condition?.threshold) : false;
 
     evaluations.push({
@@ -49,11 +66,16 @@ export function evaluatePolicies({ execution, signals, rules }) {
   };
 }
 
-function matchesScope(signal, execution, scope) {
-  if (scope.categories?.length && !scope.categories.includes(signal.category)) return false;
+function matchesExecutionScope(execution, scope) {
   if (scope.services?.length && !scope.services.includes(execution.service)) return false;
   if (scope.environments?.length && !scope.environments.includes(execution.environment)) return false;
   if (scope.branches?.length && !scope.branches.includes(execution.branch)) return false;
+  return true;
+}
+
+function matchesScope(signal, execution, scope) {
+  if (!matchesExecutionScope(execution, scope)) return false;
+  if (scope.categories?.length && !scope.categories.includes(signal.category)) return false;
   return true;
 }
 
