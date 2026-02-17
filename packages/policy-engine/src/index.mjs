@@ -65,8 +65,8 @@ export function evaluatePolicies({ execution, signals, rules }) {
     });
   }
 
-  const hasHardFailure = evaluations.some((r) => r.mode === 'hard' && !r.passed);
-  const hasAdvisoryFailure = evaluations.some((r) => r.mode === 'advisory' && !r.passed);
+  const hasHardFailure = evaluations.some((r) => r.mode === 'hard' && !r.passed && !r.skipped);
+  const hasAdvisoryFailure = evaluations.some((r) => r.mode === 'advisory' && !r.passed && !r.skipped);
 
   const outcome = hasHardFailure ? 'block' : (hasAdvisoryFailure ? 'advisory' : 'allow');
 
@@ -94,7 +94,7 @@ function matchesScope(signal, execution, scope) {
 }
 
 function buildSummary(outcome, evaluations) {
-  const failed = evaluations.filter((e) => !e.passed).length;
+  const failed = evaluations.filter((e) => !e.passed && !e.skipped).length;
   if (outcome === 'allow') return 'All policy rules passed';
   if (outcome === 'advisory') return `${failed} advisory rule(s) failed`;
   return `${failed} rule(s) failed including hard-gate policies`;

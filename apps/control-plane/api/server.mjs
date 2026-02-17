@@ -169,7 +169,14 @@ const server = http.createServer(async (req, res) => {
         signals: listAssuranceSignals(executionId),
         rules: payload.rules
       });
-      insertAssuranceDecision(decision);
+
+      try {
+        insertAssuranceDecision(decision);
+      } catch (persistError) {
+        console.error('[control-plane] decision persistence failed', { executionId, error: persistError });
+        return json(res, 200, { decision, warning: 'Decision computed but persistence failed' });
+      }
+
       return json(res, 200, { decision });
     }
 
@@ -234,10 +241,22 @@ function validateItemsWithIndex(items, validator, itemType) {
 }
 
 const ALLOWED_POLICY_OPERATORS = new Set(ALLOWED_OPERATORS);
+const ALLOWED_POLICY_MODES = new Set(['advisory', 'hard']);
 
 function validatePolicyRules(rules) {
   for (let i = 0; i < rules.length; i += 1) {
-    const operator = rules[i]?.condition?.operator;
+    const rule = rules[i];
+    if (!rule?.id || typeof rule.id !== 'string') {
+      return `rules[${i}].id is required and must be a string`;
+    }
+    if (!rule?.name || typeof rule.name !== 'string') {
+      return `rules[${i}].name is required and must be a string`;
+    }
+    if (rule.mode && !ALLOWED_POLICY_MODES.has(rule.mode)) {
+      return `rules[${i}].mode must be one of: ${Array.from(ALLOWED_POLICY_MODES).join(', ')}`;
+    }
+
+    const operator = rule?.condition?.operator;
     if (operator && !ALLOWED_POLICY_OPERATORS.has(operator)) {
       return `rules[${i}].condition.operator must be one of: ${Array.from(ALLOWED_POLICY_OPERATORS).join(', ')}`;
     }

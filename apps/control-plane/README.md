@@ -180,8 +180,8 @@ Sample `POST /policy/evaluate` response:
   "decision": {
     "id": "a2f7a8e2-2f11-4f59-b98e-7d3b7dc59e95",
     "executionId": "exec-1",
-    "outcome": "advisory",
-    "summary": "1 advisory rule(s) failed",
+    "outcome": "block",
+    "summary": "1 rule(s) failed including hard-gate policies",
     "evaluations": [
       {
         "ruleId": "unit-hard-gate",
@@ -203,8 +203,8 @@ Sample `GET /decisions/{id}` success response:
   "decision": {
     "id": "a2f7a8e2-2f11-4f59-b98e-7d3b7dc59e95",
     "executionId": "exec-1",
-    "outcome": "advisory",
-    "summary": "1 advisory rule(s) failed",
+    "outcome": "block",
+    "summary": "1 rule(s) failed including hard-gate policies",
     "evaluations": [
       {
         "ruleId": "unit-hard-gate",

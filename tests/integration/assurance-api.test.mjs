@@ -283,6 +283,9 @@ test('policy evaluation returns deterministic block/allow decision with explanat
       })
     });
     assert.equal(badOperatorRes.status, 400);
+    const badOperatorBody = await badOperatorRes.json();
+    assert.match(badOperatorBody.message, /operator/i);
+    assert.match(badOperatorBody.message, /gtee|eq|ne|gt|gte|lt|lte|in|exists/i);
 
     const decisionRes = await fetch(`http://127.0.0.1:${port}/decisions/${evalBody.decision.id}`, {
       headers: { Authorization: 'Bearer secret-token' }
