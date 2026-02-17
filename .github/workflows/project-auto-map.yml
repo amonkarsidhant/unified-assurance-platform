@@ -41,7 +41,19 @@ jobs:
           gh project item-add "$PROJECT_NUMBER" --owner "$OWNER" --url "$ISSUE_URL" >/dev/null || true
 
           ITEM_ID=$(gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json \
-            --jq ".items[] | select(.content.number == $ISSUE_NUMBER) | .id" | head -n1)
+            --jq "
+              .items[]
+              | select(
+                  (.content.url? == \"$ISSUE_URL\")
+                  or
+                  (
+                    .content.number == $ISSUE_NUMBER
+                    and
+                    ((.content.repository? // .content.repositoryNameWithOwner? // \"\") == \"$REPO\")
+                  )
+                )
+              | .id
+            " | head -n1)
 
           if [ -z "$ITEM_ID" ]; then
             echo "Could not resolve project item for issue #$ISSUE_NUMBER"
