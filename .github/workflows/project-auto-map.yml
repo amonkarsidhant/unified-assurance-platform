@@ -1,0 +1,114 @@
+name: project-auto-map
+
+on:
+  issues:
+    types: [opened, reopened, labeled, unlabeled, edited, milestoned, demilestoned]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  map-issue-to-project:
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request == null
+    steps:
+      - name: Ensure token exists
+        env:
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+        run: |
+          if [ -z "$PROJECTS_TOKEN" ]; then
+            echo "PROJECTS_TOKEN secret is missing (requires scopes: project, read:project)."
+            exit 1
+          fi
+
+      - name: Add/update issue in project with default fields
+        env:
+          GH_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          OWNER: amonkarsidhant
+          PROJECT_NUMBER: "5"
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_LABELS_JSON: ${{ toJson(github.event.issue.labels) }}
+          MILESTONE_TITLE: ${{ github.event.issue.milestone.title || '' }}
+        run: |
+          set -euo pipefail
+
+          PROJECT_ID=$(gh project view "$PROJECT_NUMBER" --owner "$OWNER" --format json --jq '.id')
+
+          # Add item (idempotent; duplicate add is harmless if already present)
+          gh project item-add "$PROJECT_NUMBER" --owner "$OWNER" --url "$ISSUE_URL" >/dev/null || true
+
+          ITEM_ID=$(gh project item-list "$PROJECT_NUMBER" --owner "$OWNER" --format json \
+            --jq "
+              .items[]
+              | select(
+                  (.content.url? == \"$ISSUE_URL\")
+                  or
+                  (
+                    .content.number == $ISSUE_NUMBER
+                    and
+                    ((.content.repository? // .content.repositoryNameWithOwner? // \"\") == \"$REPO\")
+                  )
+                )
+              | .id
+            " | head -n1)
+
+          if [ -z "$ITEM_ID" ]; then
+            echo "Could not resolve project item for issue #$ISSUE_NUMBER"
+            exit 1
+          fi
+
+          FIELD_JSON=$(gh project field-list "$PROJECT_NUMBER" --owner "$OWNER" --format json)
+
+          field_id() { echo "$FIELD_JSON" | jq -r --arg n "$1" '.fields[] | select(.name==$n) | .id'; }
+          option_id() {
+            local field="$1" opt="$2"
+            echo "$FIELD_JSON" | jq -r --arg f "$field" --arg o "$opt" '.fields[] | select(.name==$f) | .options[] | select(.name==$o) | .id'
+          }
+
+          ROLE_FIELD=$(field_id "Role")
+          SPRINT_FIELD=$(field_id "Sprint")
+          RISK_FIELD=$(field_id "Risk")
+          PRIORITY_FIELD=$(field_id "Priority")
+
+          labels=$(echo "$ISSUE_LABELS_JSON" | jq -r '.[].name')
+
+          # Role mapping from role:* labels
+          role="PO/PM"
+          echo "$labels" | grep -q '^role:architect$' && role="Architect"
+          echo "$labels" | grep -q '^role:sre$' && role="SRE"
+          echo "$labels" | grep -q '^role:qa$' && role="QA"
+          echo "$labels" | grep -q '^role:devex$' && role="DevEx"
+
+          # Sprint mapping from milestone title
+          sprint="Backlog"
+          [ "$MILESTONE_TITLE" = "Sprint-01" ] && sprint="Sprint-01"
+          [ "$MILESTONE_TITLE" = "Sprint-02" ] && sprint="Sprint-02"
+
+          # Risk mapping
+          risk="Medium"
+          echo "$labels" | grep -q '^risk:high$' && risk="High"
+          echo "$labels" | grep -q '^risk:low$' && risk="Low"
+
+          # Priority mapping (default P2)
+          # Precedence: explicit P3 label < authority-review (P1) < epic (P0)
+          priority="P2"
+          echo "$labels" | grep -q '^priority:p3$' && priority="P3"
+          echo "$labels" | grep -q '^status:authority-review$' && priority="P1"
+          echo "$labels" | grep -q '^type:epic$' && priority="P0"
+
+          set_single_select() {
+            local item="$1" field="$2" opt_id="$3"
+            [ -z "$field" ] && return 0
+            [ -z "$opt_id" ] && return 0
+            gh project item-edit --id "$item" --project-id "$PROJECT_ID" --field-id "$field" --single-select-option-id "$opt_id" >/dev/null
+          }
+
+          set_single_select "$ITEM_ID" "$ROLE_FIELD" "$(option_id "Role" "$role")"
+          set_single_select "$ITEM_ID" "$SPRINT_FIELD" "$(option_id "Sprint" "$sprint")"
+          set_single_select "$ITEM_ID" "$RISK_FIELD" "$(option_id "Risk" "$risk")"
+          set_single_select "$ITEM_ID" "$PRIORITY_FIELD" "$(option_id "Priority" "$priority")"
+
+          echo "Mapped issue #$ISSUE_NUMBER into project #$PROJECT_NUMBER with Role=$role Sprint=$sprint Risk=$risk Priority=$priority"

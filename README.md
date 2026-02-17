@@ -140,6 +140,8 @@ Primary sections:
 - [`docs/devex/`](docs/devex/)
 - [`docs/product/`](docs/product/)
 - [`docs/coordination/`](docs/coordination/)
+  - [`docs/coordination/idea-review-gate.md`](docs/coordination/idea-review-gate.md)
+  - [`docs/coordination/project-view-pack.md`](docs/coordination/project-view-pack.md)
 
 Sprint-01 Batch-1 policy artifacts:
 - [`policies/reliability-gates.yaml`](policies/reliability-gates.yaml)

@@ -64,3 +64,5 @@ Use this page as the entry point for all platform documentation.
 - **DevEx baselines and backlog**: [`docs/devex/`](devex/)
 - **Product sprint prioritization**: [`docs/product/`](product/)
 - **Coordination protocols**: [`docs/coordination/`](coordination/)
+  - [Idea review gate](coordination/idea-review-gate.md)
+  - [Project view pack standard](coordination/project-view-pack.md)
