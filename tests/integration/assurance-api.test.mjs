@@ -384,6 +384,140 @@ test('adapter ingestion (github actions + junit) powers flaky baseline report', 
   }
 });
 
+test('junit adapter maps missing execution FK violations to 400 bad_request', async () => {
+  const tempDir = uniqueTmpDir();
+  const port = await getFreePort();
+  const env = {
+    ...process.env,
+    CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
+    CONTROL_PLANE_PORT: String(port),
+    CONTROL_PLANE_HOST: '127.0.0.1',
+    CONTROL_PLANE_DISABLE_MIGRATION: '1',
+    CONTROL_PLANE_API_TOKEN: 'secret-token'
+  };
+
+  const api = spawn(process.execPath, ['apps/control-plane/api/server.mjs'], {
+    cwd: path.resolve('.'),
+    env,
+    stdio: 'ignore'
+  });
+
+  try {
+    await waitForHealth(port);
+
+    const headers = {
+      Authorization: 'Bearer secret-token',
+      'Content-Type': 'application/json'
+    };
+
+    const res = await fetch(`http://127.0.0.1:${port}/ingest/adapter/junit`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        executionId: 'missing-exec',
+        tool: 'jest',
+        xml: '<testsuite><testcase classname="auth" name="login"/></testsuite>'
+      })
+    });
+
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.match(body.message, /invalid execution_id/i);
+  } finally {
+    await terminateProcess(api);
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('flaky baseline keeps distinct classes separate and handles self-closing failures', async () => {
+  const tempDir = uniqueTmpDir();
+  const port = await getFreePort();
+  const env = {
+    ...process.env,
+    CONTROL_PLANE_DB_PATH: path.join(tempDir, 'control-plane.db'),
+    CONTROL_PLANE_PORT: String(port),
+    CONTROL_PLANE_HOST: '127.0.0.1',
+    CONTROL_PLANE_DISABLE_MIGRATION: '1',
+    CONTROL_PLANE_API_TOKEN: 'secret-token'
+  };
+
+  const api = spawn(process.execPath, ['apps/control-plane/api/server.mjs'], {
+    cwd: path.resolve('.'),
+    env,
+    stdio: 'ignore'
+  });
+
+  try {
+    await waitForHealth(port);
+
+    const headers = {
+      Authorization: 'Bearer secret-token',
+      'Content-Type': 'application/json'
+    };
+
+    const mkRun = (id, updatedAt) => ({
+      service: 'payments-api',
+      environment: 'ci',
+      workflow_run: {
+        id,
+        head_sha: `sha-${id}`,
+        head_branch: 'main',
+        run_started_at: '2026-02-17T09:00:00.000Z',
+        updated_at: updatedAt,
+        repository: { name: 'unified-assurance-platform', full_name: 'amonkarsidhant/unified-assurance-platform' }
+      }
+    });
+
+    const run1 = await fetch(`http://127.0.0.1:${port}/ingest/adapter/github-actions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(mkRun(3001, '2026-02-17T09:05:00.000Z'))
+    });
+    assert.equal(run1.status, 202);
+
+    const run2 = await fetch(`http://127.0.0.1:${port}/ingest/adapter/github-actions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(mkRun(3002, '2026-02-17T09:10:00.000Z'))
+    });
+    assert.equal(run2.status, 202);
+
+    const passInClassA = await fetch(`http://127.0.0.1:${port}/ingest/adapter/junit`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        executionId: 'gha-3001',
+        tool: 'jest',
+        xml: '<testsuite><testcase classname="suite.A" name="should work"/></testsuite>'
+      })
+    });
+    assert.equal(passInClassA.status, 202);
+
+    const failInClassB = await fetch(`http://127.0.0.1:${port}/ingest/adapter/junit`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        executionId: 'gha-3002',
+        tool: 'jest',
+        xml: '<testsuite><testcase classname="suite.B" name="should work"><failure type="AssertionError"/></testcase></testsuite>'
+      })
+    });
+    assert.equal(failInClassB.status, 202);
+
+    const flakyRes = await fetch(`http://127.0.0.1:${port}/analytics/flaky?service=payments-api&lookbackRuns=20&limit=10`, {
+      headers: { Authorization: 'Bearer secret-token' }
+    });
+    assert.equal(flakyRes.status, 200);
+    const flakyBody = await flakyRes.json();
+
+    assert.ok(Array.isArray(flakyBody.flakyTests));
+    assert.equal(flakyBody.flakyTests.length, 0);
+  } finally {
+    await terminateProcess(api);
+    await fs.promises.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('ingest validation returns item index and FK violations map to 400', async () => {
   const tempDir = uniqueTmpDir();
   const port = await getFreePort();

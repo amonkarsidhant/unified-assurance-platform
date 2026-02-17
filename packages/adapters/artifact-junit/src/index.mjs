@@ -56,12 +56,14 @@ function parseTestCases(xml) {
   while ((match = testCaseRegex.exec(xml)) !== null) {
     const attrs = parseAttrs(match[1] || match[3] || '');
     const body = match[2] || '';
-    const failure = /<failure\b[^>]*>([\s\S]*?)<\/failure>/.exec(body);
+    const failureWithBody = /<failure\b[^>]*>([\s\S]*?)<\/failure>/.exec(body);
+    const failureSelfClosing = /<failure\b[^>]*\/\s*>/.test(body);
+    const failureMessage = failureWithBody ? failureWithBody[1].trim().slice(0, 300) : null;
     cases.push({
       name: attrs.name || 'unknown',
       className: attrs.classname || attrs.className || null,
-      failed: Boolean(failure),
-      failureMessage: failure ? failure[1].trim().slice(0, 300) : null
+      failed: Boolean(failureWithBody) || failureSelfClosing,
+      failureMessage
     });
   }
   return cases;

@@ -310,13 +310,23 @@ export function getFlakyBaseline({ service = null, lookbackRuns = 20, limit = 20
     const tags = parseJson(row.tags_json, {});
     const testCase = tags?.testCase;
     if (!testCase) continue;
+    const className = tags?.className || 'unknown';
+    const testIdentity = `${className}::${testCase}`;
 
-    const entry = byTest.get(testCase) || { testCase, pass: 0, fail: 0, runs: new Set(), lastSeenAt: row.started_at };
+    const entry = byTest.get(testIdentity) || {
+      testCase,
+      className,
+      testIdentity,
+      pass: 0,
+      fail: 0,
+      runs: new Set(),
+      lastSeenAt: row.started_at
+    };
     if (row.status === 'pass') entry.pass += 1;
     if (row.status === 'fail') entry.fail += 1;
     entry.runs.add(row.execution_id);
     if (row.started_at > entry.lastSeenAt) entry.lastSeenAt = row.started_at;
-    byTest.set(testCase, entry);
+    byTest.set(testIdentity, entry);
   }
 
   const flaky = [];
@@ -325,6 +335,8 @@ export function getFlakyBaseline({ service = null, lookbackRuns = 20, limit = 20
       const score = Math.round((item.fail / (item.pass + item.fail)) * 100);
       flaky.push({
         testCase: item.testCase,
+        className: item.className,
+        testIdentity: item.testIdentity,
         passCount: item.pass,
         failCount: item.fail,
         seenInRuns: item.runs.size,

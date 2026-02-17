@@ -146,8 +146,18 @@ const server = http.createServer(async (req, res) => {
       const evidence = validateItemsWithIndex(result.evidence || [], validateEvidenceRef, 'evidence');
       const signals = validateItemsWithIndex(result.signals || [], validateSignal, 'signal');
 
-      insertEvidence(evidence);
-      insertSignals(signals);
+      try {
+        insertEvidence(evidence);
+        insertSignals(signals);
+      } catch (error) {
+        if (isExecutionForeignKeyConstraint(error)) {
+          return jsonError(res, 400, 'bad_request', 'Invalid execution_id: execution does not exist for one or more ingested items');
+        }
+        if (isCrossExecutionIdConflict(error)) {
+          return jsonError(res, 400, 'bad_request', error.message);
+        }
+        throw error;
+      }
 
       return json(res, 202, {
         ingestedEvidence: evidence.length,
