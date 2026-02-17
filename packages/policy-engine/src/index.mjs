@@ -1,15 +1,29 @@
 import { randomUUID } from 'node:crypto';
 
+function toFiniteNumber(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function compareNumbers(actual, expected, comparator) {
+  const numericActual = toFiniteNumber(actual);
+  const numericExpected = toFiniteNumber(expected);
+  if (numericActual == null || numericExpected == null) return false;
+  return comparator(numericActual, numericExpected);
+}
+
 const OPERATORS = {
   eq: (actual, expected) => actual === expected,
   ne: (actual, expected) => actual !== expected,
-  gt: (actual, expected) => Number(actual) > Number(expected),
-  gte: (actual, expected) => Number(actual) >= Number(expected),
-  lt: (actual, expected) => Number(actual) < Number(expected),
-  lte: (actual, expected) => Number(actual) <= Number(expected),
+  gt: (actual, expected) => compareNumbers(actual, expected, (a, b) => a > b),
+  gte: (actual, expected) => compareNumbers(actual, expected, (a, b) => a >= b),
+  lt: (actual, expected) => compareNumbers(actual, expected, (a, b) => a < b),
+  lte: (actual, expected) => compareNumbers(actual, expected, (a, b) => a <= b),
   in: (actual, expected) => Array.isArray(expected) && expected.includes(actual),
   exists: (actual) => actual != null
 };
+
+export const ALLOWED_OPERATORS = Object.freeze(Object.keys(OPERATORS));
 
 export function evaluatePolicies({ execution, signals, rules }) {
   const evaluations = [];

@@ -205,7 +205,15 @@ Sample `GET /decisions/{id}` success response:
     "executionId": "exec-1",
     "outcome": "advisory",
     "summary": "1 advisory rule(s) failed",
-    "evaluations": [],
+    "evaluations": [
+      {
+        "ruleId": "unit-hard-gate",
+        "passed": false,
+        "mode": "hard",
+        "reason": "Unit pass rate below 95% on main",
+        "evidenceIds": ["ev-1"]
+      }
+    ],
     "createdAt": "2026-02-17T09:03:00.000Z"
   }
 }

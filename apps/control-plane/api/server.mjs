@@ -19,7 +19,7 @@ import { createRunArtifactSkeleton } from '../lib/artifacts.mjs';
 import { validateIncidentBody, validateJsonBody } from '../lib/validation.mjs';
 import { ValidationError, validateExecutionRef, validateEvidenceRef, validateSignal } from '../../../packages/assurance-schema/src/index.mjs';
 import { json, jsonError, readBody, setCors } from '../lib/http.mjs';
-import { evaluatePolicies } from '../../../packages/policy-engine/src/index.mjs';
+import { evaluatePolicies, ALLOWED_OPERATORS } from '../../../packages/policy-engine/src/index.mjs';
 
 openDb();
 
@@ -233,7 +233,7 @@ function validateItemsWithIndex(items, validator, itemType) {
   return validated;
 }
 
-const ALLOWED_POLICY_OPERATORS = new Set(['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'exists']);
+const ALLOWED_POLICY_OPERATORS = new Set(ALLOWED_OPERATORS);
 
 function validatePolicyRules(rules) {
   for (let i = 0; i < rules.length; i += 1) {

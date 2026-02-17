@@ -146,7 +146,7 @@ test('policy evaluation returns deterministic block/allow decision with explanat
       'Content-Type': 'application/json'
     };
 
-    await fetch(`http://127.0.0.1:${port}/ingest/execution`, {
+    const executionIngestRes = await fetch(`http://127.0.0.1:${port}/ingest/execution`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -160,8 +160,9 @@ test('policy evaluation returns deterministic block/allow decision with explanat
         source: { provider: 'github-actions', version: '1' }
       })
     });
+    assert.equal(executionIngestRes.status, 202);
 
-    await fetch(`http://127.0.0.1:${port}/ingest/signals`, {
+    const signalsIngestRes = await fetch(`http://127.0.0.1:${port}/ingest/signals`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -180,6 +181,7 @@ test('policy evaluation returns deterministic block/allow decision with explanat
         ]
       })
     });
+    assert.equal(signalsIngestRes.status, 202);
 
     const evalRes = await fetch(`http://127.0.0.1:${port}/policy/evaluate?executionId=exec-policy`, {
       method: 'POST',
