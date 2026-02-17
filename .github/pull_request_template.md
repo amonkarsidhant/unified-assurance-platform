@@ -51,7 +51,7 @@ Details:
 ## Architecture guardrail compliance declaration
 
 - [ ] I confirm this change complies with established architecture guardrails ([reference](docs/architecture/guardrails.md)).
-- [ ] If any guardrail deviation exists, it is explicitly documented with rationale and approval link.
+- [ ] Any guardrail deviations are documented with rationale + approval link (write "None" if there are no deviations).
 
 Details (list guardrail(s) checked, compliance/deviation status, and if deviating include rationale + approval link):
 
