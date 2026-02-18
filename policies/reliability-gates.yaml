@@ -66,3 +66,10 @@ decision_rules:
   go: [all_required_checks_pass, pass_rate_at_or_above_threshold]
   conditional: [approved_exception_present, exception_not_expired]
   no_go: [required_check_failed, missing_required_evidence, expired_exception, pass_rate_below_threshold]
+
+rollback_thresholds:
+  error_rate_multiplier: 1.5
+  latency_p95_regression_pct: 15
+  threshold_window_minutes: 10
+  require_slo_burnrate_guard: true
+  require_synthetic_check_pass: true

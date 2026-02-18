@@ -67,6 +67,16 @@ make assurance-governance-check
 
 These checks validate both Prometheus metrics availability and Grafana dashboard provisioning via API.
 
+## Rollout safety profile (Sprint-02)
+
+Use safe-first -> ambitious rollout in this order:
+
+1. Ring/canary rollout with explicit soak window
+2. Synthetic checks + SLO health review before expansion
+3. Objective rollback triggers (error/latency/burn-rate thresholds)
+
+Reference runbook: [`docs/sre/uap-reliability-playbook.md`](../sre/uap-reliability-playbook.md)
+
 ## Phase 2 local verification
 
 ```bash
