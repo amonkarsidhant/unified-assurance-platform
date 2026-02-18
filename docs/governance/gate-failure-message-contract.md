@@ -19,6 +19,7 @@ Minimum requirements:
 - `reproduce`: exact local command
 - `owner`: accountable team/role for the gate
 - `evidence`: placeholder or link to proof artifact
+- Include rollback-related reason wording when failure affects release safety (e.g., threshold breach, missing rollback evidence).
 
 Compatibility note:
 - Existing automation still keys on `fix_hint`.

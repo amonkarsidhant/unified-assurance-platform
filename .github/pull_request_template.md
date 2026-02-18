@@ -59,6 +59,8 @@ Details (list guardrail(s) checked, compliance/deviation status, and if deviatin
 
 - Reliability impact (latency/error budget/SLO risk): <!-- e.g., +5% p95 latency, 2% error budget burn in 1h, or "none" -->
 - Rollback trigger criteria (objective threshold): <!-- e.g., rollback if error rate >1% for 10m or SLO breach persists -->
+- Reliability runbook link: <!-- required for medium/high risk changes -->
+- On-call acknowledgement: <!-- required for high risk changes: name + timestamp or "N/A" -->
 
 ## QA evidence completeness declaration
 

@@ -5,3 +5,6 @@
 - Vulnerability backlog by severity
 - Pipeline lead time and rerun rate
 - Coverage trend on critical modules
+- Change failure rate (CFR)
+- Mean time to recovery (MTTR)
+- Evidence completeness rate (required traceability rows present)

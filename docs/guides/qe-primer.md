@@ -67,3 +67,15 @@ Good QE helps teams:
 - Failures are actionable with owners
 - Release decisions are documented (GO/CONDITIONAL/NO-GO + reason)
 - Production learnings feed back into tests and policies
+
+## PR-B / Sprint-02 minimum gate profile
+
+Decision outputs:
+- **GO**: all required evidence + checks complete
+- **CONDITIONAL GO**: non-critical gaps accepted with explicit owner + due date
+- **NO-GO**: missing critical evidence, failed mandatory controls, or unresolved P0/P1 defects
+
+Hard-stop overrides:
+- Missing rollback path for high-risk changes
+- Failed mandatory security or contract control
+- Missing negative-path evidence for touched guardrails/policies

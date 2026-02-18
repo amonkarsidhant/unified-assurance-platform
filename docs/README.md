@@ -25,6 +25,7 @@ Use this page as the entry point for all platform documentation.
 - [Security posture (threat model, controls, evidence integrity)](reference/security-posture.md)
 - [Control traceability](compliance/control-traceability.md)
 - [Enterprise assurance controls](guides/phase2-enterprise-assurance-controls.md)
+- [UAP reliability playbook](sre/uap-reliability-playbook.md)
 - [Branch protection guidance](guides/branch-protection-guidance.md)
 - [Control-plane hardening direction](architecture/control-plane-hardening.md)
 - [Enterprise hardening backlog](reference/enterprise-hardening-backlog.md)
