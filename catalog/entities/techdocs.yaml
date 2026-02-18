@@ -1,0 +1,32 @@
+# Backstage TechDocs Configuration
+# https://backstage.io/docs/features/techdocs/
+---
+site:
+  name: Unified Assurance Platform
+  description: Technical documentation for UAP
+  visibility: internal
+
+publisher:
+  type: repository
+  branches:
+    - main
+  includedPaths:
+    - docs/**
+    - README.md
+    - SECURITY.md
+
+generator:
+  type: local
+
+mkdocs:
+  name: material
+  plugins:
+    - techdocs-core
+    - search:
+        separator: '[\s\-\.]+'
+  markdown_extensions:
+    - markdown.extensions.admonition
+    - markdown.extensions.codehilite:
+        guessLang: false
+    - markdown.extensions.toc:
+        permalink: true

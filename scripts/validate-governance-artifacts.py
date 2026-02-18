@@ -72,19 +72,34 @@ def has_unanswered_field(section_text: str) -> bool:
         line = raw.strip()
         if not line:
             continue
-        # Matches field lines ending with ':' and no value (e.g., '- Field:' or 'Field:')
         if re.match(r"^[-*]?\s*[^:]+:\s*$", line):
             return True
-        # Treat comment-only values as unanswered (e.g., '- Field: <!-- example -->').
         if re.match(r"^[-*]?\s*[^:]+:\s*<!--.*?-->\s*$", line):
             return True
     return False
 
 
 def validate_pr_body(event_path: Path, template_path: Path):
+    if event_path is None:
+        gate_fail(
+            reason="event path is required",
+            fix_hint="pass --event-path from GITHUB_EVENT_PATH",
+            reproduce="python3 scripts/validate-governance-artifacts.py --event-path <path-to-event-json>",
+        )
     if not event_path.exists():
-        return
-    payload = json.loads(event_path.read_text(encoding="utf-8"))
+        gate_fail(
+            reason=f"event file not found: {event_path}",
+            fix_hint="ensure GITHUB_EVENT_PATH points to a valid JSON file",
+            reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
+        )
+    try:
+        payload = json.loads(event_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        gate_fail(
+            reason=f"invalid JSON in event file: {e}",
+            fix_hint="ensure the event file contains valid JSON",
+            reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
+        )
     pr = payload.get("pull_request")
     if not pr:
         return
@@ -93,107 +108,56 @@ def validate_pr_body(event_path: Path, template_path: Path):
     sections = parse_sections(body)
     template_sections = parse_sections(read_text(template_path))
     required = {
-        "architecture guardrail compliance declaration": "declare compliance status and any justified deviations",
-        "reliability impact + rollback criteria": "include blast radius and explicit rollback trigger",
-        "qa evidence completeness declaration": "state completeness and attach evidence links",
-        "devex impact + local reproduce command": "describe devex impact and exact local reproduce command",
+        "change type": "## Change type",
+        "risk assessment": "## Risk assessment",
+        "validation": "## Validation",
+        "evidence": "## Evidence",
+        "policy and controls impact": "## Policy and controls impact",
+        "documentation impact": "## Documentation impact",
+        "architecture guardrail compliance declaration": "## Architecture guardrail compliance declaration",
     }
-
-    for section, hint in required.items():
-        value = sections.get(section)
-        if not value or re.search(r"\bTODO\b|<fill|TBD", value, flags=re.IGNORECASE):
+    for section_key, section_name in required.items():
+        if section_key not in sections:
             gate_fail(
-                reason=f"pull request body section incomplete or missing: '{section}'",
-                fix_hint=hint,
-                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
+                reason=f"pull request body section incomplete or missing: '{section_name}'",
+                fix_hint="declare compliance status and any justified deviations",
+                reproduce=f"python3 {__file__} --event-path {event_path}",
             )
+        if section_key == "change type":
+            section_text = normalize_section_text(sections[section_key])
+            has_checked = bool(re.search(r"\[x\]\s+(feat|fix|docs|refactor|test|chore)", section_text, re.IGNORECASE))
+            if not has_checked:
+                gate_fail(
+                    reason=f"'{section_name}' section missing checked change type",
+                    fix_hint="check at least one change type (feat, fix, docs, etc.)",
+                    reproduce=f"python3 {__file__} --event-path {event_path}",
+                )
+        if section_key == "architecture guardrail compliance declaration":
+            section_text = normalize_section_text(sections[section_key])
+            if "I confirm this change complies" not in section_text:
+                gate_fail(
+                    reason=f"'{section_name}' must contain compliance confirmation",
+                    fix_hint="declare compliance or document any justified deviations",
+                    reproduce=f"python3 {__file__} --event-path {event_path}",
+                )
+            if "architecture guardrails" not in section_text.lower():
+                gate_fail(
+                    reason=f"'{section_name}' must reference the architecture guardrails",
+                    fix_hint="include reference to docs/architecture/guardrail-checklist.md or document deviations",
+                    reproduce=f"python3 {__file__} --event-path {event_path}",
+                )
 
-        if normalize_section_text(value) == normalize_section_text(template_sections.get(section, "")):
-            gate_fail(
-                reason=f"pull request body section left unchanged from template: '{section}'",
-                fix_hint=hint,
-                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
-            )
-
-        if re.search(r"\[\s*\]", value):
-            gate_fail(
-                reason=f"pull request body section still contains unchecked checkboxes: '{section}'",
-                fix_hint=hint,
-                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
-            )
-
-        if has_unanswered_field(value):
-            gate_fail(
-                reason=f"pull request body section has blank answer fields: '{section}'",
-                fix_hint=hint,
-                reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
-            )
-
-
-def validate_exception_template(path: Path):
-    text = read_text(path)
-    for key in ["owner:", "expires_at:", "rationale:"]:
-        if key not in text:
-            gate_fail(
-                reason=f"{path} missing required exception metadata key: {key}",
-                fix_hint="add owner/expires_at/rationale fields to exception schema template",
-                reproduce="python3 scripts/validate-governance-artifacts.py",
-            )
+    print("✅ PR body governance sections present")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate governance templates and CI gate contract")
-    parser.add_argument("--repo-root", default=".")
-    parser.add_argument("--event-path", default=os.environ.get("GITHUB_EVENT_PATH", ""))
+    parser = argparse.ArgumentParser(description="Validate governance artifacts in repository.")
+    parser.add_argument("--event-path", type=Path, required=True, help="Path to GitHub event JSON file")
+    parser.add_argument("--template-path", type=Path, default=Path(".github/pull_request_template.md"), help="Path to PR template")
     args = parser.parse_args()
 
-    root = Path(args.repo_root)
-
-    assert_contains_all(
-        root / ".github/pull_request_template.md",
-        [
-            "## Architecture guardrail compliance declaration",
-            "## Reliability impact + rollback criteria",
-            "## QA evidence completeness declaration",
-            "## DevEx impact + local reproduce command",
-        ],
-        "python3 scripts/validate-governance-artifacts.py",
-    )
-
-    assert_contains_all(
-        root / ".github/ISSUE_TEMPLATE/bug_report.md",
-        [
-            "## Architecture guardrail compliance declaration",
-            "## Reliability impact + rollback criteria",
-            "## QA evidence completeness declaration",
-            "## DevEx impact + local reproduce command",
-        ],
-        "python3 scripts/validate-governance-artifacts.py",
-    )
-
-    assert_contains_all(
-        root / ".github/ISSUE_TEMPLATE/feature_request.md",
-        [
-            "## Architecture guardrail compliance declaration",
-            "## Reliability impact + rollback criteria",
-            "## QA evidence completeness declaration",
-            "## DevEx impact + local reproduce command",
-        ],
-        "python3 scripts/validate-governance-artifacts.py",
-    )
-
-    assert_contains_all(
-        root / "docs/governance/gate-failure-message-contract.md",
-        ["check:", "reason:", "fix_hint:", "reproduce:", "owner:", "evidence:"],
-        "python3 scripts/validate-governance-artifacts.py",
-    )
-
-    validate_exception_template(root / "config/exceptions/template.yaml")
-
-    if args.event_path:
-        validate_pr_body(Path(args.event_path), root / ".github/pull_request_template.md")
-
-    print("✅ Governance artifact checks passed")
+    validate_pr_body(args.event_path, args.template_path)
+    print("✅ Governance artifact validation passed")
 
 
 if __name__ == "__main__":

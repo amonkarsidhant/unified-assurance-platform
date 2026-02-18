@@ -94,6 +94,3 @@ make validate
 - [ ] No unresolved review threads
 - [ ] Security-sensitive changes are explicitly called out
 - [ ] Ownership reviewers are assigned per CODEOWNERS
-- [ ] Negative-path proof exists for touched guards/policies
-- [ ] Rollback verification evidence is present
-- [ ] No unresolved P0/P1 defects

@@ -1,0 +1,166 @@
+# Backstage Software Catalog Entity Definitions
+# https://backstage.io/docs/features/software-catalog/
+#
+# Use: Separate entities with --- document separator
+#
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: uap-control-plane
+  description: Unified Assurance Platform Control Plane API
+  tags:
+    - assurance
+    - control-plane
+    - api
+  annotations:
+    backstage.io/techdocs-ref: docs/architecture/control-plane-mvp.md
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  type: service
+  lifecycle: production
+  owner: architect
+  providesApis:
+    - uap-assurance-api
+    - uap-policy-api
+  consumesApis:
+    - uap-connector-events
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: uap-policy-engine
+  description: Policy evaluation engine with explainable advisory and hard gates
+  tags:
+    - policy
+    - governance
+    - evaluation
+  annotations:
+    backstage.io/techdocs-ref: docs/architecture/control-plane-mvp.md
+spec:
+  type: service
+  lifecycle: production
+  owner: architect
+  providesApis:
+    - uap-policy-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: uap-connectors
+  description: Pluggable connectors for third-party integrations (GitHub Actions, JUnit, etc.)
+  tags:
+    - connectors
+    - plugin
+    - integration
+  annotations:
+    backstage.io/techdocs-ref: docs/architecture/control-plane-mvp.md
+spec:
+  type: library
+  lifecycle: production
+  owner: architect
+  providesApis:
+    - uap-connector-events
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: uap-assurance-system
+  description: UAP Assurance System - core services and APIs
+  tags:
+    - assurance
+    - system
+spec:
+  owner: architect
+  domains:
+    - uap-assurance
+  components:
+    - component:default/uap-control-plane
+    - component:default/uap-policy-engine
+    - component:default/uap-connectors
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: uap-assurance-api
+  description: Core assurance API for ingestion and query
+  tags:
+    - assurance
+    - api
+    - rest
+spec:
+  type: openapi
+  lifecycle: production
+  owner: architect
+  system: uap-assurance-system
+  definition:
+    $openapi: ./openapi/assurance-api.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: uap-policy-api
+  description: Policy evaluation and governance API
+  tags:
+    - policy
+    - api
+    - rest
+spec:
+  type: openapi
+  lifecycle: production
+  owner: architect
+  system: uap-assurance-system
+  definition:
+    $openapi: ./openapi/policy-api.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: uap-connector-events
+  description: Event ingestion API for connector plugins
+  tags:
+    - events
+    - api
+    - webhook
+spec:
+  type: openapi
+  lifecycle: production
+  owner: architect
+  system: uap-assurance-system
+  definition:
+    $openapi: ./openapi/connector-events.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: uap-core-team
+  description: Core team responsible for UAP development
+spec:
+  type: team
+  memberOf: engineering
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: uap-prometheus
+  description: Prometheus instance for UAP metrics
+  tags:
+    - monitoring
+    - prometheus
+spec:
+  type: monitoring
+  owner: sre
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: uap-kubernetes
+  description: Kubernetes cluster hosting UAP services
+  tags:
+    - infrastructure
+    - kubernetes
+spec:
+  type: infrastructure
+  owner: sre
