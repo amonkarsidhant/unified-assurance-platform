@@ -11,6 +11,16 @@ Enforce requirement-to-evidence traceability and risk-tiered QA gates in phase-2
 
 ---
 
+## Risk Tier Definitions
+
+| Tier | Meaning | Priority |
+|------|---------|----------|
+| T0 | Critical - Must pass all checks | Highest |
+| T1 | High - Requires sign-off | Medium |
+| T2 | Standard - Standard process | Normal |
+
+---
+
 ## Deliverables
 
 ### 1. QA Evidence Matrix Update
@@ -32,7 +42,7 @@ Enforce requirement-to-evidence traceability and risk-tiered QA gates in phase-2
 - [ ] CI passes (all checks)
 - [ ] PR template sections completed
 - [ ] No unresolved review comments
-- [ ] Evidence matrix populated (if applicable)
+- [ ] Evidence matrix populated (required for T2+ risk level PRs or when security/compliance changes are present)
 
 **Risk-Based Requirements:**
 
