@@ -3,6 +3,11 @@
 #
 # Use: Separate entities with --- document separator
 #
+# Phase 2 Updates (Issues #58, #59, #67, #68):
+# - SRE: Grafana/Prometheus dashboard links, SLO status, on-call widgets
+# - SRE: PagerDuty/OpsGenie on-call and runbook integration
+# - Architect: Governance guardrail compliance widget
+#
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -14,9 +19,17 @@ metadata:
     - control-plane
     - api
   annotations:
-    backstage.io/techdocs-ref: docs/architecture/control-plane-mvp.md
+    backstage.io/techdocs-ref: dir:docs/architecture
+    # Issue #58: Grafana/Prometheus dashboards & SLOs
     prometheus.io/scrape: "true"
     prometheus.io/port: "9090"
+    grafana/dashboard-selector: "UAP Control Plane"
+    grafana/link: "https://grafana.example.com/d/uap-control-plane"
+    # Issue #68: Governance guardrail status
+    uap/guardrail-status: "https://governance.example.com/status/uap-control-plane"
+    # Issue #67: Runbook links
+    backstage.io/illuminated-doc: "docs/runbooks/control-plane-runbook.md"
+    jira/component: "control-plane"
 spec:
   type: service
   lifecycle: production
@@ -37,7 +50,17 @@ metadata:
     - governance
     - evaluation
   annotations:
-    backstage.io/techdocs-ref: docs/architecture/control-plane-mvp.md
+    backstage.io/techdocs-ref: dir:docs/architecture
+    # Issue #58: Grafana/Prometheus dashboards & SLOs
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9091"
+    grafana/dashboard-selector: "UAP Policy Engine"
+    grafana/link: "https://grafana.example.com/d/uap-policy-engine"
+    # Issue #68: Governance guardrail status
+    uap/guardrail-status: "https://governance.example.com/status/uap-policy-engine"
+    # Issue #67: Runbook links
+    backstage.io/illuminated-doc: "docs/runbooks/policy-engine-runbook.md"
+    jira/component: "policy-engine"
 spec:
   type: service
   lifecycle: production
@@ -55,7 +78,17 @@ metadata:
     - plugin
     - integration
   annotations:
-    backstage.io/techdocs-ref: docs/architecture/control-plane-mvp.md
+    backstage.io/techdocs-ref: dir:docs/architecture
+    # Issue #58: Grafana/Prometheus dashboards & SLOs
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9092"
+    grafana/dashboard-selector: "UAP Connectors"
+    grafana/link: "https://grafana.example.com/d/uap-connectors"
+    # Issue #68: Governance guardrail status
+    uap/guardrail-status: "https://governance.example.com/status/uap-connectors"
+    # Issue #67: Runbook links
+    backstage.io/illuminated-doc: "docs/runbooks/connectors-runbook.md"
+    jira/component: "connectors"
 spec:
   type: library
   lifecycle: production
@@ -73,12 +106,7 @@ metadata:
     - system
 spec:
   owner: architect
-  domains:
-    - uap-assurance
-  components:
-    - component:default/uap-control-plane
-    - component:default/uap-policy-engine
-    - component:default/uap-connectors
+  domain: uap-assurance
 ---
 apiVersion: backstage.io/v1alpha1
 kind: API
@@ -136,6 +164,10 @@ kind: Group
 metadata:
   name: uap-core-team
   description: Core team responsible for UAP development
+  annotations:
+    # Issue #59: PagerDuty/OpsGenie on-call integration
+    pagerduty.com/service-id: "P123456"
+    opsgenie.com/team: "uap-core"
 spec:
   type: team
   memberOf: engineering
@@ -149,6 +181,18 @@ metadata:
   tags:
     - monitoring
     - prometheus
+spec:
+  type: monitoring
+  owner: sre
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: uap-grafana
+  description: Grafana instance for UAP dashboards
+  tags:
+    - monitoring
+    - grafana
 spec:
   type: monitoring
   owner: sre
