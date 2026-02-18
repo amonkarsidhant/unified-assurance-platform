@@ -1,0 +1,65 @@
+# Backstage Template: New UAP Service
+# https://backstage.io/docs/features/software-catalog/
+---
+apiVersion: backstage.io/v1beta2
+kind: Template
+metadata:
+  name: uap-service-template
+  title: UAP Service Template
+  description: Create a new UAP microservice with built-in assurance patterns
+  tags:
+    - uap
+    - service
+    - template
+spec:
+  owner: architect
+  type: service
+
+  parameters:
+    - title: Service Information
+      required:
+        - name
+        - description
+      properties:
+        name:
+          title: Service Name
+          type: string
+          description: Name of the service (e.g., my-service)
+        description:
+          title: Description
+          type: string
+          description: Brief description of the service
+        owner:
+          title: Owner
+          type: string
+          description: Team or individual responsible
+          default: developer
+
+  steps:
+    - id: fetch-base
+      name: Fetch Base Template
+      action: fetch:cookiecutter
+      input:
+        url: https://github.com/amonkarsidhant/backstage-service-template
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+
+    - id: lint
+      name: Lint
+      action: exec:spawn
+      input:
+        command: make lint
+        timeout: 300000
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        entityRef: component:default/${{ parameters.name }}
+
+  output:
+    links:
+      - title: Open Service Catalog
+        url: https://backstage.example.com/catalog/default/component/${{ parameters.name }}
