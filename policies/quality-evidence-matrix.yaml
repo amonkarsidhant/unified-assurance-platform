@@ -31,6 +31,19 @@ validation:
   fail_on_missing_artifact: true
   fail_on_unreadable_artifact: true
 
+risk_tier_profiles:
+  R0:
+    required_rows: [happy_path]
+  R1:
+    required_rows: [happy_path, negative_path]
+  R2:
+    required_rows: [happy_path, negative_path, impacted_regression]
+  R3:
+    required_rows: [happy_path, negative_path, impacted_regression, rollback_verification]
+  R4:
+    required_rows: [happy_path, negative_path, impacted_regression, rollback_verification]
+    require_cross_role_signoff: true
+
 reporting:
   output:
     - artifacts/latest/release-report.md

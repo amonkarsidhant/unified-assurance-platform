@@ -138,8 +138,13 @@ Primary sections:
 - [`docs/reference/`](docs/reference/)
 - [`docs/reviews/`](docs/reviews/)
 - [`docs/devex/`](docs/devex/)
+  - [`docs/devex/pr-b-first-green.md`](docs/devex/pr-b-first-green.md)
+  - [`docs/devex/failure-summary-contract.md`](docs/devex/failure-summary-contract.md)
+  - [`docs/devex/metrics-baseline.md`](docs/devex/metrics-baseline.md)
 - [`docs/product/`](docs/product/)
 - [`docs/coordination/`](docs/coordination/)
+  - [`docs/coordination/idea-review-gate.md`](docs/coordination/idea-review-gate.md)
+  - [`docs/coordination/project-view-pack.md`](docs/coordination/project-view-pack.md)
 
 Sprint-01 Batch-1 policy artifacts:
 - [`policies/reliability-gates.yaml`](policies/reliability-gates.yaml)

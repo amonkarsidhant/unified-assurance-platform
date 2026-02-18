@@ -57,6 +57,35 @@ Reviewer checks:
 - [ ] Failure modes and rollback path are clear
 - [ ] Ownership/reviewers are appropriate (see `CODEOWNERS`)
 
+## Minimum merge gate (Sprint-02 baseline)
+
+A PR is merge-blocked if any of the following are missing:
+- Requirement-to-test traceability rows are incomplete
+- Negative-path proof is missing for touched guards/policies
+- Rollback verification evidence is missing
+- Unresolved P0/P1 defects remain
+- Cross-role review sign-off is missing for high-risk changes
+
+## CI failure summary contract (DevEx)
+
+When reporting CI/gate failures in PR threads, prefer this structure:
+
+- `check`: gate/check name
+- `reason`: exact failure reason
+- `repro`: exact local command
+- `fix`: smallest next action
+- `owner`: accountable role/team
+- `artifact`: artifact link/path
+- `class`: env | policy | test | flake | infra | security
+
+Reference: [`docs/devex/failure-summary-contract.md`](docs/devex/failure-summary-contract.md)
+
+For the deterministic fast path before full CI, run:
+
+```bash
+make first-green
+```
+
 ## Security and disclosure
 
 Do not open public issues for vulnerabilities or leaked secrets.
