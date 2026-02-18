@@ -1,7 +1,7 @@
 # Backstage Template: New UAP Service
 # https://backstage.io/docs/features/software-catalog/
 ---
-apiVersion: backstage.io/v1beta2
+apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: uap-service-template
@@ -34,30 +34,29 @@ spec:
           type: string
           description: Team or individual responsible
           default: developer
+        templateRepo:
+          title: Template Repository
+          type: string
+          description: URL to the template repository
+          default: https://github.com/amonkarsidhant/backstage-service-template
 
   steps:
     - id: fetch-base
       name: Fetch Base Template
       action: fetch:cookiecutter
       input:
-        url: https://github.com/amonkarsidhant/backstage-service-template
+        url: ${{ parameters.templateRepo }}
         values:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
 
-    - id: lint
-      name: Lint
-      action: exec:spawn
-      input:
-        command: make lint
-        timeout: 300000
-
     - id: register
       name: Register in Catalog
       action: catalog:register
       input:
-        entityRef: component:default/${{ parameters.name }}
+        repoContentsUrl: ${{ steps['fetch-base'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
 
   output:
     links:

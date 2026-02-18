@@ -5,7 +5,7 @@ exceptions:
     tier: "high"
     control: "dast"
     rationale: "Temporary scanner outage; mitigated with manual review"
-    reason: "Temporary scanner outage; mitigated with manual review"
+    # reason_legacy: retained for backwards compatibility
     owner: "security-team"
     approver: "security-director"
     approved_at: "2026-02-09T09:00:00Z"

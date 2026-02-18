@@ -72,19 +72,34 @@ def has_unanswered_field(section_text: str) -> bool:
         line = raw.strip()
         if not line:
             continue
-        # Matches field lines ending with ':' and no value (e.g., '- Field:' or 'Field:')
         if re.match(r"^[-*]?\s*[^:]+:\s*$", line):
             return True
-        # Treat comment-only values as unanswered (e.g., '- Field: <!-- example -->').
         if re.match(r"^[-*]?\s*[^:]+:\s*<!--.*?-->\s*$", line):
             return True
     return False
 
 
 def validate_pr_body(event_path: Path, template_path: Path):
+    if event_path is None:
+        gate_fail(
+            reason="event path is required",
+            fix_hint="pass --event-path from GITHUB_EVENT_PATH",
+            reproduce="python3 scripts/validate-governance-artifacts.py --event-path <path-to-event-json>",
+        )
     if not event_path.exists():
-        return
-    payload = json.loads(event_path.read_text(encoding="utf-8"))
+        gate_fail(
+            reason=f"event file not found: {event_path}",
+            fix_hint="ensure GITHUB_EVENT_PATH points to a valid JSON file",
+            reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
+        )
+    try:
+        payload = json.loads(event_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        gate_fail(
+            reason=f"invalid JSON in event file: {e}",
+            fix_hint="ensure the event file contains valid JSON",
+            reproduce=f"python3 scripts/validate-governance-artifacts.py --event-path {event_path}",
+        )
     pr = payload.get("pull_request")
     if not pr:
         return
@@ -110,10 +125,11 @@ def validate_pr_body(event_path: Path, template_path: Path):
             )
         if section_key == "change type":
             section_text = normalize_section_text(sections[section_key])
-            if "[ ] feat" not in section_text and "[ ] fix" not in section_text:
+            has_checked = bool(re.search(r"\[x\]\s+(feat|fix|docs|refactor|test|chore)", section_text, re.IGNORECASE))
+            if not has_checked:
                 gate_fail(
-                    reason=f"'{section_name}' section missing change type checklist",
-                    fix_hint="include the standard change type checklist with at least one checked item",
+                    reason=f"'{section_name}' section missing checked change type",
+                    fix_hint="check at least one change type (feat, fix, docs, etc.)",
                     reproduce=f"python3 {__file__} --event-path {event_path}",
                 )
         if section_key == "architecture guardrail compliance declaration":
@@ -136,7 +152,7 @@ def validate_pr_body(event_path: Path, template_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Validate governance artifacts in repository.")
-    parser.add_argument("--event-path", type=Path, help="Path to GitHub event JSON file")
+    parser.add_argument("--event-path", type=Path, required=True, help="Path to GitHub event JSON file")
     parser.add_argument("--template-path", type=Path, default=Path(".github/pull_request_template.md"), help="Path to PR template")
     args = parser.parse_args()
 

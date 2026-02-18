@@ -17,8 +17,6 @@ publisher:
 
 generator:
   type: local
-  runIn: local
-  dockerImage: spotify/techdocs-core
 
 mkdocs:
   name: material
@@ -32,16 +30,3 @@ mkdocs:
         guessLang: false
     - markdown.extensions.toc:
         permalink: true
-  nav:
-    - Home: index.md
-    - Architecture:
-        - Overview: architecture/overview.md
-        - Guardrails: architecture/guardrail-checklist.md
-        - Platform Architecture: architecture/platform-architecture.md
-    - SRE:
-        - Reliability Playbook: sre/uap-reliability-playbook.md
-    - Guides:
-        - QE Primer: guides/qe-primer.md
-        - Phase 2 Controls: guides/phase2-enterprise-assurance-controls.md
-    - Reference:
-        - OpenAPI: reference/openapi.md

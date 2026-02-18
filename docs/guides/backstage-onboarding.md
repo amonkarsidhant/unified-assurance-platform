@@ -16,9 +16,9 @@ Backstage is an open platform for building developer portals. It provides a unif
 
 Navigate to your organization's Backstage instance:
 
-```
+```text
 https://backstage.example.com
-```
+```text
 
 ### 2. Register Your Service
 
@@ -41,7 +41,7 @@ spec:
   type: service
   lifecycle: production
   owner: my-team
-```
+```text
 
 Backstage will automatically detect and register the service.
 
@@ -65,7 +65,7 @@ nav:
   - Home: index.md
   - API: api.md
   - Runbook: runbook.md
-```
+```text
 
 ### 4. View Your Service
 
@@ -104,7 +104,7 @@ Add OpenAPI spec to your service:
 spec:
   providesApis:
     - example-api
-```
+```text
 
 ### Adding Monitoring
 
@@ -114,14 +114,14 @@ Annotate your service for Prometheus scraping:
 annotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
-```
+```text
 
 ### Linking Runbooks
 
 ```yaml
 annotations:
   opsgenie.com/runbook-url: "https://wiki.example.com/runbooks/my-service"
-```
+```text
 
 ---
 

@@ -15,6 +15,7 @@
 
 ## 2) Friction-removal checklist (UAP practical)
 
+
 ### A) Onboarding speed
 - [ ] One command from clone to green (`make bootstrap && make validate`) works on clean machine.
 - [ ] “First PR in 60 minutes” path documented (happy path + 3 known pitfalls).
@@ -165,7 +166,7 @@ Score each PR 0/1/2 (Poor/Acceptable/Excellent). Max 20.
 
 ### 61–90 days (scale)
 - Enforce PR DX rubric in template/review workflow.
-- Tune gate strictness by risk tier (high risk strict, low risk lightweight).
+- Tune gate strictness by risk tier (high-risk strict, low-risk lightweight).
 - Monthly DevEx report to engineering leadership with trendlines and ROI.
 
 ---
