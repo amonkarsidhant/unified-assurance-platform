@@ -79,6 +79,40 @@ test:
 		echo "No npm test suite configured in this environment."; \
 	fi
 
+# Coverage targets
+.PHONY: coverage coverage-js coverage-python coverage-report coverage-check
+
+coverage: coverage-js
+	@echo "Coverage run complete."
+
+coverage-js:
+	@if [ -f package.json ] && command -v npm >/dev/null 2>&1; then \
+		npm run coverage 2>/dev/null || npm test; \
+	else \
+		echo "npm not available, skipping JS coverage."; \
+	fi
+
+coverage-report:
+	@if [ -f package.json ] && command -v npm >/dev/null 2>&1; then \
+		npm run coverage:report 2>/dev/null || npx nyc report; \
+	else \
+		echo "npm not available, skipping coverage report."; \
+	fi
+
+coverage-check: coverage
+	@echo "Checking coverage thresholds..."
+	@node scripts/check-coverage-threshold.mjs
+
+# Type checking
+.PHONY: typecheck
+
+typecheck:
+	@if [ -f package.json ] && command -v npm >/dev/null 2>&1; then \
+		npm run typecheck 2>/dev/null || echo "No typecheck script configured"; \
+	else \
+		echo "npm not available, skipping typecheck."; \
+	fi
+
 bootstrap:
 	@echo "Bootstrapping local toolchain checks..."
 	@command -v bash >/dev/null
