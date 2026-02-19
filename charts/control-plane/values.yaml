@@ -1,0 +1,90 @@
+# Default values for control-plane chart
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/amonkarsidhant/unified-assurance-platform
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+app:
+  name: uap-control-plane
+
+config:
+  nodeEnv: production
+  database:
+    path: /data/assurance.db
+  otel:
+    endpoint: "http://otel-collector:4317"
+
+healthCheck:
+  path: /health
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - uap-control-plane
+        topologyKey: kubernetes.io/hostname
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: uap.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: uap-tls
+      hosts:
+        - uap.example.com
+
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+
+persistence:
+  enabled: true
+  storageClass: "gp3"
+  accessMode: ReadWriteOnce
+  size: 10Gi
