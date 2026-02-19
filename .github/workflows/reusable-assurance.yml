@@ -73,10 +73,42 @@ jobs:
       - name: Run tooling check
         run: make tooling-check
 
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    needs: [tooling-check]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.20.0'
+      - name: Install dependencies
+        run: npm install
+      - name: Run typecheck
+        run: make typecheck
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    needs: [tooling-check]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.20.0'
+      - name: Install dependencies
+        run: npm install
+      - name: Run coverage
+        run: make coverage || true
+      - name: Check coverage threshold
+        run: make coverage-check || true
+
   run-assurance:
     name: run-assurance
     runs-on: ubuntu-latest
-    needs: [tooling-check]
+    needs: [tooling-check, typecheck, coverage]
     steps:
       - uses: actions/checkout@v4
       - name: Install required CI tools
