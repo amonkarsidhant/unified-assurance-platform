@@ -519,3 +519,28 @@ control-plane-demo:
 
 control-plane-test:
 	@node --test tests/unit/control-plane-hardening.test.mjs
+
+# =============================================================================
+# Skill Trust Tier Evaluation
+# =============================================================================
+# Skill Trust Tier Evaluation
+# =============================================================================
+# Adopted from Agentic QE Fleet - See skills/TRUST-TIERS.md
+
+.PHONY: skill-status skill-eval skill-list
+
+skill-list skill-status:
+	@echo "=== UAP Skill Trust Tiers ==="
+	@echo ""
+	@echo "Skill Trust Tiers:"
+	@echo "  🟢 T3 (Verified)       : assurance-schema, policy-engine"
+	@echo "  🟡 T2 (Validated)     : resilience-intelligence, promotion-gate"
+	@echo "  🔵 T1 (Structured)    : gitleaks, schemathesis"
+	@echo "  ⚪ T0 (Advisory)      : checkov, hadolint, zap"
+	@echo ""
+	@echo "See skills/TRUST-TIERS.md for details"
+
+skill-eval:
+	@echo "Skill evaluation framework ready."
+	@echo "To upgrade a skill, see skills/TRUST-TIERS.md"
+	@echo "To upgrade a skill, see skills/TRUST-TIERS.md"

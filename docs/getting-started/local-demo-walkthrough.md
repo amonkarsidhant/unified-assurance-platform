@@ -20,8 +20,17 @@ Show that UAP gives a clear release recommendation from evidence, even for non-Q
 
 ## Capability snapshot
 
-![Assurance run and report (placeholder)](../assets/screenshots/assurance-run-report-placeholder.svg)
-*Assurance run/report screenshot placeholder. Reliable capture is tracked in issue [#22](https://github.com/amonkarsidhant/unified-assurance-platform/issues/22).*
+### Happy Path Demo
+- **Command:** `make demo-happy`
+- **Output:** [demo-happy-output.md](demo-happy-output.md)
+- **Recommendation:** GO
+
+### Broken Path Demo  
+- **Command:** `make demo-broken`
+- **Output:** [demo-broken-output.md](demo-broken-output.md)
+- **Recommendation:** NO-GO
+
+*Real output captured - replaces previous placeholder.*
 
 ## Expected outputs
 - Happy path recommendation: `GO`
