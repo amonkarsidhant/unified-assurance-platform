@@ -24,6 +24,22 @@ SHELL := /bin/bash
 .PHONY: demo-up demo-down demo-happy demo-broken demo-site-up demo-site-down demo-e2e
 .PHONY: dev-stack-up dev-stack-down dev-stack-status
 
+help:
+	@echo "Available make targets:"
+	@echo "  fmt                - Run formatting scripts"
+	@echo "  lint               - Run linting checks (markdown, yaml, shell, links)"
+	@echo "  clean              - Clean generated artifacts"
+	@echo "  bootstrap          - Install dependencies and setup"
+	@echo "  validate           - Validate repository structure"
+	@echo "  tooling-check      - Run tooling checks (yamllint, shellcheck)"
+	@echo "  test               - Run test suite"
+	@echo "  ci-local           - Run CI locally (lint, validate, test)"
+	@echo "  run-assurance      - Run assurance pipeline"
+	@echo "  run-assurance-real - Run assurance pipeline in real mode"
+	@echo "  report             - Generate reports"
+	@echo "  (other targets omitted)"
+
+
 fmt:
 	@./scripts/fmt.sh
 
