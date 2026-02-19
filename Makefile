@@ -605,3 +605,29 @@ audit-init:
 	@echo "Initializing audit logging..."
 	@mkdir -p artifacts/audit
 	@echo "Audit directory created at artifacts/audit/"
+
+# =============================================================================
+# RBAC - Role-Based Access Control (Enterprise)
+# =============================================================================
+# See docs/operations/rbac-model.md
+
+.PHONY: rbac-show rbac-check
+
+rbac-show:
+	@echo "=== UAP Roles ==="
+	@echo ""
+	@echo "Admin           - Full system access"
+	@echo "Release Manager - Approve/reject promotions"
+	@echo "Developer       - Run assurance, view own results"
+	@echo "Auditor         - Read-only, export audits"
+	@echo "Viewer          - View dashboards only"
+	@echo ""
+	@echo "See docs/operations/rbac-model.md"
+
+rbac-check:
+	@echo "Checking RBAC configuration..."
+	@echo ""
+	@echo "Current user: $$(whoami)"
+	@echo "GitHub Teams integration: See .uap/rbac.yaml"
+	@echo ""
+	@echo "RBAC is configured at the GitHub organization level."
