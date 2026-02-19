@@ -87,14 +87,14 @@ coverage: coverage-js
 
 coverage-js:
 	@if [ -f package.json ] && command -v npm >/dev/null 2>&1; then \
-		npm run coverage 2>/dev/null || npm test; \
+		npm run coverage 2>&1 | tee /dev/stderr | grep "all files" > coverage/node-coverage.txt || true; \
 	else \
 		echo "npm not available, skipping JS coverage."; \
 	fi
 
 coverage-report:
 	@if [ -f package.json ] && command -v npm >/dev/null 2>&1; then \
-		npm run coverage:report 2>/dev/null || npx nyc report; \
+		npm run coverage:report 2>&1 | head -100; \
 	else \
 		echo "npm not available, skipping coverage report."; \
 	fi

@@ -2,6 +2,7 @@
 /**
  * check-coverage-threshold.mjs
  * Checks if coverage meets the threshold defined in quality-gates.yaml
+ * Supports both nyc and Node.js native test coverage formats
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -25,8 +26,8 @@ if (existsSync(qualityGatesPath)) {
 
 console.log(`📊 Minimum coverage threshold: ${(minCoverage * 100).toFixed(1)}%`);
 
-// Check for coverage reports
-const coveragePaths = [
+// Check for coverage reports (nyc format)
+const nycCoveragePaths = [
   join(rootDir, 'coverage', 'coverage-summary.json'),
   join(rootDir, 'coverage', 'lcov.info'),
   join(rootDir, 'coverage', 'coverage.json')
@@ -36,9 +37,10 @@ let totalLines = 0;
 let coveredLines = 0;
 let coveragePercent = 0;
 
-for (const covPath of coveragePaths) {
+// Try nyc format first
+for (const covPath of nycCoveragePaths) {
   if (existsSync(covPath)) {
-    console.log(`📄 Found coverage report: ${covPath}`);
+    console.log(`📄 Found nyc coverage report: ${covPath}`);
     
     if (covPath.endsWith('.json')) {
       try {
@@ -63,6 +65,22 @@ for (const covPath of coveragePaths) {
     if (coveredLines > 0 && totalLines > 0) {
       coveragePercent = (coveredLines / totalLines) * 100;
       break;
+    }
+  }
+}
+
+// If no nyc coverage, try Node.js native coverage (from stderr)
+if (coveragePercent === 0) {
+  const nodeCoveragePath = join(rootDir, 'coverage', 'node-coverage.txt');
+  if (existsSync(nodeCoveragePath)) {
+    console.log(`📄 Found Node.js coverage report: ${nodeCoveragePath}`);
+    const content = readFileSync(nodeCoveragePath, 'utf-8');
+    
+    // Parse "all files" line from Node.js coverage output
+    // Format: # all files                           |  86.79 |    66.67 |   88.46 | 
+    const match = content.match(/all files\s+\|\s+([\d.]+)/);
+    if (match) {
+      coveragePercent = parseFloat(match[1]);
     }
   }
 }

@@ -10,13 +10,12 @@
     "test:contract": "node --test tests/contract/**/*.test.mjs",
     "test:ui:smoke": "node scripts/ensure-playwright.mjs && npx playwright test tests/ui/smoke.spec.ts --config=playwright.config.ts --reporter=line",
     "typecheck": "tsc --noEmit",
-    "coverage": "nyc --reporter=text --reporter=json node --test tests/unit/**/*.test.mjs",
-    "coverage:report": "nyc report"
+    "coverage": "node --experimental-test-coverage --test tests/unit/**/*.test.mjs",
+    "coverage:report": "node --experimental-test-coverage --test tests/unit/**/*.test.mjs 2>&1 | grep -E '^(#.*|.*\\|.*%)'"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.3.0",
-    "nyc": "^17.1.0",
     "typescript": "^5.9.3"
   }
 }
