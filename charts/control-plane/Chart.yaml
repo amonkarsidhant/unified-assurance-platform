@@ -1,0 +1,14 @@
+apiVersion: v2
+name: control-plane
+description: Unified Assurance Platform - Control Plane
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - assurance
+  - quality-gates
+  - ci/cd
+  - security
+maintainers:
+  - name: UAP Team
+    email: uap@example.com

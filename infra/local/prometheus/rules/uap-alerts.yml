@@ -1,0 +1,127 @@
+# UAP Prometheus Alerting Rules
+# Based on SLI/SLO definitions from docs/operations/sli-slo-definitions.md
+
+groups:
+  - name: uap-availability
+    interval: 30s
+    rules:
+      # Availability SLO: 99.9% (allow 0.1% error rate)
+      - alert: UAPAvailabilityLow
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) 
+            / 
+            sum(rate(http_requests_total[5m]))
+          ) > 0.001
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "UAP availability below 99.9%"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+
+      - alert: UAPAvailabilityDegraded
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"4.."}[5m])) 
+            / 
+            sum(rate(http_requests_total[5m]))
+          ) > 0.005
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "UAP availability degraded"
+          description: "4xx error rate is {{ $value | humanizePercentage }} for the last 10 minutes"
+
+  - name: uap-reliability
+    interval: 30s
+    rules:
+      # Reliability SLO: 99.5% (allow 0.5% failure)
+      - alert: UAPReliabilityLow
+        expr: |
+          (
+            sum(rate(assurance_runs_failed_total[5m])) 
+            / 
+            sum(rate(assurance_runs_total[5m]))
+          ) > 0.005
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "UAP reliability below 99.5%"
+          description: "Assurance run failure rate is {{ $value | humanizePercentage }}"
+
+      - alert: UAPAssuranceQueueBacklog
+        expr: assurance_queue_backlog > 100
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Assurance queue backlog growing"
+          description: "There are {{ $value }} pending assurance runs"
+
+  - name: uap-latency
+    interval: 30s
+    rules:
+      # Latency SLO: p95 <= 400ms
+      - alert: UAPLatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.4
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "UAP p95 latency above 400ms"
+          description: "Current p95 latency is {{ $value | humanizeDuration }}"
+
+      - alert: UAPLatencyCritical
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "UAP p95 latency above 1s"
+          description: "Critical latency detected: {{ $value | humanizeDuration }}"
+
+  - name: uap-quality
+    interval: 60s
+    rules:
+      # Quality gates failing
+      - alert: UAPQualityGateFailing
+        expr: quality_gates_failed_total > quality_gates_passed_total
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Quality gates failing more than passing"
+          description: "In the last hour, {{ $value }} quality gates failed"
+
+      - alert: UAPTestCoverageLow
+        expr: test_coverage_percent < 75
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Test coverage below 75%"
+          description: "Current test coverage is {{ $value }}%"
+
+  - name: uap-security
+    interval: 60s
+    rules:
+      - alert: UAPSecurityFindingsHigh
+        expr: security_findings_critical > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical security findings detected"
+          description: "There are {{ $value }} critical security findings"
+
+      - alert: UAPSecretsDetected
+        expr: secrets_detected_total > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Secrets detected in codebase"
+          description: "Secrets were detected in the latest scan"
