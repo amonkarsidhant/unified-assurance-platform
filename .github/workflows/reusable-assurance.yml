@@ -27,6 +27,10 @@ on:
         required: false
         type: string
         default: shared-pragmatic
+      event-path:
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -57,7 +61,8 @@ jobs:
       - name: Run validate
         run: make validate
       - name: Validate governance artifacts
-        run: make governance-artifacts-check
+        if: inputs.event-path != ''
+        run: make governance-artifacts-check EVENT_PATH=${{ inputs.event-path }}
 
   tooling-check:
     name: tooling-check

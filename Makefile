@@ -281,7 +281,7 @@ sign-bundle:
 		./scripts/sign-evidence-bundle.sh "$$latest_bundle"
 
 governance-artifacts-check:
-	@./scripts/validate-governance-artifacts.py
+	@EVENT_PATH=$(EVENT_PATH) ./scripts/validate-governance-artifacts.py
 
 validate-exceptions:
 	@tier=$$(python3 -c 'import json;print(json.load(open("artifacts/latest/results.json")).get("risk_context",{}).get("risk_tier","low"))'); \

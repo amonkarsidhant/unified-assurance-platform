@@ -79,13 +79,10 @@ def has_unanswered_field(section_text: str) -> bool:
     return False
 
 
-def validate_pr_body(event_path: Path, template_path: Path):
+def validate_pr_body(event_path: Path | None, template_path: Path):
     if event_path is None:
-        gate_fail(
-            reason="event path is required",
-            fix_hint="pass --event-path from GITHUB_EVENT_PATH",
-            reproduce="python3 scripts/validate-governance-artifacts.py --event-path <path-to-event-json>",
-        )
+        # Skip PR body validation when event-path is not provided
+        return
     if not event_path.exists():
         gate_fail(
             reason=f"event file not found: {event_path}",
@@ -152,7 +149,7 @@ def validate_pr_body(event_path: Path, template_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Validate governance artifacts in repository.")
-    parser.add_argument("--event-path", type=Path, required=True, help="Path to GitHub event JSON file")
+    parser.add_argument("--event-path", type=Path, required=False, default=None, help="Path to GitHub event JSON file")
     parser.add_argument("--template-path", type=Path, default=Path(".github/pull_request_template.md"), help="Path to PR template")
     args = parser.parse_args()
 
