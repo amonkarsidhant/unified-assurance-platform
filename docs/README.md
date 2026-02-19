@@ -1,72 +1,50 @@
-# Documentation Hub
+# UAP Documentation
 
-Use this page as the entry point for all platform documentation.
+> Unified Assurance Platform documentation hub
 
-## Start by role
+## 📚 Quick Access
 
-### Platform engineer
+| Topic | Description |
+|-------|-------------|
+| **[Getting Started](getting-started/)** | Quickstart, hello-world, setup guides |
+| **[Architecture](architecture/)** | System design, guardrails, reference architecture |
+| **[Operations](operations/)** | SLI/SLO definitions, RBAC, audit logs |
+| **[Governance](governance/)** | Policies, compliance, security controls |
+| **[Runbooks](runbooks/)** | Incident response, on-call procedures |
+| **[ADRs](adr/)** | Architecture decision records |
 
-- [Dev experience setup](getting-started/dev-experience-setup.md)
-- [Required tooling](getting-started/required-tooling.md)
-- [Platform architecture](architecture/platform-architecture.md)
-- [Reference architecture](reference-architecture/overview.md)
-- [Troubleshooting](getting-started/troubleshooting.md)
+## 📖 Document Categories
 
-### Application developer
+### Getting Started
+- `getting-started/hello-world.md` - Your first assurance run
+- `getting-started/quickstart.md` - Fast onboarding guide
 
-- [Consumer quickstart (10-minute path)](getting-started/consumer-quickstart.md)
-- [Onboarding mode](getting-started/onboarding-mode.md)
-- [Local demo walkthrough](getting-started/local-demo-walkthrough.md)
-- [Golden paths](golden-paths/)
-- [Phase 3 DX pack](guides/phase3-dx-pack.md)
+### Architecture
+- `architecture/overview.md` - System architecture
+- `architecture/guardrail-checklist.md` - Guardrails compliance
+- `reference-architecture/overview.md` - Detailed reference
 
-### Security and governance
+### Operations
+- `operations/sli-slo-definitions.md` - SLO definitions
+- `operations/rbac-model.md` - Access control
+- `operations/audit-log-schema.md` - Audit logging
 
-- [Security posture (threat model, controls, evidence integrity)](reference/security-posture.md)
-- [Control traceability](compliance/control-traceability.md)
-- [Enterprise assurance controls](guides/phase2-enterprise-assurance-controls.md)
-- [UAP reliability playbook](sre/uap-reliability-playbook.md)
-- [Branch protection guidance](guides/branch-protection-guidance.md)
-- [Control-plane hardening direction](architecture/control-plane-hardening.md)
-- [Enterprise hardening backlog](reference/enterprise-hardening-backlog.md)
-- [Guardrail checklist](architecture/guardrail-checklist.md)
-- [Cross-agent collaboration protocol](coordination/cross-agent-collaboration-protocol.md)
+### Governance & Compliance
+- `governance/` - Policy files and compliance docs
+- `compliance/` - Compliance frameworks
 
-### Release manager
+### Runbooks
+- `runbooks/` - Incident and operational runbooks
+- `sre/uap-reliability-playbook.md` - SRE practices
 
-- [Enterprise CI/CD model (Phase 1)](guides/phase1-enterprise-cicd.md)
-- [Phase 2.5 promotion refinements](guides/phase2-5-p0.md)
-- [End-to-end review checklist](reference/end-to-end-review.md)
-- [Roadmap](reference/roadmap.md)
-- [Control-plane backlog](reference/control-plane-backlog.md)
+### Developer Experience
+- `devex/` - DevEx metrics and improvements
+- `consumer-quickstart.md` - Quick start for consumers
 
-### Documentation maintainers
+### Proposals & Roadmaps
+- `proposals/` - Feature proposals
+- `roadmap/` - Product roadmap
 
-- [Design language (compact)](reference/design-language.md)
-- [Architecture diagram asset](assets/diagrams/uap-architecture.svg) ([diagram docs](reference-architecture/diagram.md))
-- [Workflow diagram asset](assets/diagrams/uap-workflow.svg) ([diagram docs](reference-architecture/diagram.md))
+---
 
-## Quick map
-
-- **Getting started and setup**: [`docs/getting-started/`](getting-started/)
-- **Architecture and platform direction**: [`docs/architecture/`](architecture/)
-- **Implementation guides and runbooks**: [`docs/guides/`](guides/)
-- **Reference docs, reviews, and planning**: [`docs/reference/`](reference/)
-- **Policies and governance artifacts**: [`docs/compliance/`](compliance/) and [`policies/`](../policies/)
-- **Troubleshooting**: [getting-started/troubleshooting.md](getting-started/troubleshooting.md)
-
-## Additional high-value sections
-
-- **Chaos integration**: [`docs/chaos/`](chaos/)
-- **Generated onboarding docs**: [`docs/generated/`](generated/)
-- **Architecture diagrams**: [`docs/reference-architecture/`](reference-architecture/)
-- **Formal reviews**: [`docs/reviews/`](reviews/)
-- **Trial-pack planning**: [`docs/roadmap/`](roadmap/)
-- **DevEx baselines and backlog**: [`docs/devex/`](devex/)
-  - [PR-B first-green path](devex/pr-b-first-green.md)
-  - [DevEx failure summary contract](devex/failure-summary-contract.md)
-  - [DevEx metrics baseline](devex/metrics-baseline.md)
-- **Product sprint prioritization**: [`docs/product/`](product/)
-- **Coordination protocols**: [`docs/coordination/`](coordination/)
-  - [Idea review gate](coordination/idea-review-gate.md)
-  - [Project view pack standard](coordination/project-view-pack.md)
+For contributing, see [contribution-standard.md](contribution-standard.md)
