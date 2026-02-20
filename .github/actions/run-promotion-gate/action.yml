@@ -1,0 +1,75 @@
+name: Run Promotion Gate Scripts
+description: Runs all promotion gate evaluation scripts in sequence
+
+inputs:
+  artifacts-dir:
+    description: Artifacts directory path
+    default: artifacts/latest
+  config-dir:
+    description: Config directory path
+    default: config
+  environment:
+    description: Target environment
+    default: stage
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Run all promotion gate scripts
+      shell: bash
+      run: |
+        set -euo pipefail
+        
+        ARTIFACTS="${{ inputs.artifacts-dir }}"
+        CONFIG="${{ inputs.config-dir }}"
+        ENV="${{ inputs.environment }}"
+        
+        # Extract tier and service from results.json
+        tier=$(python3 -c 'import json;print(json.load(open("$ARTIFACTS/results.json")).get("risk_context",{}).get("risk_tier","low"))')
+        service=$(python3 -c 'import json;print(json.load(open("$ARTIFACTS/results.json")).get("service","sample-service"))')
+        
+        echo "Running promotion gate for service=$service tier=$tier env=$ENV"
+        
+        # 1. Validate exceptions
+        python3 scripts/validate-exceptions.py \
+          --exceptions-dir "$CONFIG/exceptions" \
+          --service "$service" \
+          --environment "$ENV" \
+          --tier "$tier"
+        
+        # 2. Evaluate flaky policy
+        python3 scripts/evaluate-flaky-policy.py \
+          --policy "$CONFIG/flaky-policy.json" \
+          --results "$ARTIFACTS/results.json" \
+          --output "$ARTIFACTS/flaky-policy.json"
+        
+        # 3. Evaluate promotion
+        python3 scripts/evaluate-promotion.py \
+          --environment "$ENV" \
+          --results "$ARTIFACTS/results.json" \
+          --exceptions-dir "$CONFIG/exceptions" \
+          --flaky-result "$ARTIFACTS/flaky-policy.json"
+        
+        # 4. Normalize results
+        python3 scripts/normalize-results-v2.py \
+          --input "$ARTIFACTS/results.json" \
+          --output "$ARTIFACTS/results.v2.json" \
+          --exceptions "$ARTIFACTS/exceptions-audit.json" \
+          --promotion "$ARTIFACTS/promotion-decision.json" \
+          --flaky "$ARTIFACTS/flaky-policy.json"
+        
+        # 5. Render PR comment
+        python3 scripts/render-pr-comment.py \
+          --results "$ARTIFACTS/results.json" \
+          --promotion "$ARTIFACTS/promotion-decision.json" \
+          --flaky "$ARTIFACTS/flaky-policy.json" \
+          --output "$ARTIFACTS/pr-comment.md"
+        
+        echo "Promotion gate scripts completed"
