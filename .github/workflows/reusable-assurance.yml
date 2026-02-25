@@ -185,6 +185,7 @@ jobs:
             artifacts/latest/*.status
             artifacts/latest/*.log
             artifacts/latest/*.json
+            artifacts/latest/failure-summary.md
             artifacts/latest/ci-summary-${{ inputs.artifact-suffix }}.md
 
   run-assurance-real:
@@ -268,4 +269,5 @@ jobs:
             artifacts/latest/*.status
             artifacts/latest/*.log
             artifacts/latest/*.json
+            artifacts/latest/failure-summary.md
             artifacts/latest/ci-summary-${{ inputs.artifact-suffix }}.md
