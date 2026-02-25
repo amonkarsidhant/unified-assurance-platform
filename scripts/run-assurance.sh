@@ -55,8 +55,30 @@ run_cmd_step() {
   fi
 }
 
+ensure_node_tooling() {
+  if command -v npm >/dev/null 2>&1; then
+    return 0
+  fi
+
+  # Common locations for NVM-managed and system Node installs.
+  local candidate
+  for candidate in \
+    "$HOME/.nvm/versions/node"/*/bin/npm \
+    /usr/local/bin/npm \
+    /usr/bin/npm; do
+    if [ -x "$candidate" ]; then
+      export PATH="$(dirname "$candidate"):$PATH"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 run_npm_or_fallback() {
   local name="$1" cmd="$2"
+  ensure_node_tooling || true
+
   if command -v npm >/dev/null 2>&1 && [ -f "$ROOT_DIR/package.json" ]; then
     run_cmd_step "$name" bash -lc "cd '$ROOT_DIR' && $cmd"
   else
@@ -500,5 +522,21 @@ PY
   }
 }
 JSON
+
+{
+  echo "# Assurance failed-stage summary"
+  echo
+  if [ "$FAILURES" -eq 0 ]; then
+    echo "All tracked stages passed."
+  else
+    for status_file in "$ART_DIR"/*.status; do
+      stage_name="$(basename "$status_file" .status)"
+      stage_status="$(cat "$status_file")"
+      if [ "$stage_status" = "fail" ]; then
+        echo "- ${stage_name}: fail (see artifacts/latest/${stage_name}.log)"
+      fi
+    done
+  fi
+} >"$ART_DIR/failure-summary.md"
 
 log "Assurance run complete. Results at $ART_DIR/results.json"
